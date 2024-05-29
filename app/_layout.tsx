@@ -1,13 +1,12 @@
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { StatusBar } from "expo-status-bar";
 
 export default function RootLayout() {
-  useEffect(() => {}, []);
-
   return (
     <>
+      <StatusBar style="dark" />
       <Stack>
-        <Stack.Screen name="index" options={{ title: "Головна" }} />
+        <Stack.Screen name="index" options={{ title: "Всі документи" }} />
         <Stack.Screen name="document" options={{ title: "Документ ..." }} />
       </Stack>
     </>

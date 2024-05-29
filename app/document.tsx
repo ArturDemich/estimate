@@ -3,22 +3,31 @@ import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 export default function Document() {
   return (
     <View>
-      <Text>Your document is here</Text>
-
       <TouchableOpacity style={styles.documentItem}>
         <View style={styles.itemRow}>
-          <Text>1</Text>
-          <View>
-            <Text style={{ fontSize: 11 }}>
+          <Text style={styles.itemNum}>1</Text>
+          <View style={styles.itemBlock}>
+            <Text style={{ fontSize: 13 }}>
               Euonymus japonicus 'Microphyllus Aureovariegatus', Бересклет
               японський 'Мікрофілуc Ауреоварієгатус'
             </Text>
-            <Text style={{ fontSize: 13 }}>
+            <View style={styles.rowBtw}>
+              <View style={styles.itemRow}>
+                <TouchableOpacity style={styles.btnRes}>
+                  <Text>+резерв</Text>
+                </TouchableOpacity>
+                <Text style={[styles.itemQty, { color: "orange" }]}>20шт</Text>
+              </View>
+              <Text style={styles.itemQty}>2000шт</Text>
+            </View>
+
+            <Text style={styles.itemSize}>
               WRB, H80-100, EXTRA багатоверхівковий
             </Text>
-            <Text>2000шт</Text>
           </View>
-          <Button title="+"></Button>
+          <TouchableOpacity style={styles.btnPlus}>
+            <Text>+1</Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     </View>
@@ -46,5 +55,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 5,
+  },
+  rowBtw: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  btnPlus: {
+    backgroundColor: "green",
+    width: 40,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnRes: {
+    backgroundColor: "orange",
+    padding: 4,
+    borderRadius: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  itemBlock: {
+    gap: 3,
+    flex: 1,
+  },
+  itemQty: {
+    alignSelf: "flex-end",
+    fontSize: 17,
+  },
+  itemName: {
+    fontSize: 13,
+  },
+  itemSize: {
+    fontSize: 13,
+    fontWeight: "600",
+    padding: 5,
+  },
+  itemNum: {
+    alignSelf: "center",
+    fontSize: 10,
+    color: "grey",
   },
 });
