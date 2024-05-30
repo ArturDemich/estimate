@@ -1,3 +1,4 @@
+import ButtonNewItem from "@/components/ButtonNewItem";
 import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Document() {
@@ -30,6 +31,7 @@ export default function Document() {
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
+      <ButtonNewItem />
     </View>
   );
 }
