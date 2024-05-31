@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { PropsWithChildren, useState } from "react";
 import {
   Modal,
   StyleSheet,
@@ -7,8 +7,35 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 
-export default function ModalAddItem({ show, close }: any) {
+type ModalProps = {
+  show: boolean;
+  close: () => void;
+};
+
+const DATA = [
+  { id: "1", title: "Apple" },
+  { id: "2", title: "Banana" },
+  { id: "3", title: "Cherry" },
+  { id: "4", title: "Date" },
+  { id: "5", title: "Elderberry" },
+  { id: "6", title: "Fig" },
+  { id: "7", title: "Grape" },
+];
+
+export default function ModalAddItem({ show, close }: ModalProps) {
+  const [name, setName] = useState("");
+  const [size, setSize] = useState("");
+  const [reserv, setReserv] = useState("");
+  const [qty, setQty] = useState("");
+
+  const handleSelectItem = (item: any) => {
+    if (item) {
+      setSize(item.title);
+    }
+  };
+
   return (
     <View>
       <Modal
@@ -26,11 +53,54 @@ export default function ModalAddItem({ show, close }: any) {
             >
               Назва
             </Text>
-            <TextInput style={styles.input} />
-            <Text style={{ fontSize: 17 }}>Х-ка</Text>
-            <TextInput style={styles.input} />
-            <Text style={styles.textStyle}>К-сть</Text>
-            <TextInput style={styles.input} />
+            <TextInput
+              style={styles.input}
+              onChangeText={setName}
+              value={name}
+            />
+            <Text style={styles.textStyle}>Х-ка</Text>
+            <TextInput
+              style={styles.input}
+              onChangeText={setSize}
+              value={size}
+              readOnly={name ? false : true}
+              placeholder={name ? "" : "Оберіть назву рослини"}
+              placeholderTextColor="orange"
+            />
+
+            <AutocompleteDropdown
+              dataSet={DATA}
+              onSelectItem={handleSelectItem}
+              textInputProps={{
+                placeholder: "Enter text",
+                value: size,
+                onChangeText: setSize,
+              }}
+              inputContainerStyle={styles.inputContainer}
+              suggestionsListContainerStyle={styles.suggestionsContainer}
+            />
+
+            <View style={styles.qtyBlock}>
+              <View>
+                <Text style={styles.textStyle}>В резерв:</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  onChangeText={setReserv}
+                  value={reserv}
+                />
+              </View>
+
+              <View>
+                <Text style={styles.textStyle}>К-сть загальна:</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  onChangeText={setQty}
+                  value={qty}
+                />
+              </View>
+            </View>
             <View style={styles.btnBlock}>
               <TouchableOpacity
                 onPress={() => close()}
@@ -71,8 +141,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#00002329",
   },
+  inputContainer: {
+    backgroundColor: "white",
+    borderRadius: 5,
+    padding: 8,
+    elevation: 3,
+  },
+  suggestionsContainer: {
+    backgroundColor: "white",
+    borderRadius: 5,
+    elevation: 3,
+  },
   modalView: {
-    width: 300,
+    width: "93%",
     flexDirection: "column",
     margin: 1,
     backgroundColor: "white",
@@ -125,7 +206,7 @@ const styles = StyleSheet.create({
   },
   textStyle: {
     fontWeight: "500",
-    fontSize: 18,
+    fontSize: 14,
     color: "#555555",
     //marginBottom: 40,
     paddingLeft: 5,
@@ -133,7 +214,7 @@ const styles = StyleSheet.create({
   },
   textStr: {
     fontWeight: "600",
-    fontSize: 21,
+    fontSize: 13,
   },
   modalText: {
     textAlign: "center",
@@ -144,8 +225,17 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    width: 200,
+    borderRadius: 3,
+    borderColor: "#e8e7e3",
+    width: "95%",
     height: 40,
     padding: 3,
+    backgroundColor: "#f0ede6",
+    marginBottom: 3,
+  },
+  qtyBlock: {
+    width: "97%",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });
