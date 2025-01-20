@@ -1,11 +1,11 @@
 import ButtonNewItem from "@/components/DocumentScreen/ButtonNewItem";
-import PlantListItem from "@/components/DocumentScreen/PlantListItem";
+import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
 import { View } from "react-native";
 
-export default function Document() {
+export default function Plant() {
   return (
     <View>
-      <PlantListItem />
+      <PlantSizeItem />
       <ButtonNewItem />
     </View>
   );

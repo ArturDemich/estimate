@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ModalAddItem from "./ModalAddItem";
+import ModalAddItem from "../ModalAddItem";
 
 export default function ButtonNewItem() {
   const [show, setShow] = useState(false);

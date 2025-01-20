@@ -1,6 +1,10 @@
+import { RootState } from "@/redux/store";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSelector } from "react-redux";
 
 export default function ButtonNewDoc() {
+  const storages = useSelector((state: RootState) => state.data.digStorages)
+  console.log('ButtonNewDoc', storages)
   return (
     <View style={styles.containerNBTN}>
       <TouchableOpacity style={styles.buttonStep}>
@@ -19,7 +23,7 @@ const styles = StyleSheet.create({
     // shadowRadius: 25,
     position: "absolute",
     right: 12,
-    bottom: -600,
+    bottom: -550,
   },
   textBtn: {
     color: "white",
