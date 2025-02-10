@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 
 export default function ButtonNewDoc() {
   const storages = useSelector((state: RootState) => state.data.digStorages)
-  console.log('ButtonNewDoc', storages)
+  console.log('ButtonNewDoc',)
   return (
     <View style={styles.containerNBTN}>
       <TouchableOpacity style={styles.buttonStep}>

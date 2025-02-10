@@ -12,29 +12,6 @@ export default function PlantListItem() {
           Бересклет японський 'Мікрофілуc Ауреоварієгатус'
         </Text>
       </View>
-
-      {/* <View style={{flexDirection: "row", justifyContent: 'space-between'}}>
-        <View style={{  flexDirection: "column",  flex: 1, paddingRight: 8}}>
-          <Text style={styles.itemSize}>
-            WRB, H80-100, EXTRA багатоверхівковий
-          </Text>
-
-          <View style={{ flexDirection: "row", justifyContent: 'space-between',}}>
-            <View style={{  gap: 8, flexDirection: "row",}}>
-              <TouchableOpacity style={styles.btnRes}>
-                <Text>+резерв</Text>
-              </TouchableOpacity>
-              <Text style={[styles.itemQty, { color: "orange" }]}>20шт</Text>
-            </View>
-
-            <Text style={styles.itemQty}>2000шт</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.btnPlus}>
-          <Text>+1</Text>
-        </TouchableOpacity>
-        
-      </View> */}
     </TouchableOpacity>
     </Link>
   );

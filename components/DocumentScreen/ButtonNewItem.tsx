@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ModalAddItem from "../ModalAddItem";
+import Feather from '@expo/vector-icons/Feather';
+import ModalAddPlant from "./ModalAddPlant";
 
 export default function ButtonNewItem() {
   const [show, setShow] = useState(false);
   return (
     <View style={styles.containerNBTN}>
       <TouchableOpacity style={styles.buttonStep} onPress={() => setShow(true)}>
-        <Text style={styles.textBtn}>New +</Text>
+      <Feather name="plus" size={18} color="#131316" />
+        <Text style={styles.textBtn}>Додати</Text>
       </TouchableOpacity>
-      <ModalAddItem show={show} close={() => setShow(!show)} />
+      <ModalAddPlant show={show} close={() => setShow(!show)} />
     </View>
   );
 }
@@ -26,20 +28,26 @@ const styles = StyleSheet.create({
     bottom: -50,
   },
   textBtn: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "900",
+    color: "#131316",
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 14,
   },
   buttonStep: {
-    borderRadius: 3,
-    backgroundColor: "blue",
-    height: 40,
-    padding: 5,
+    borderRadius: 40,
+    height: 30,
+    padding: 6,
     opacity: 0.95,
     elevation: 5,
-    shadowColor: "#d70000",
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#959595",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 3,
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 3,
+    alignItems: 'center',
+    
   },
 });

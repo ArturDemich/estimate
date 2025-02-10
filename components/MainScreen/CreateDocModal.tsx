@@ -7,10 +7,13 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
+import { useRouter } from "expo-router";
+import { Storages } from "@/redux/dataSlice";
 
 type StorageItem = {
     id: string;
@@ -19,21 +22,45 @@ type StorageItem = {
     name: string;
   };
 
-const DATA = [
-  { id: "1", title: "Apple" },
-  { id: "2", title: "Banana" },
-  { id: "3", title: "Cherry" },
-  { id: "4", title: "Date" },
-  { id: "5", title: "Elderberry" },
-  { id: "6", title: "Fig" },
-  { id: "7", title: "Grape" },
-];
+  const filterStorages = (stateStorages: Storages[]) => {
+    const groupStore: Storages[] = [];
+    const singleStore: Storages[] = [];
+    const filterStore: Storages[] = [];
+  
+    stateStorages.forEach((elem) => {
+      if (elem.is_group === false) {
+        singleStore.push(elem);
+      } else if (elem.is_group === true) {
+        groupStore.push(elem);
+      } else {
+        console.log("ERROR filterStorages");
+      }
+    });
+  
+    groupStore.forEach((elem) => {
+      if (singleStore.some((item) => item.id_parent === elem.id)) {
+        filterStore.some((store) => store.id === elem.id)
+          ? null
+          : filterStore.push(elem);
+      } 
+    });
+    if (filterStore.length >= 4) {
+      groupStore.forEach(elem => {
+          elem.id_parent === '00000000-0000-0000-0000-000000000000' || null ? filterStore.unshift(elem) : null
+      })
+    }
+  
+    return filterStore;
+  };
+
 
 export default function CreateDocModal() {
+  const router = useRouter();
   const storages: StorageItem[] = useSelector((state: RootState) => state.data.digStorages);
-  console.log('CreateDocModal', storages)
+  console.log('CreateDocModal', )
   const [show, setShow] = useState(false);
   const [name, setName] = useState<{ id: string; name: string }>();
+  const [input, setInput] = useState('');
 
   const handleClose = () => {
     setShow(false);
@@ -42,6 +69,14 @@ export default function CreateDocModal() {
   const selectWarehouse = (warehouse: { id: string; name: string }) => {
     setName(warehouse);
     setShow(false); 
+  };
+
+  const navigateToDocument = (docName: string) => {
+    setShow(false); // Close modal
+    router.push({
+      pathname: "/document", // Path to the document screen
+      params: { docName }, // Pass docNumber as a parameter
+    });
   };
 
   
@@ -72,13 +107,19 @@ export default function CreateDocModal() {
               Оберіть склад
             </Text>
 
+            <TextInput
+              style={styles.input}
+              onChangeText={setInput}
+              value={input}
+            />
+
             <FlatList
               data={storages}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.listItem}
-                  onPress={() => selectWarehouse(item)}
+                  onPress={() => navigateToDocument(item.name)}
                 >
                   <Text style={styles.listItemText}>{item.name}</Text>
                 </TouchableOpacity>
@@ -250,11 +291,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 3,
     borderColor: "#e8e7e3",
-    width: "70%",
-    height: 40,
+    width: "90%",
+    minHeight: 35,
     padding: 3,
     backgroundColor: "#f0ede6",
     marginBottom: 3,
+    marginTop: 10,
   },
   qtyBlock: {
     width: "97%",

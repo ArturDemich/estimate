@@ -1,11 +1,29 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { getStoragesThunk } from './thunks';
 
-const initialState = {
-    digStorages: [],
-    status: 'idle'
-  };
-  
+export enum LoadingStatus {
+  Loading = 'Loading',
+  Succeeded = 'Succeeded',
+  Failed = 'Failed'
+};
+
+export interface Storages {
+  id: string;
+  name: string;
+  is_group: boolean;
+  id_parent: string;
+};
+export interface DataSlice {
+  digStorages: Storages[];
+  status: LoadingStatus | string;
+};
+
+
+const initialState: DataSlice = {
+  digStorages: [],
+  status: 'idle',
+};
+
 
 const dataSlice = createSlice({
   name: 'data',
@@ -19,7 +37,6 @@ const dataSlice = createSlice({
       .addCase(getStoragesThunk.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.digStorages = action.payload;
-        console.log('dataSlice', state.digStorages)
       })
       .addCase(getStoragesThunk.rejected, (state) => {
         state.status = 'failed';

@@ -1,4 +1,4 @@
-import { AppDipatch } from "@/redux/store";
+import { AppDispatch } from "@/redux/store";
 import { getStoragesThunk } from "@/redux/thunks";
 import { Link } from "expo-router";
 import { useEffect } from "react";
@@ -6,23 +6,6 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
 
 export default function DocumentList() {
-  const dispatch = useDispatch<AppDipatch>();
-
-  const getData = async () => {
-    try {
-      const data = await dispatch(getStoragesThunk()).unwrap();
-      console.log("DocumentList Fetched data:", data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      alert("Failed to fetch data. Please try again later.");
-    }
-  };
-
-  useEffect(() => {
-    getData()
-    console.log('DocumentList111', );
-   
-  }, [])
 
   return (
     <View>

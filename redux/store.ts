@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-import dataSlice from '@/redux/slice';
+import dataReducer from '@/redux/dataSlice';
+import loginReducer from '@/redux/authSlice';
 
 export const store = configureStore({
   reducer: {
-    data: dataSlice, 
+    data: dataReducer, 
+    login: loginReducer,
   },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDipatch = typeof store.dispatch;
+export type AppDispatch = typeof store.dispatch;

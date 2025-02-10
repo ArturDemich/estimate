@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
+import { AutocompleteDropdown, AutocompleteDropdownContextProvider } from "react-native-autocomplete-dropdown";
 
 type ModalProps = {
   show: boolean;
@@ -68,6 +68,8 @@ export default function ModalAddItem({ show, close }: ModalProps) {
               placeholderTextColor="orange"
             />
 
+          <AutocompleteDropdownContextProvider>
+            <View style={{flex: 1}}>
             <AutocompleteDropdown
               dataSet={DATA}
               onSelectItem={handleSelectItem}
@@ -79,6 +81,8 @@ export default function ModalAddItem({ show, close }: ModalProps) {
               inputContainerStyle={styles.inputContainer}
               suggestionsListContainerStyle={styles.suggestionsContainer}
             />
+            </View>
+            </AutocompleteDropdownContextProvider>
 
             <View style={styles.qtyBlock}>
               <View>
