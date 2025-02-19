@@ -35,14 +35,14 @@ export default function Plant() {
       <Stack.Screen options={{
         headerBackVisible: false,
         headerLeft: () => (
-          <TouchableOpacity style={{marginRight: 15}} onPress={() => handleBackAction().then(() => router.back())}>
+          <TouchableOpacity style={{marginRight: 15}} onPressOut={() => handleBackAction().then(() => router.back())}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
         )
       }} />
       <View style={{paddingLeft: 15, paddingVertical: 5, }}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
       <PlantSizeItem />
-      <AddDetailsModal />
+      <AddDetailsModal plantDBid={params.plantId.toString()} docId={params.docId.toString()} />
     </View>
   );
 }

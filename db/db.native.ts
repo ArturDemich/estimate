@@ -1,3 +1,4 @@
+import { PlantItemRespons } from "@/redux/stateServiceTypes";
 import * as SQLite from "expo-sqlite";
 
 export async function openDB(): Promise<SQLite.SQLiteDatabase> {
@@ -17,9 +18,10 @@ export async function openDB(): Promise<SQLite.SQLiteDatabase> {
 export async function initializeDB(): Promise<void> {
   const db = await openDB();
   try {
+    await db.execAsync("PRAGMA foreign_keys = ON;");
+    await db.execAsync("PRAGMA journal_mode = WAL;");
+    await db.execAsync("BEGIN TRANSACTION;");
     await db.execAsync(`
-      PRAGMA journal_mode = WAL;
-      
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -46,6 +48,7 @@ export async function initializeDB(): Promise<void> {
         FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE
       );
     `);
+    await db.execAsync("COMMIT;");
     console.log("Database initialized successfully");
   } catch (error) {
     console.error("Error initializing database:", error);
@@ -175,17 +178,13 @@ export async function deletePlant(documentId: number, plantNameId: number): Prom
 }
 
 export async function addCharacteristic(
-  documentId: number,
   plantId: number,
-  characteristic: { id: string; name: string },
-  unit: { id: string; name: string },
-  barcode: string,
-  quantity: number
+  plantItem: PlantItemRespons
 ): Promise<number | null> {
   const db = await openDB();
   try {
     // Step 1: Verify that the plant belongs to the given document
-    const plant = await db.getFirstAsync(
+    /* const plant = await db.getFirstAsync(
       "SELECT id FROM plants WHERE id = ? AND document_id = ?",
       [plantId, documentId]
     );
@@ -193,7 +192,7 @@ export async function addCharacteristic(
     if (!plant) {
       console.error("Error: Plant does not belong to the specified document.");
       return null;
-    }
+    } */
 
     // Step 2: Insert the characteristic
     const result = await db.runAsync(
@@ -202,12 +201,12 @@ export async function addCharacteristic(
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         plantId,
-        characteristic.id,
-        characteristic.name,
-        unit.id,
-        unit.name,
-        barcode,
-        quantity,
+        plantItem.characteristic.id,
+        plantItem.characteristic.name,
+        plantItem.unit.id,
+        plantItem.unit.name,
+        plantItem.barcode,
+        plantItem.quantity ? plantItem.quantity : 0,
       ]
     );
 

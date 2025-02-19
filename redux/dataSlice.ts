@@ -19,7 +19,7 @@ const dataSlice = createSlice({
     builder
       .addCase(getStoragesThunk.fulfilled, (state, action) => {
         state.digStorages = action.payload;
-        console.log('dataSlice __ getStoragesThunk', state.digStorages)
+        console.log('dataSlice __ getStoragesThunk', )
       })
 
       .addCase(getPlantsNameThunk.fulfilled, (state, action) => {

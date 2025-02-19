@@ -1,8 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import HeaderLogout from "@/components/HeaderLogout";
-import { ActivityIndicator, Platform, View } from "react-native";
-import * as SecureStore from "expo-secure-store";
+import { ActivityIndicator, View } from "react-native";
 import { loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -17,16 +16,11 @@ export default function ProtectedLayout() {
   useEffect(() => {
     console.log('ProtectedLayout___useEffect')
     const checkToken = async () => {
-      /* let token;
-      if (Platform.OS === 'web') {
-        token = await localStorage.getItem('token')
-      } else {
-        token = await SecureStore.getItemAsync("token");
-      } */
      const token = await dispatch(loginThunk())
-      console.log('ProtectedLayout__ checkToken', token)
+      console.log('ProtectedLayout__ checkToken',)
 
-      if (!token) {
+      if (!token.payload || Object.keys(token.payload).length === 0 ) {
+        console.log('ProtectedLayout__ checkToken_ replace', Boolean(token.payload))
         router.replace("/login");
       } else {
         setCheckingToken(false);

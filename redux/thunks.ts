@@ -21,6 +21,7 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
       } else {
         token = await SecureStore.getItemAsync("token");
       };
+      console.log('loginThunk___ localStor', token)
       if (token) {
         return JSON.parse(token);
       } else {
@@ -29,7 +30,7 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
     } else {
       try {
         const response = await DataService.getToken(loginData.login, loginData.pass);
-        console.log('loginThunk', response)
+        console.log('loginThunk__ server', response)
         if (!response.success) {
           Alert.alert('From Server:', response.errors[0])
           return {}

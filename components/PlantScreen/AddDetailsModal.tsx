@@ -1,4 +1,4 @@
-import { RootState } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useState } from "react";
 import {
   FlatList,
@@ -8,22 +8,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { addDocument } from "@/db/db.native";
+import { addCharacteristic, addDocument } from "@/db/db.native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { PlantItemRespons } from "@/redux/stateServiceTypes";
+import { getPlantsDetailsDB } from "@/redux/thunks";
 
-type StorageItem = {
-  id: string;
-  id_parent: string;
-  is_group: boolean;
-  name: string;
+interface AddDetailsProps {
+    plantDBid: string;
+    docId: string;
 };
 
-
-export default function AddDetailsModal() {
+export default function AddDetailsModal({plantDBid, docId}: AddDetailsProps) {
+    const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const storages: StorageItem[] = useSelector((state: RootState) => state.data.digStorages);
+  const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
   console.log('CreateDocModal')
   const [show, setShow] = useState(false);
 
@@ -33,13 +33,10 @@ export default function AddDetailsModal() {
     setShow(false);
   };
 
-  const navigateToDocument = async (docName: string) => {
+  const addDetails = async (plantNameId: number, plantItem: PlantItemRespons) => {
+    await addCharacteristic(plantNameId, plantItem)
+    await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId:  Number(docId) }))
     setShow(false);
-    const docId = await addDocument(docName)
-    router.push({
-      pathname: "/document",
-      params: { docName, docId },
-    });
   };
 
 
@@ -71,14 +68,15 @@ export default function AddDetailsModal() {
             </Text>
 
             <FlatList
-            data={['children']}
-            keyExtractor={(child) => child}
+            data={plants}
+            keyExtractor={(item) => item.characteristic.id}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.listItem}
-                onPress={() => navigateToDocument(item)}
+                onPress={() => addDetails(Number(plantDBid), item)}
               >
-                <Text style={styles.listItemText}>{item}</Text>
+                <Text style={styles.listItemName}>{item.characteristic.name}</Text>
+                <Text style={styles.listItemQty}>{item.quantity} 0 {item.unit.name}</Text>
               </TouchableOpacity>
             )}
             style={{ width: '100%'}}
@@ -107,7 +105,8 @@ export default function AddDetailsModal() {
 
 const styles = StyleSheet.create({
   listItem: {
-    padding: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
     width: "100%",
@@ -115,9 +114,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between'
   },
-  listItemText: {
+  listItemName: {
     fontSize: 16,
     alignSelf: "center",
+    display: 'flex',
+    flex: 2
+  },
+  listItemQty: {
+    fontSize: 16,
+    alignSelf: 'flex-end',
+    textAlign: 'right',
+    display: 'flex',
+    flex: 1
   },
   containerNBTN: {
     elevation: 5,

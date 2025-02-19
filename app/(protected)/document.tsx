@@ -35,7 +35,7 @@ export default function Document() {
         title: params.docName?.toString() || "Document",
         headerBackVisible: false,
         headerLeft: () => (
-          <TouchableOpacity style={{marginRight: 15}} onPress={() => handleBackAction().then(() => router.back())}>
+          <TouchableOpacity style={{marginRight: 15, pointerEvents: 'auto'}} onPressOut={() => handleBackAction().then(() => router.back())}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
         )

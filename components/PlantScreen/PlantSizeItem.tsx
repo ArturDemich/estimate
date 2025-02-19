@@ -6,15 +6,13 @@ import { useCallback } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
-const renderPlantDetail = () => {
+const renderPlantDetail = (item: PlantDetails) => {
 
   return (
     <TouchableOpacity style={styles.documentItem}>
       <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
         <Text style={styles.itemNum}>1</Text>
-        <Text style={styles.itemSize}>
-          WRB, H80-100, EXTRA багатоверхівковий
-        </Text>
+        <Text style={styles.itemSize}>{item.characteristic_name}</Text>
       </View>
 
       <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
@@ -22,9 +20,9 @@ const renderPlantDetail = () => {
           <View style={{ flexDirection: "row", justifyContent: 'space-between', }}>
             <View style={{ gap: 8, flexDirection: "row", }}>
               <TouchableOpacity style={styles.btnRes}>
-                <Text>+резерв</Text>
+                <Text>склад:</Text>
               </TouchableOpacity>
-              <Text style={[styles.itemQty, { color: "orange" }]}>20шт</Text>
+              <Text style={[styles.itemQty, { color: "orange" }]}>200123шт</Text>
             </View>
 
             <Text style={styles.itemQty}>2000шт</Text>
@@ -48,7 +46,7 @@ export default function PlantSizeItem() {
   const loadDBDetails = async () => {
     const plantId = params.plantId;
     const docId = params.docId
-    const data = await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId:  Number(docId) }))
+    const data = await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId: Number(docId) }))
     console.log('PlantSizeItem___', data)
   };
 
@@ -63,7 +61,7 @@ export default function PlantSizeItem() {
       <FlatList
         data={palntDetails}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => renderPlantDetail()}
+        renderItem={({ item, index }) => renderPlantDetail(item)}
         style={{ width: "100%", height: '100%', paddingBottom: 40 }}
         ListEmptyComponent={
           <View>
@@ -101,12 +99,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   btnRes: {
-    backgroundColor: "orange",
     padding: 4,
     borderRadius: 3,
     alignItems: "center",
     justifyContent: "center",
-    width: 70
   },
   itemQty: {
     alignSelf: "flex-end",

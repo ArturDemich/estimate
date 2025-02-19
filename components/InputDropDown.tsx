@@ -10,7 +10,7 @@ import {
     UIManager,
     Keyboard,
 } from "react-native";
-import { Portal } from "react-native-paper";
+import { Button, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +19,7 @@ import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
 import { addPlant, fetchDocuments, fetchPlants } from "@/db/db.native";
 import { getUkrainianPart } from "./helpers";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import BarcodeScanner from "./BarcodeScanner";
 
 interface InputDropDownProps {
     docId: string;
@@ -41,6 +42,9 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
     const inputRef = useRef<TextInput>(null);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
+    const [barcode, setBarcode] = useState("");
+    const [isScanning, setIsScanning] = useState(false);
+
     const showDropdown = () => {
         if (inputRef.current) {
             const handle = findNodeHandle(inputRef.current);
@@ -52,37 +56,30 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
         }
     };
 
-    const navigateToPlantScreen = (name: string, id: string) => {
+    const navigateToPlantScreen = (name: string, id: number | null) => {
         router.push({
             pathname: "/plant",
-            params: { plantName: name, plantId: id, docId: docId},
-          });
+            params: { plantName: name, plantId: id, docId: docId },
+        });
     };
-    const checkIfPlantExists = async (plantid: string) => {
-        return docPlantsList.some(plant => plant.product_id === plantid);
+    const checkIfPlantExists = async (productid: string) => {
+        const plant = docPlantsList.find(plant => plant.product_id === productid);
+        return plant ? plant.id : null
     };
-    const handleCreatePlant = async (name: string, id: string) => {
-        console.log('handleCreatePlant()__START', )
-        const existingPlant = await checkIfPlantExists(id);
+    const handleCreatePlant = async (name: string, productId: string) => {
+        console.log('handleCreatePlant()__START',)
+        const existingPlant = await checkIfPlantExists(productId);
         console.log('handleCreatePlant()__exist', existingPlant)
 
-    if (existingPlant) {
-        // If the plant already exists, navigate to the plant's screen
-        console.log('handleCreatePlant()__navigateToPlantScreen',)
-        navigateToPlantScreen(name, id);
-    } else {
-        // If the plant does not exist, create it
-        await addPlant(Number(docId), { id, name });
-        console.log('handleCreatePlant()addPlant',)
-        // Optionally, fetch updated list or dispatch to update the store
-        //await dispatch(getPlantsNameDB({ docId: Number(docId) }));
-
-        // After adding the plant, navigate to the newly created plant's screen
-        navigateToPlantScreen(name, id);
-    }
-    
-    // Close the dropdown after handling the plant
-    close();
+        if (existingPlant) {
+            console.log('handleCreatePlant()__navigateToPlantScreen',)
+            navigateToPlantScreen(name, existingPlant);
+        } else {
+            const addingId = await addPlant(Number(docId), { id: productId, name });
+            console.log('handleCreatePlant() addPlant', addingId)
+            navigateToPlantScreen(name, addingId);
+        }
+        close();
     };
 
     const uniquePlants = Array.from(
@@ -91,17 +88,17 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
 
     useLayoutEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
-          setKeyboardOpen(true);
+            setKeyboardOpen(true);
         });
         const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
-          setKeyboardOpen(false);
+            setKeyboardOpen(false);
         });
-    
+
         return () => {
-          keyboardDidShowListener.remove();
-          keyboardDidHideListener.remove();
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
         };
-      }, []);
+    }, []);
 
     useEffect(() => {
         if (typingTimeout.current) {
@@ -134,6 +131,18 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                     placeholder={input ? "" : "Оберіть назву рослини"}
                     placeholderTextColor="#A0A0AB"
                 />
+                <Button onPress={() => setIsScanning(true)}>Barcode</Button>
+                <Text>Barcode / QR Code: {barcode}</Text>
+                {isScanning && (
+                    <BarcodeScanner
+                        onScan={(scannedData) => {
+                            setBarcode(scannedData);
+                            setInput(scannedData)
+                            setIsScanning(false);
+                        }}
+                        onClose={() => setIsScanning(false)}
+                    />
+                )}
                 {input ? (
                     <TouchableOpacity
                         onPress={() => {

@@ -1,6 +1,6 @@
 import { deletePlant, fetchPlants } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsNameDB } from "@/redux/thunks";
+import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -19,6 +19,14 @@ export default function PlantListItem() {
   const loadDBPlants = async () => {
     const data = await dispatch(getPlantsNameDB({ docId: Number(docId) }))
     console.log('PlantListItem___', data)
+  };
+
+  const toPlantDetails = async (product_name: string, plantDBid: number) => {
+    await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' }));
+    router.push({
+      pathname: "/plant",
+      params: { plantName: product_name, plantId: plantDBid, docId: docId },
+    });
   };
 
   useFocusEffect(
@@ -41,12 +49,7 @@ export default function PlantListItem() {
               await deletePlant(Number(docId), item.id) 
               loadDBPlants();
             }}
-            onPress={() => {
-              router.push({
-                pathname: "/plant",
-                params: { plantName: item.product_name, plantId: item.id, docId: docId },
-              });
-            }}
+            onPress={() => toPlantDetails(item.product_name, item.id)}
           >
             <View style={{ display: "flex", flexDirection: "row", gap: 5 }}> 
               <Text style={styles.itemNum}>{index + 1}</Text>

@@ -24,7 +24,7 @@ export default function HeaderLogout() {
 
     return (
         <View>
-            <TouchableOpacity onPress={handleLogout} >
+            <TouchableOpacity onPressIn={handleLogout} >
                 <MaterialCommunityIcons name="logout" size={24} color="black" />
             </TouchableOpacity>
         </View>
