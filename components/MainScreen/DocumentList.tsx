@@ -1,42 +1,74 @@
+import { deleteDocument, fetchDocuments } from "@/db/db.native";
 import { AppDispatch } from "@/redux/store";
 import { getStoragesThunk } from "@/redux/thunks";
-import { Link } from "expo-router";
-import { useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Link, useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
+import moment from "moment";
+
+
+interface DocumentList {
+  id: number;
+  name: string;
+  created_at: string
+};
 
 export default function DocumentList() {
+  const router = useRouter();
+  const [documents, setDocuments] = useState<DocumentList[]>([]);
 
+  const loadDocuments = async () => {
+    const data = await fetchDocuments();
+    setDocuments(data)
+    console.log('loadDocuments', data)
+  };
+
+  function formatDate(timestamp: string): string { 
+    return moment(timestamp).format("DD.MM.YYYY - HH:mm");
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDocuments();
+    }, [])
+  );
+  console.log('DocumentList', Boolean(documents))
   return (
-    <View>
-      <Link href="/document" asChild>
-        <TouchableOpacity
-          style={styles.documentItem}
-          onPress={() => {
-            console.log("Document");
-          }}
-        >
-          <View style={styles.itemRow}>
-            <Text>Дубриничі</Text>
-            <Text>02.03.2024 - 15:00</Text>
+      <FlatList
+        data={documents}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.documentItem}
+            onLongPress={async (e) => {
+              e.preventDefault()
+              console.log("Document");
+              await deleteDocument(item.id)
+              loadDocuments();
+            }}
+            onPress={() => {
+              router.push({
+                pathname: "/document",
+                params: { docName: item.name, docId: item.id },
+              });
+            }}
+          >
+            <View style={styles.itemRow}>
+              <Text>{item.name}</Text>
+              <Text>{formatDate(item.created_at)}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        style={{ width: "100%", height: '100%', paddingBottom: 40}}
+        ListEmptyComponent={
+          <View>
+            <Text>Немає створених документів</Text>
           </View>
-        </TouchableOpacity>
-      </Link>
-
-      <Link href="/document" asChild>
-        <TouchableOpacity
-          style={styles.documentItem}
-          onPress={() => {
-            console.log("Document");
-          }}
-        >
-          <View style={styles.itemRow}>
-            <Text>Дубриничі</Text>
-            <Text>02.03.2024 - 15:00</Text>
-          </View>
-        </TouchableOpacity>
-      </Link>
-    </View>
+        }
+        ListFooterComponent={<View></View>}
+        ListFooterComponentStyle={{height: 50}}
+      />
   );
 }
 

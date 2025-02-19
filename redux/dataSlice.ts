@@ -1,27 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getStoragesThunk } from './thunks';
-
-export enum LoadingStatus {
-  Loading = 'Loading',
-  Succeeded = 'Succeeded',
-  Failed = 'Failed'
-};
-
-export interface Storages {
-  id: string;
-  name: string;
-  is_group: boolean;
-  id_parent: string;
-};
-export interface DataSlice {
-  digStorages: Storages[];
-  status: LoadingStatus | string;
-};
+import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
+import { DataSlice } from './stateServiceTypes';
 
 
 const initialState: DataSlice = {
   digStorages: [],
-  status: 'idle',
+  searchPlantName: [],
+  dBPlantsName: [],
+  dBPlantDetails: []
 };
 
 
@@ -31,16 +17,25 @@ const dataSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getStoragesThunk.pending, (state) => {
-        state.status = 'loading';
-      })
       .addCase(getStoragesThunk.fulfilled, (state, action) => {
-        state.status = 'succeeded';
         state.digStorages = action.payload;
+        console.log('dataSlice __ getStoragesThunk', state.digStorages)
       })
-      .addCase(getStoragesThunk.rejected, (state) => {
-        state.status = 'failed';
-      });
+
+      .addCase(getPlantsNameThunk.fulfilled, (state, action) => {
+        state.searchPlantName = action.payload;
+        console.log('dataSlice __getPlantsNameThunk',)
+      })
+
+      .addCase(getPlantsNameDB.fulfilled, (state, action) => {
+        state.dBPlantsName = action.payload;
+        console.log('dataSlice getPlantsNameDB',)
+      })
+
+      .addCase(getPlantsDetailsDB.fulfilled, (state, action) => {
+        state.dBPlantDetails = action.payload;
+        console.log('dataSlice getPlantsNameDB', state.dBPlantDetails)
+      })
   },
 });
 

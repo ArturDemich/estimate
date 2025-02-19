@@ -1,59 +1,91 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from "react-native";
 import InputDropDown from "../InputDropDown";
 import { Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
+import { useLocalSearchParams } from "expo-router";
+import Feather from '@expo/vector-icons/Feather';
 
-type ModalProps = {
-  show: boolean;
-  close: () => void;
-};
 
-export default function ModalAddPlant({ show, close }: ModalProps) {
+export default function ModalAddPlant() {
+  const params = useLocalSearchParams();
+  const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
+  const [show, setShow] = useState(false);
+  console.log('ModalAddPlant', params)
+
   return (
-    <Portal>
-      <Modal
-        visible={show}
-        onDismiss={close}
-        dismissable={false}
-        contentContainerStyle={{ flex: 1, }}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.centeredView}
+    <>
+      <View style={styles.containerNBTN}>
+        <TouchableOpacity style={styles.buttonStep} onPress={() => setShow(true)}>
+          <Feather name="plus" size={18} color="#131316" />
+          <Text style={styles.textBtn}>Додати</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Portal>
+        <Modal
+          visible={show}
+          onDismiss={() => setShow(false)}
+          dismissable={false}
+          contentContainerStyle={{ flex: 1, }}
         >
-          <View style={styles.modalView}>
-            <Text style={styles.textStr}>Назва</Text>
-            <InputDropDown />
-            <View style={styles.btnBlock}>
-              <TouchableOpacity onPress={close} style={styles.buttonClose}>
-                <EvilIcons name="close" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => console.log("1")}
-                style={styles.buttonModal}
-              >
-                <Text style={styles.modalText}>Додати</Text>
-              </TouchableOpacity>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.centeredView}
+          >
+            <View style={styles.modalView}>
+              <View style={styles.btnBlock}>
+                <TouchableOpacity onPress={() => setShow(false)} style={styles.buttonClose}>
+                  <EvilIcons name="close" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <Text style={styles.textStr}>Назва</Text>
+              </View>
+              <InputDropDown docId={docId} close={() => setShow(false)} />
             </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </Portal>
+          </KeyboardAvoidingView>
+        </Modal>
+      </Portal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  containerNBTN: {
+    elevation: 5,
+    position: "absolute",
+    right: 12,
+    bottom: 15,
+  },
+  textBtn: {
+    color: "#131316",
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 14,
+  },
+  buttonStep: {
+    borderRadius: 40,
+    height: 30,
+    padding: 6,
+    opacity: 0.95,
+    elevation: 5,
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#959595",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 3,
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 3,
+    alignItems: 'center',
+
+  },
   centeredView: {
     flex: 1,
     alignItems: "center",
@@ -93,11 +125,14 @@ const styles = StyleSheet.create({
     borderColor: '#E4E4E7',
     borderWidth: 1,
     justifyContent: "center",
-    alignItems: 'center'
+    alignItems: 'center',
   },
   textStr: {
     fontWeight: "600",
-    fontSize: 13,
+    fontSize: 15,
+    flex: 1,
+    alignSelf: 'center',
+    textAlign: 'center'
   },
   modalText: {
     textAlign: "center",

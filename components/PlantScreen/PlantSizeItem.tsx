@@ -1,28 +1,26 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { PlantDetails } from "@/redux/stateServiceTypes";
+import { AppDispatch, RootState } from "@/redux/store";
+import { getPlantsDetailsDB } from "@/redux/thunks";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback } from "react";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
-export default function PlantSizeItem() {
+const renderPlantDetail = () => {
+
   return (
     <TouchableOpacity style={styles.documentItem}>
-     
       <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
         <Text style={styles.itemNum}>1</Text>
-        {/* <Text style={{ fontSize: 13 }}>
-          Бересклет японський 'Мікрофілуc Ауреоварієгатус'
-        </Text> */}
         <Text style={styles.itemSize}>
-            WRB, H80-100, EXTRA багатоверхівковий
-          </Text>
+          WRB, H80-100, EXTRA багатоверхівковий
+        </Text>
       </View>
 
-      <View style={{flexDirection: "row", justifyContent: 'space-between'}}>
-        <View style={{  flexDirection: "column",  flex: 1, paddingRight: 8}}>
-          {/* <Text style={styles.itemSize}>
-            WRB, H80-100, EXTRA багатоверхівковий
-          </Text> */}
-          
-
-          <View style={{ flexDirection: "row", justifyContent: 'space-between',}}>
-            <View style={{  gap: 8, flexDirection: "row",}}>
+      <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: "column", flex: 1, paddingRight: 8 }}>
+          <View style={{ flexDirection: "row", justifyContent: 'space-between', }}>
+            <View style={{ gap: 8, flexDirection: "row", }}>
               <TouchableOpacity style={styles.btnRes}>
                 <Text>+резерв</Text>
               </TouchableOpacity>
@@ -35,9 +33,49 @@ export default function PlantSizeItem() {
         <TouchableOpacity style={styles.btnPlus}>
           <Text>+1</Text>
         </TouchableOpacity>
-        
       </View>
     </TouchableOpacity>
+  )
+}
+
+export default function PlantSizeItem() {
+  //const router = useRouter();
+  const params = useLocalSearchParams();
+  const dispatch = useDispatch<AppDispatch>();
+  const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
+  console.log('ModalAddPlant', params)
+
+  const loadDBDetails = async () => {
+    const plantId = params.plantId;
+    const docId = params.docId
+    const data = await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId:  Number(docId) }))
+    console.log('PlantSizeItem___', data)
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDBDetails()
+    }, [])
+  );
+
+  return (
+    <View>
+      <FlatList
+        data={palntDetails}
+        keyExtractor={(item, index) => item.characteristic_id.toString() + index}
+        renderItem={({ item, index }) => renderPlantDetail()}
+        style={{ width: "100%", height: '100%', paddingBottom: 40 }}
+        ListEmptyComponent={
+          <View>
+            <Text>Немає доданих х-ка</Text>
+          </View>
+        }
+        ListFooterComponent={<View></View>}
+        ListFooterComponentStyle={{ height: 50 }}
+      />
+
+
+    </View>
   );
 }
 

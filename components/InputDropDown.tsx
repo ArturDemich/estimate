@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import {
     FlatList,
     StyleSheet,
@@ -8,49 +8,114 @@ import {
     View,
     findNodeHandle,
     UIManager,
+    Keyboard,
 } from "react-native";
 import { Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
+import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
+import { addPlant, fetchDocuments, fetchPlants } from "@/db/db.native";
+import { getUkrainianPart } from "./helpers";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-const data = [
-    { name: "Azalea japonica 'Babuschka', Азалія японська 'Бабушка'" },
-    { name: "Platanus hispanica (x acerifolia), Платан іспанський (кленолистий)" },
-    { name: "Acer platanoides 'Royal Red', Клен гостролистий 'Роял Ред'" },
-    { name: "Thuja plicata 'Gelderland', Туя складчаста 'Гелдерланд'" },
-    { name: "Thuja 'Golden Smaragd', Туя західна 'Голден Смарагд'" },
-    { name: "Thuja occidentalis 'Smaragd Witbont', Туя західна 'Смарагд Вітбонт'" },
-];
+interface InputDropDownProps {
+    docId: string;
+    close: () => void;
+};
 
-export default function InputDropDown() {
+export default function InputDropDown({ docId, close }: InputDropDownProps) {
+    const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
+    const searchPlantsList = useSelector<RootState, PlantItemRespons[]>((state) => state.data.searchPlantName);
+    const docPlantsList = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
     const [input, setInput] = useState("");
     const [dropdownVisible, setDropdownVisible] = useState(false);
+    const [keyboardOpen, setKeyboardOpen] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState<{
         top: number;
         left: number;
         width: number;
     } | null>(null);
-
     const inputRef = useRef<TextInput>(null);
+    const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const showDropdown = () => {
         if (inputRef.current) {
             const handle = findNodeHandle(inputRef.current);
             if (handle) {
                 UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
-                    setDropdownPosition({
-                        top: pageY + height,
-                        left: pageX,
-                        width,
-                    });
+                    setDropdownPosition({ top: pageY + height, left: pageX, width, });
                 });
             }
         }
     };
 
-    function getUkrainianPart(name: string): string {
-        const parts = name.split(",");
-        return parts.length > 1 ? parts[1].trim() : name;
+    const navigateToPlantScreen = (name: string, id: string) => {
+        router.push({
+            pathname: "/plant",
+            params: { plantName: name, plantId: id, docId: docId},
+          });
+    };
+    const checkIfPlantExists = async (plantid: string) => {
+        return docPlantsList.some(plant => plant.product_id === plantid);
+    };
+    const handleCreatePlant = async (name: string, id: string) => {
+        console.log('handleCreatePlant()__START', )
+        const existingPlant = await checkIfPlantExists(id);
+        console.log('handleCreatePlant()__exist', existingPlant)
+
+    if (existingPlant) {
+        // If the plant already exists, navigate to the plant's screen
+        console.log('handleCreatePlant()__navigateToPlantScreen',)
+        navigateToPlantScreen(name, id);
+    } else {
+        // If the plant does not exist, create it
+        await addPlant(Number(docId), { id, name });
+        console.log('handleCreatePlant()addPlant',)
+        // Optionally, fetch updated list or dispatch to update the store
+        //await dispatch(getPlantsNameDB({ docId: Number(docId) }));
+
+        // After adding the plant, navigate to the newly created plant's screen
+        navigateToPlantScreen(name, id);
     }
+    
+    // Close the dropdown after handling the plant
+    close();
+    };
+
+    const uniquePlants = Array.from(
+        new Map(searchPlantsList.map((item) => [item.product.name, item])).values()
+    );
+
+    useLayoutEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
+          setKeyboardOpen(true);
+        });
+        const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
+          setKeyboardOpen(false);
+        });
+    
+        return () => {
+          keyboardDidShowListener.remove();
+          keyboardDidHideListener.remove();
+        };
+      }, []);
+
+    useEffect(() => {
+        if (typingTimeout.current) {
+            console.log('InputDropDown222')
+            clearTimeout(typingTimeout.current);
+        }
+
+        if (input.trim() !== "" && input.length > 3 && dropdownVisible) {
+            console.log('InputDropDown333')
+            typingTimeout.current = setTimeout(() => {
+                dispatch(getPlantsNameThunk({ name: input, barcode: '' }));
+            }, 1000);
+        }
+    }, [input, dispatch]);
 
     return (
         <View style={styles.inputWrapper}>
@@ -91,24 +156,29 @@ export default function InputDropDown() {
                                 top: dropdownPosition.top,
                                 left: dropdownPosition.left,
                                 width: dropdownPosition.width,
+                                maxHeight: keyboardOpen ? 160 : 370,
                             },
                         ]}
                     >
                         <FlatList
-                            data={data.filter((item) => item.name.toLowerCase().includes(input.toLowerCase()))}
+                            data={uniquePlants}
                             keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.pressItemList}
-                                    onPress={() => {
-                                        setInput(item.name);
-                                        setDropdownVisible(false);
+                                    onPress={async () => {
+                                        //setInput(item.product.name);
+                                        await handleCreatePlant(item.product.name, item.product.id)
+                                        //setDropdownVisible(false);
                                     }}
                                 >
-                                    <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.name)}</Text>
+                                    <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
                                 </TouchableOpacity>
                             )}
                             ItemSeparatorComponent={() => (
+                                <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
+                            )}
+                            ListFooterComponent={() => (
                                 <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
                             )}
                             keyboardShouldPersistTaps="handled"
@@ -116,8 +186,9 @@ export default function InputDropDown() {
                         />
                     </View>
                 </Portal>
-            )}
-        </View>
+            )
+            }
+        </View >
     );
 }
 
@@ -164,7 +235,8 @@ const styles = StyleSheet.create({
         zIndex: 110,
         elevation: 10,
         borderRadius: 3,
-        maxHeight: 170,
+        maxHeight: 370,
+        minHeight: 170,
         shadowColor: "#959595",
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.9,
@@ -174,5 +246,6 @@ const styles = StyleSheet.create({
     pressItemList: {
         paddingBottom: 8,
         paddingTop: 8,
+        paddingLeft: 8,
     }
 });

@@ -1,29 +1,28 @@
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { loginThunk } from "@/redux/thunks";
+import { ActivityIndicator } from "react-native-paper";
 
 export default function LoginScreen() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
     const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const status = useSelector((state: RootState) => state.login.status);
 
     const handleLogin = () => {
         dispatch(loginThunk({ login: username, pass: password }))
             .unwrap()
-            .then((data) => {
-                console.log('handleLogin', data)
-                if (data.token) {
-                    router.replace("/");
-                } else {
-                    console.log("handleLogin", data);
-                }
+            .then(() => {
+                router.replace("/");
             })
+            .catch((error) => console.error("Login error:", error));
     };
 
+console.log('LoginScreen')
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Login</Text>
@@ -40,9 +39,20 @@ export default function LoginScreen() {
                 secureTextEntry
                 style={styles.input}
             />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
+            {status === "loading" ? (
+                <ActivityIndicator size="large" color="#ff6f61" />
+            ) : (
+                <TouchableOpacity 
+                    disabled={username === '' || password === ''} 
+                    style={[styles.button, (username === '' || password === '') && styles.lock]} 
+                    onPress={handleLogin}
+                >
+                    <Text style={styles.buttonText}>Login</Text>
+                </TouchableOpacity>
+            )}
+            
+            {status === "failed" && <Text style={styles.errorText}>Login failed. Please try again.</Text>}
+
         </View>
     );
 }
@@ -115,4 +125,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "bold",
       },
+      errorText: { color: "red", marginTop: 10 },
+      lock: {opacity: 0.5}
 });

@@ -1,8 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {loginThunk } from './thunks';
+import { AuthSlice } from './stateServiceTypes';
 
 
-const initialState = {
+const initialState: AuthSlice = {
     status: 'idle',
     isAuthenticated: false,
     token: {},
@@ -29,6 +30,7 @@ const loginSlice = createSlice({
         state.status = 'succeeded';
         state.token = action.payload;
         state.isAuthenticated = true;
+        console.log('loginSlice', state.token)
       })
       .addCase(loginThunk.rejected, (state) => {
         state.status = 'failed';

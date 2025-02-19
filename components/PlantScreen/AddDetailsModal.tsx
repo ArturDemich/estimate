@@ -21,36 +21,12 @@ type StorageItem = {
 };
 
 
-export default function CreateDocModal() {
+export default function AddDetailsModal() {
   const router = useRouter();
   const storages: StorageItem[] = useSelector((state: RootState) => state.data.digStorages);
   console.log('CreateDocModal')
   const [show, setShow] = useState(false);
 
-  const [expandedItems, setExpandedItems] = useState<number[]>([]);
-  const toggleExpand = (id: number) => {
-    setExpandedItems(prevState =>
-      prevState.includes(id) ? prevState.filter(itemId => itemId !== id) : [...prevState, id]
-    );
-  };
-  
-  const filterStorages = (storages: StorageItem[]) => {
-    const middleGroups: StorageItem[] = storages.filter(
-      item => item.is_group && item.id_parent !== '00000000-0000-0000-0000-000000000000'
-    );
-    const rootStorages: StorageItem[] = storages.filter(
-      item => item.is_group && item.id_parent === '00000000-0000-0000-0000-000000000000'
-    );
-    const maxRootStorages = rootStorages.filter(root =>
-      middleGroups.some(middle => middle.id_parent === root.id)
-    );
-    const filteredStorages = [
-      ...middleGroups,
-      ...rootStorages.filter(root => !maxRootStorages.some(maxRoot => maxRoot.id === root.id))
-    ];
-  
-    return filteredStorages;
-  };
   
 
   const handleClose = () => {
@@ -66,42 +42,6 @@ export default function CreateDocModal() {
     });
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    const children = storages.filter(child => child.id_parent === item.id);
-
-    return (
-      <View>
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => toggleExpand(item.id)} // Toggle expand
-        >
-          <Text style={styles.listItemText}>{item.name}</Text>
-          {item.is_group ? (expandedItems.includes(item.id) ?
-            <MaterialIcons name="expand-less" size={24} color="black" /> :
-            <MaterialIcons name="expand-more" size={24} color="black" />)
-            : null}
-        </TouchableOpacity>
-
-        {/* Render nested items if expanded */}
-        {(expandedItems.includes(item.id) && children.length > 0) && (
-          <FlatList
-            data={children}
-            keyExtractor={(child) => child.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.listItem}
-                onPress={() => navigateToDocument(item.name)}
-              >
-                <Text style={styles.listItemText}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
-            style={{ marginLeft: 20 }}
-          />
-        )}
-      </View>
-    );
-  };
-
 
   return (
     <>
@@ -110,7 +50,7 @@ export default function CreateDocModal() {
           style={styles.buttonStep}
           onPress={() => setShow(!show)}
         >
-          <Text style={styles.textBtn}>NewDoc +</Text>
+          <Text style={styles.textBtn}>New +</Text>
         </TouchableOpacity>
       </View>
 
@@ -127,15 +67,22 @@ export default function CreateDocModal() {
               allowFontScaling={true}
               maxFontSizeMultiplier={1}
             >
-              Оберіть склад
+              Оберіть х-ка
             </Text>
 
             <FlatList
-              data={filterStorages(storages)}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderItem}
-              style={{ width: '100%' }}
-            />
+            data={['children']}
+            keyExtractor={(child) => child}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.listItem}
+                onPress={() => navigateToDocument(item)}
+              >
+                <Text style={styles.listItemText}>{item}</Text>
+              </TouchableOpacity>
+            )}
+            style={{ width: '100%'}}
+          />
 
             <View style={styles.btnBlock}>
               <TouchableOpacity

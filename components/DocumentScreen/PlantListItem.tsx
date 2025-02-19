@@ -1,19 +1,68 @@
-import { Link } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { deletePlant, fetchPlants } from "@/db/db.native";
+import { AppDispatch, RootState } from "@/redux/store";
+import { getPlantsNameDB } from "@/redux/thunks";
+import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback } from "react";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { getUkrainianPart } from "../helpers";
+import { PlantNameDB } from "@/redux/stateServiceTypes";
 
 export default function PlantListItem() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const docId = params.docId;
+  const dispatch = useDispatch<AppDispatch>();
+  const palnts = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
+  console.log('ModalAddPlant', params)
+
+  const loadDBPlants = async () => {
+    const data = await dispatch(getPlantsNameDB({ docId: Number(docId) }))
+    console.log('PlantListItem___', data)
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDBPlants()
+    }, [])
+  );
+
   return (
-    <Link href="/plant" asChild>
-    <TouchableOpacity style={styles.documentItem}>
-     
-      <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
-        <Text style={styles.itemNum}>1</Text>
-        <Text style={styles.itemSize}>
-          Бересклет японський 'Мікрофілуc Ауреоварієгатус'
-        </Text>
-      </View>
-    </TouchableOpacity>
-    </Link>
+
+    <FlatList
+      data={palnts}
+      keyExtractor={(item, index) => item.id.toString() + index} 
+      renderItem={({ item, index }) => (
+          <TouchableOpacity 
+            style={styles.documentItem}
+            onLongPress={async (e) => {
+              e.preventDefault()
+              console.log("PlantListItem before delete", item);
+              await deletePlant(Number(docId), item.id) 
+              loadDBPlants();
+            }}
+            onPress={() => {
+              router.push({
+                pathname: "/plant",
+                params: { plantName: item.product_name, plantId: item.id, docId: docId },
+              });
+            }}
+          >
+            <View style={{ display: "flex", flexDirection: "row", gap: 5 }}> 
+              <Text style={styles.itemNum}>{index + 1}</Text>
+              <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
+            </View>
+          </TouchableOpacity>
+      )}
+      style={{ width: "100%", height: '100%', paddingBottom: 40 }}
+      ListEmptyComponent={
+        <View>
+          <Text>Немає доданих рослин</Text>
+        </View>
+      }
+      ListFooterComponent={<View></View>}
+      ListFooterComponentStyle={{ height: 50 }}
+    />
   );
 }
 
