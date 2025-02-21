@@ -9,7 +9,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 export default function Plant() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  console.log("Plant__", params.plantName);
+  console.log("Plant__", params);
   const namePlant = Array.isArray(params.plantName) ? getUkrainianPart(params.plantName[0]) : getUkrainianPart(params.plantName); 
 
   const handleBackAction = async () => {
@@ -42,7 +42,11 @@ export default function Plant() {
       }} />
       <View style={{paddingLeft: 15, paddingVertical: 5, }}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
       <PlantSizeItem />
-      <AddDetailsModal plantDBid={params.plantId.toString()} docId={params.docId.toString()} />
+      <AddDetailsModal 
+        plantDBid={params.plantId && params.plantId.toString()} 
+        docId={params.docId && params.docId.toString()} 
+        productId={params.productId && params.productId.toString()}
+        />
     </View>
   );
 }

@@ -6,23 +6,27 @@ import { useCallback } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
-const renderPlantDetail = (item: PlantDetails) => {
+const nullId = '00000000-0000-0000-0000-000000000000';
+
+const renderPlantDetail = (item: PlantDetails, index: number) => {
 
   return (
     <TouchableOpacity style={styles.documentItem}>
       <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
-        <Text style={styles.itemNum}>1</Text>
-        <Text style={styles.itemSize}>{item.characteristic_name}</Text>
+        <Text style={styles.itemNum}>{index + 1}.</Text>
+        <Text style={styles.itemSize}>{
+          item.characteristic_id === nullId || null ? 'Немає характеристики' : item.characteristic_name
+        }</Text>
       </View>
 
       <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
         <View style={{ flexDirection: "column", flex: 1, paddingRight: 8 }}>
           <View style={{ flexDirection: "row", justifyContent: 'space-between', }}>
-            <View style={{ gap: 8, flexDirection: "row", }}>
+            <View style={{ gap: 4, flexDirection: "row", }}>
               <TouchableOpacity style={styles.btnRes}>
                 <Text>склад:</Text>
               </TouchableOpacity>
-              <Text style={[styles.itemQty, { color: "orange" }]}>200123шт</Text>
+              <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}5555{item.unit_name}</Text>
             </View>
 
             <Text style={styles.itemQty}>2000шт</Text>
@@ -47,7 +51,7 @@ export default function PlantSizeItem() {
     const plantId = params.plantId;
     const docId = params.docId
     const data = await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId: Number(docId) }))
-    console.log('PlantSizeItem___', data)
+    console.log('PlantSizeItem___',  )
   };
 
   useFocusEffect(
@@ -57,12 +61,11 @@ export default function PlantSizeItem() {
   );
 
   return (
-    <View>
       <FlatList
         data={palntDetails}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => renderPlantDetail(item)}
-        style={{ width: "100%", height: '100%', paddingBottom: 40 }}
+        renderItem={({ item, index }) => renderPlantDetail(item, index)}
+        style={{ width: "100%", paddingBottom: 40 }}
         ListEmptyComponent={
           <View>
             <Text>Немає доданих х-ка</Text>
@@ -71,9 +74,6 @@ export default function PlantSizeItem() {
         ListFooterComponent={<View></View>}
         ListFooterComponentStyle={{ height: 50 }}
       />
-
-
-    </View>
   );
 }
 
@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   itemQty: {
-    alignSelf: "flex-end",
-    fontSize: 17,
+    alignSelf: "center",
+    fontSize: 14,
   },
   itemSize: {
     fontSize: 13,

@@ -18,7 +18,7 @@ export default function PlantListItem() {
 
   const loadDBPlants = async () => {
     const data = await dispatch(getPlantsNameDB({ docId: Number(docId) }))
-    console.log('PlantListItem___', data)
+    console.log('PlantListItem___', )
   };
 
   const toPlantDetails = async (product_name: string, plantDBid: number) => {

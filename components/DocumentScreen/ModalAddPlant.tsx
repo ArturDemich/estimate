@@ -8,7 +8,7 @@ import {
   Platform,
 } from "react-native";
 import InputDropDown from "../InputDropDown";
-import { Modal, Portal } from "react-native-paper";
+import { Button, Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { useLocalSearchParams } from "expo-router";
 import Feather from '@expo/vector-icons/Feather';
@@ -48,6 +48,7 @@ export default function ModalAddPlant() {
                 <Text style={styles.textStr}>Назва</Text>
               </View>
               <InputDropDown docId={docId} close={() => setShow(false)} />
+              
             </View>
           </KeyboardAvoidingView>
         </Modal>
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     alignItems: "center",
-    top: 100
+    top: 60
   },
   modalView: {
     width: "93%",

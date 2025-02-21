@@ -93,8 +93,10 @@ export async function deleteDocument(documentId: number): Promise<boolean> {
  */
 export async function fetchDocuments(): Promise<any[]> {
   const db = await openDB();
+  
   try {
     const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
+    console.log('fetchDocuments__', rows)
     return rows;
   } catch (error) {
     console.error("Error fetching documents:", error);
@@ -107,6 +109,7 @@ export async function fetchDocuments(): Promise<any[]> {
  */
 export async function addPlant(documentId: number, product: { id: string; name: string }): Promise<number | null> {
   const db = await openDB();
+  console.log('addPlant__', documentId, product)
   try {
     const result = await db.runAsync(
       "INSERT INTO plants (document_id, product_id, product_name) VALUES (?, ?, ?)",
@@ -126,6 +129,7 @@ export async function addPlant(documentId: number, product: { id: string; name: 
  */
 export async function fetchPlants(documentId: number): Promise<any[]> {
   const db = await openDB();
+  console.log('fetchPlants__', documentId)
   try {
     const rows = await db.getAllAsync(
       "SELECT * FROM plants WHERE document_id = ?",
@@ -195,6 +199,7 @@ export async function addCharacteristic(
     } */
 
     // Step 2: Insert the characteristic
+    console.log('addCharacteristic___', plantId, plantItem)
     const result = await db.runAsync(
       `INSERT INTO plant_characteristics 
        (plant_id, characteristic_id, characteristic_name, unit_id, unit_name, barcode, quantity) 
@@ -222,6 +227,7 @@ export async function addCharacteristic(
 
 export async function fetchCharacteristics(plantId: number, docId: number): Promise<any[]> {
   const db = await openDB();
+  console.log('fetchCharacteristics__', plantId, docId)
   try {
     return await db.getAllAsync(
       `SELECT pc.*

@@ -21,7 +21,7 @@ export default function DocumentList() {
   const loadDocuments = async () => {
     const data = await fetchDocuments();
     setDocuments(data)
-    console.log('loadDocuments', data)
+    console.log('loadDocuments', )
   };
 
   function formatDate(timestamp: string): string { 

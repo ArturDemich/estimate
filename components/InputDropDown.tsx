@@ -56,28 +56,28 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
         }
     };
 
-    const navigateToPlantScreen = (name: string, id: number | null) => {
+    const navigateToPlantScreen = (name: string, id: number | null, productId?: string) => {
         router.push({
             pathname: "/plant",
-            params: { plantName: name, plantId: id, docId: docId },
+            params: { plantName: name, plantId: id, docId: docId, productId: productId },
         });
     };
     const checkIfPlantExists = async (productid: string) => {
         const plant = docPlantsList.find(plant => plant.product_id === productid);
-        return plant ? plant.id : null
+        return plant ? {existId: plant.id, productId: plant.product_id} : null
     };
     const handleCreatePlant = async (name: string, productId: string) => {
         console.log('handleCreatePlant()__START',)
         const existingPlant = await checkIfPlantExists(productId);
-        console.log('handleCreatePlant()__exist', existingPlant)
+        console.log('handleCreatePlant()__exist',)
 
         if (existingPlant) {
             console.log('handleCreatePlant()__navigateToPlantScreen',)
-            navigateToPlantScreen(name, existingPlant);
+            navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
         } else {
             const addingId = await addPlant(Number(docId), { id: productId, name });
             console.log('handleCreatePlant() addPlant', addingId)
-            navigateToPlantScreen(name, addingId);
+            navigateToPlantScreen(name, addingId, productId);
         }
         close();
     };
@@ -102,7 +102,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
 
     useEffect(() => {
         if (typingTimeout.current) {
-            console.log('InputDropDown222')
+            console.log('InputDropDown222' )
             clearTimeout(typingTimeout.current);
         }
 
