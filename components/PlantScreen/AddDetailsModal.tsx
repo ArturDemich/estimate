@@ -11,9 +11,9 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
 import { addCharacteristic, addDocument } from "@/db/db.native";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB } from "@/redux/thunks";
+import { setExistPlantProps } from "@/redux/dataSlice";
 
 interface AddDetailsProps {
     plantDBid: string;
@@ -39,7 +39,16 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
 
     const addDetails = async (plantNameId: number, plantItem: PlantItemRespons) => {
         if (isCharacteristicAdded(plantItem.characteristic.id)) {
-            alert("Ця характеристика вже додана!");
+            dispatch(setExistPlantProps({
+                plant_id: plantNameId, 
+                characteristic_id: plantItem.characteristic.id,
+                characteristic_name: plantItem.characteristic.name,
+                unit_id: plantItem.unit.id,
+                unit_name: plantItem.unit.name,
+                barcode: plantItem.barcode,
+                quantity: plantItem.quantity ? plantItem.quantity : 0
+            }))
+            setShow(false);
             return;
         }
         const addCharact = await addCharacteristic(plantNameId, plantItem);

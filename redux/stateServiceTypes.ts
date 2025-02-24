@@ -29,7 +29,7 @@ export interface PlantItemRespons {
     product: { id: string; name: string; };
     characteristic: { id: string; name: string; };
     unit: { id: string; name: string; };
-    barcode: string;
+    barcode: number;
     quantity?: number;
 };
 export interface PlantNameDB {
@@ -52,7 +52,8 @@ export interface DataSlice {
     digStorages: Storages[];
     searchPlantName: PlantItemRespons[];
     dBPlantsName: PlantNameDB[];
-    dBPlantDetails: PlantDetails[]
+    dBPlantDetails: PlantDetails[];
+    existPlantProps: PlantDetails | null;
 };
 
 export interface PalntNameInput {

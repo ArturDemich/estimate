@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Button, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { CameraView, Camera } from "expo-camera";
+import EvilIcons from '@expo/vector-icons/EvilIcons';
 
 const { width, height } = Dimensions.get("window"); // Get screen dimensions
 
@@ -43,8 +44,9 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
         style={styles.camera} // Apply styles here
       />
       <View style={styles.overlay}>
-        {scanned && <Button title="Scan Again" onPress={() => setScanned(false)} />}
-        <Button title="Close Scanner" onPress={onClose} />
+        <TouchableOpacity onPress={onClose} style={styles.clearButton}>
+          <EvilIcons name="close-o" size={30} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -53,25 +55,42 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
+    bottom: height * 0.22,
+    position: 'relative'
   },
   camera: {
-    width: width * 0.9, // 90% of screen width
+    width: width * 0.94, // 90% of screen width
     height: height * 0.3, // 70% of screen height
     borderRadius: 10,
     overflow: "hidden",
+    zIndex: 2
   },
   btn: {
     zIndex: 999,
-    flex: 1
+    flex: 1,
+
   },
   overlay: {
     position: "absolute", // Make buttons overlay the camera
-    bottom: 20, // Move buttons to the bottom
+    //bottom: '100%', // Move buttons to the bottom
+    //top: '100%',
     width: "100%",
     alignItems: "center",
+    zIndex: 2
   },
+  clearButton: {
+    position: "absolute",
+    right: 0,
+    top: 5,
+    backgroundColor: "#A0A0AB",
+    borderRadius: 8,
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1
+},
 });
 
 

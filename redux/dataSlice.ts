@@ -1,20 +1,26 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
-import { DataSlice } from './stateServiceTypes';
+import { DataSlice, PlantDetails } from './stateServiceTypes';
 
 
 const initialState: DataSlice = {
   digStorages: [],
   searchPlantName: [],
   dBPlantsName: [],
-  dBPlantDetails: []
+  dBPlantDetails: [],
+  existPlantProps: null,
 };
 
 
 const dataSlice = createSlice({
   name: 'data',
   initialState,
-  reducers: {},
+  reducers: {
+    setExistPlantProps(state, action: PayloadAction<PlantDetails | null>) {
+      state.existPlantProps = action.payload;
+      console.log('dataSlice __ setExistPlantProps', state.existPlantProps)
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getStoragesThunk.fulfilled, (state, action) => {
@@ -24,7 +30,7 @@ const dataSlice = createSlice({
 
       .addCase(getPlantsNameThunk.fulfilled, (state, action) => {
         state.searchPlantName = action.payload;
-        console.log('dataSlice __getPlantsNameThunk',)
+        console.log('dataSlice __getPlantsNameThunk', state.searchPlantName)
       })
 
       .addCase(getPlantsNameDB.fulfilled, (state, action) => {
@@ -34,9 +40,10 @@ const dataSlice = createSlice({
 
       .addCase(getPlantsDetailsDB.fulfilled, (state, action) => {
         state.dBPlantDetails = action.payload;
-        console.log('dataSlice getPlantsNameDB', state.dBPlantDetails)
+        console.log('dataSlice getPlantsNameDB', )
       })
   },
 });
 
+export const { setExistPlantProps } = dataSlice.actions;
 export default dataSlice.reducer;

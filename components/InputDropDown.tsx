@@ -83,8 +83,12 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
     };
 
     const uniquePlants = Array.from(
-        new Map(searchPlantsList.map((item) => [item.product.name, item])).values()
+        searchPlantsList ? new Map(searchPlantsList.map((item) => [item.product.name, item])).values() : []
     );
+
+    function isNumericBarcode(barcode: string): boolean {
+        return /^\d+$/.test(barcode);
+      }
 
     useLayoutEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
@@ -112,7 +116,25 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                 dispatch(getPlantsNameThunk({ name: input, barcode: '' }));
             }, 1000);
         }
-    }, [input, dispatch]);
+    }, [input, dispatch,]);
+
+    useEffect(() => {
+        if (barcode) {
+            if (isNumericBarcode(barcode)) {
+               dispatch(getPlantsNameThunk({ name: '', barcode: barcode }))
+               .unwrap()
+               .then(((data: PlantItemRespons[]) => {
+                console.log('barcode res', data.length)
+                if (data.length > 0) {
+                    handleCreatePlant(data[0].product.name, data[0].product.id)
+                }
+            }))
+               
+            } else {
+                dispatch(getPlantsNameThunk({ name: barcode, barcode: '' }));
+            }
+        }
+    }, [barcode]);
 
     return (
         <View style={styles.inputWrapper}>
@@ -165,7 +187,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                                 top: dropdownPosition.top,
                                 left: dropdownPosition.left,
                                 width: dropdownPosition.width,
-                                maxHeight: keyboardOpen ? 160 : 370,
+                                maxHeight: keyboardOpen ? 60 : 370,
                             },
                         ]}
                     >
@@ -176,9 +198,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                                 <TouchableOpacity
                                     style={styles.pressItemList}
                                     onPress={async () => {
-                                        //setInput(item.product.name);
                                         await handleCreatePlant(item.product.name, item.product.id)
-                                        //setDropdownVisible(false);
                                     }}
                                 >
                                     <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
@@ -233,6 +253,7 @@ const styles = StyleSheet.create({
         height: 25,
         alignItems: "center",
         justifyContent: "center",
+        zIndex: 1
     },
     clearButtonText: {
         fontSize: 12,

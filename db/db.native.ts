@@ -1,11 +1,17 @@
 import { PlantItemRespons } from "@/redux/stateServiceTypes";
 import * as SQLite from "expo-sqlite";
+import { Alert } from "react-native";
+
+let dbInstance: SQLite.SQLiteDatabase | null = null;
 
 export async function openDB(): Promise<SQLite.SQLiteDatabase> {
   try {
-    const db = await SQLite.openDatabaseAsync("app.db");
+    if (!dbInstance) {
+      console.log("Database WAS NOT opened successfully", dbInstance);
+      dbInstance = await SQLite.openDatabaseAsync("app.db");
+    }
     console.log("Database opened successfully");
-    return db;
+    return dbInstance;
   } catch (error) {
     console.error("Error opening database:", error);
     throw error; // Stop execution if DB fails to open
@@ -55,9 +61,7 @@ export async function initializeDB(): Promise<void> {
   }
 }
 
-/**
- * Adds a new document with the current date and time.
- */
+
 export async function addDocument(name: string): Promise<number | null> {
   const db = await openDB();
   const createdAt = new Date().toISOString();
@@ -74,39 +78,7 @@ export async function addDocument(name: string): Promise<number | null> {
   }
 }
 
-/**
- * Deletes a document by ID.
- */
-export async function deleteDocument(documentId: number): Promise<boolean> {
-  const db = await openDB();
-  try {
-    const result = await db.runAsync("DELETE FROM documents WHERE id = ?", documentId);
-    return result.changes > 0;
-  } catch (error) {
-    console.error("Error deleting document:", error);
-    return false;
-  }
-}
 
-/**
- * Fetches all documents from the database.
- */
-export async function fetchDocuments(): Promise<any[]> {
-  const db = await openDB();
-  
-  try {
-    const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
-    console.log('fetchDocuments__', rows)
-    return rows;
-  } catch (error) {
-    console.error("Error fetching documents:", error);
-    return [];
-  }
-}
-
-/**
- * Adds a new plant for a specific document.
- */
 export async function addPlant(documentId: number, product: { id: string; name: string }): Promise<number | null> {
   const db = await openDB();
   console.log('addPlant__', documentId, product)
@@ -124,9 +96,50 @@ export async function addPlant(documentId: number, product: { id: string; name: 
   }
 }
 
-/**
- * Fetches all plants for a given document.
- */
+export async function addCharacteristic(
+  plantId: number,
+  plantItem: PlantItemRespons
+): Promise<number | null> {
+  const db = await openDB();
+  try {
+    console.log('addCharacteristic___', plantId, plantItem.barcode)
+    const result = await db.runAsync(
+      `INSERT INTO plant_characteristics 
+       (plant_id, characteristic_id, characteristic_name, unit_id, unit_name, barcode, quantity) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        plantId,
+        plantItem.characteristic.id ? plantItem.characteristic.id : 'null',
+        plantItem.characteristic.name ? plantItem.characteristic.name : 'null',
+        plantItem.unit.id ? plantItem.unit.id : 'null',
+        plantItem.unit.name ? plantItem.unit.name : 'null',
+        plantItem.barcode ? plantItem.barcode : 0,
+        plantItem.quantity ? plantItem.quantity : 0,
+      ]
+    );
+
+    return result.lastInsertRowId;
+  } catch (error) {
+    Alert.alert("Error adding plant characteristic to doc: ", plantItem.product.name)
+    console.log("Error adding plant characteristic:", error);
+    return null;
+  }
+}
+
+
+export async function fetchDocuments(): Promise<any[]> {
+  const db = await openDB();
+  
+  try {
+    const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
+    console.log('fetchDocuments__', rows)
+    return rows;
+  } catch (error) {
+    console.error("Error fetching documents:", error);
+    return [];
+  }
+}
+
 export async function fetchPlants(documentId: number): Promise<any[]> {
   const db = await openDB();
   console.log('fetchPlants__', documentId)
@@ -141,89 +154,6 @@ export async function fetchPlants(documentId: number): Promise<any[]> {
     return [];
   }
 }
-
-/**
- * Updates a plant's details.
- */
-export async function updatePlant(
-  plantId: number,
-  quantity: number
-): Promise<boolean> {
-  const db = await openDB();
-  try {
-    const result = await db.runAsync(
-      "UPDATE plants SET quantity = ? WHERE id = ?",
-      quantity,
-      plantId
-    );
-    return result.changes > 0;
-  } catch (error) {
-    console.error("Error updating plant:", error);
-    return false;
-  }
-}
-
-/**
- * Deletes a plant by ID.
- */
-export async function deletePlant(documentId: number, plantNameId: number): Promise<boolean> {
-  const db = await openDB();
-  try {
-    const result = await db.runAsync(
-      "DELETE FROM plants WHERE id = ? AND document_id = ?",
-      [plantNameId, documentId]
-    );
-    console.log(`Delete result:`, result);
-    return result.changes > 0;
-  } catch (error) {
-    console.error("Error deleting plant:", error);
-    return false;
-  }
-}
-
-export async function addCharacteristic(
-  plantId: number,
-  plantItem: PlantItemRespons
-): Promise<number | null> {
-  const db = await openDB();
-  try {
-    // Step 1: Verify that the plant belongs to the given document
-    /* const plant = await db.getFirstAsync(
-      "SELECT id FROM plants WHERE id = ? AND document_id = ?",
-      [plantId, documentId]
-    );
-
-    if (!plant) {
-      console.error("Error: Plant does not belong to the specified document.");
-      return null;
-    } */
-
-    // Step 2: Insert the characteristic
-    console.log('addCharacteristic___', plantId, plantItem)
-    const result = await db.runAsync(
-      `INSERT INTO plant_characteristics 
-       (plant_id, characteristic_id, characteristic_name, unit_id, unit_name, barcode, quantity) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        plantId,
-        plantItem.characteristic.id,
-        plantItem.characteristic.name,
-        plantItem.unit.id,
-        plantItem.unit.name,
-        plantItem.barcode,
-        plantItem.quantity ? plantItem.quantity : 0,
-      ]
-    );
-
-    return result.lastInsertRowId;
-  } catch (error) {
-    console.error("Error adding plant characteristic:", error);
-    return null;
-  }
-}
-
-
-
 
 export async function fetchCharacteristics(plantId: number, docId: number): Promise<any[]> {
   const db = await openDB();
@@ -242,17 +172,31 @@ export async function fetchCharacteristics(plantId: number, docId: number): Prom
   }
 }
 
-export async function updateCharacteristic(plantCharacteristicId: number, quantity: number): Promise<boolean> {
+
+export async function deleteDocument(documentId: number): Promise<boolean> {
+  console.log("1Database WAS NOT opened successfully", dbInstance);
+  const db = await openDB();
+  console.log('deleteDocument', documentId, db)
+  try {
+    const result = await db.runAsync("DELETE FROM documents WHERE id = ?", documentId);
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    return false;
+  }
+}
+
+export async function deletePlant(documentId: number, plantNameId: number): Promise<boolean> {
   const db = await openDB();
   try {
     const result = await db.runAsync(
-      "UPDATE plant_characteristics SET quantity = ? WHERE id = ?",
-      quantity,
-      plantCharacteristicId
+      "DELETE FROM plants WHERE id = ? AND document_id = ?",
+      [plantNameId, documentId]
     );
+    console.log(`Delete result:`, result);
     return result.changes > 0;
   } catch (error) {
-    console.error("Error updating quantity:", error);
+    console.error("Error deleting plant:", error);
     return false;
   }
 }
@@ -268,10 +212,48 @@ export async function deleteCharacteristic(characteristicId: number): Promise<bo
   }
 }
 
-const d = [
-  {
-    "document_id": 1, 
-    "id": 10, 
-    "product_id": "12476ae5-0f98-11ec-82fc-00c12700489e", 
-    "product_name": "Thuja occidentalis 'Golden Smaragd' Form, Туя західна 'Голден Смарагд' Формована"}, 
-    {"document_id": 1, "id": 15, "product_id": "12476ae5-0f98-11ec-82fc-00c12700489e", "product_name": "Thuja occidentalis 'Golden Smaragd' Form, Туя західна 'Голден Смарагд' Формована"}]
+
+
+export async function updatePlant(
+  plantId: number,
+  quantity: number
+): Promise<boolean> {
+  const db = await openDB();
+  try {
+    const result = await db.runAsync(
+      "UPDATE plants SET quantity = ? WHERE id = ?",
+      quantity,
+      plantId
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error updating plant:", error);
+    return false;
+  }
+}
+
+export async function updateCharacteristic(plantCharacteristicId: number, quantity: number): Promise<boolean> {
+  const db = await openDB();
+  try {
+    const result = await db.runAsync(
+      "UPDATE plant_characteristics SET quantity = ? WHERE id = ?",
+      quantity,
+      plantCharacteristicId
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error updating quantity:", error);
+    return false;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+

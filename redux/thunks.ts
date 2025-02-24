@@ -89,11 +89,14 @@ export const getPlantsNameThunk = createAsyncThunk<PlantItemRespons[], PalntName
         console.log('getPlantsNameThunk___',)
         return response.data;
       } else {
+        Alert.alert('From State:', 'No token available!')
         throw new Error("No token available");
       }
     } catch (error) {
+      Alert.alert('From getPlantsNameThunk :', 'Failed to fetch plants name')
       console.error("Error in thunk: getPlantsNameThunk", error);
-      return rejectWithValue("Failed to fetch plants name");
+      rejectWithValue("Failed to fetch plants name");
+      return 
     }
   }
 );
