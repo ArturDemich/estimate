@@ -4,7 +4,6 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity,
     View,
     findNodeHandle,
     UIManager,
@@ -15,11 +14,12 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
-import { addPlant, fetchDocuments, fetchPlants } from "@/db/db.native";
+import { getPlantsNameThunk } from "@/redux/thunks";
+import { addPlant } from "@/db/db.native";
 import { getUkrainianPart } from "./helpers";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import BarcodeScanner from "./BarcodeScanner";
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 interface InputDropDownProps {
     docId: string;
@@ -125,7 +125,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                .unwrap()
                .then(((data: PlantItemRespons[]) => {
                 console.log('barcode res', data.length)
-                if (data.length > 0) {
+                if (data.length === 1) {
                     handleCreatePlant(data[0].product.name, data[0].product.id)
                 }
             }))
@@ -166,7 +166,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                     />
                 )}
                 {input ? (
-                    <TouchableOpacity
+                    <TouchableVibrate
                         onPress={() => {
                             setInput("");
                             setDropdownVisible(false);
@@ -174,7 +174,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                         style={styles.clearButton}
                     >
                         <EvilIcons name="close-o" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
+                    </TouchableVibrate>
                 ) : null}
             </View>
 
@@ -195,14 +195,14 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                             data={uniquePlants}
                             keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <TouchableOpacity
+                                <TouchableVibrate
                                     style={styles.pressItemList}
                                     onPress={async () => {
                                         await handleCreatePlant(item.product.name, item.product.id)
                                     }}
                                 >
                                     <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
-                                </TouchableOpacity>
+                                </TouchableVibrate>
                             )}
                             ItemSeparatorComponent={() => (
                                 <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />

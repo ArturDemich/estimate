@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import HeaderLogout from "@/components/HeaderLogout";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, ImageBackground, View } from "react-native";
 import { loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -39,10 +39,25 @@ export default function ProtectedLayout() {
   }
 
   return (
-    <Stack >
+    <ImageBackground
+                  source={require("../../assets/globoza.jpg")}
+                  style={{flex: 1, width: "100%",
+                    height: "100%",
+                    position: "absolute",}}
+                  resizeMode="cover"
+                >
+    <Stack 
+    screenOptions={{
+      headerStyle: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      },
+      
+    }}
+    >
       <Stack.Screen name="index" options={{title: "Всі документи", headerRight: () => <HeaderLogout />,}} />
       <Stack.Screen name="document" options={{ title: "Документ #", headerRight: () => <HeaderLogout />, }} />
       <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => <HeaderLogout />, }} />
     </Stack>
+    </ImageBackground>
   );
 }

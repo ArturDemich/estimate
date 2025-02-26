@@ -1,11 +1,9 @@
 import { deleteDocument, fetchDocuments } from "@/db/db.native";
-import { AppDispatch } from "@/redux/store";
-import { getStoragesThunk } from "@/redux/thunks";
-import { Link, useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useDispatch } from "react-redux";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import moment from "moment";
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 
 interface DocumentList {
@@ -39,7 +37,7 @@ export default function DocumentList() {
         data={documents}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <TouchableOpacity
+          <TouchableVibrate
             style={styles.documentItem}
             onLongPress={async (e) => {
               e.preventDefault()
@@ -58,7 +56,7 @@ export default function DocumentList() {
               <Text>{item.name}</Text>
               <Text>{formatDate(item.created_at)}</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableVibrate>
         )}
         style={{ width: "100%", height: '100%', paddingBottom: 40}}
         ListEmptyComponent={
@@ -88,6 +86,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 7,
+    opacity: 0.9
   },
   itemRow: {
     flexDirection: "row",

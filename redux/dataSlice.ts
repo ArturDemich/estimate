@@ -19,7 +19,14 @@ const dataSlice = createSlice({
     setExistPlantProps(state, action: PayloadAction<PlantDetails | null>) {
       state.existPlantProps = action.payload;
       console.log('dataSlice __ setExistPlantProps', state.existPlantProps)
-    }
+    },
+    updateLocalCharacteristic: (state, action: PayloadAction<{ id: number, quantity: number }>) => {
+      const index = state.dBPlantDetails.findIndex((char) => char.id === action.payload.id);
+      if (index !== -1) {
+          state.dBPlantDetails[index].quantity = action.payload.quantity;
+      }
+      console.log('dataSlice __ updateLocalCharacteristic', state.dBPlantDetails[index].quantity)
+  }
   },
   extraReducers: (builder) => {
     builder
@@ -45,5 +52,5 @@ const dataSlice = createSlice({
   },
 });
 
-export const { setExistPlantProps } = dataSlice.actions;
+export const { setExistPlantProps, updateLocalCharacteristic } = dataSlice.actions;
 export default dataSlice.reducer;

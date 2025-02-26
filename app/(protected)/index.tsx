@@ -1,11 +1,10 @@
-import { View } from "react-native";
+import { ImageBackground, View } from "react-native";
 import DocumentList from "@/components/MainScreen/DocumentList";
 import CreateDocModal from "@/components/MainScreen/CreateDocModal";
 import { useDispatch } from "react-redux";
 import { getStoragesThunk } from "@/redux/thunks";
 import { useEffect } from "react";
 import { AppDispatch } from "@/redux/store";
-import { initializeDB, } from '@/db/db.native'
 
 export default function HomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
@@ -24,13 +23,20 @@ export default function HomeScreen() {
   useEffect(() => {
     getData()
     console.log('HomeScreen__useEffect', );
-   // initializeDB();
   }, [])
 
   return (
-    <View style={{position: 'relative', height: '100%', display: 'flex'}}>
+    <ImageBackground
+                      source={require("../../assets/globoza.jpg")}
+                      style={{flex: 1, width: "100%",
+                        height: "100%",
+                        position: "absolute",}}
+                      resizeMode="cover"
+                    >
+    <View style={{position: 'relative', height: '100%', display: 'flex', backgroundColor: 'rgba(255, 255, 255, 0.2)'}}>
       <DocumentList />
       <CreateDocModal />
     </View>
+    </ImageBackground>
   );
 }

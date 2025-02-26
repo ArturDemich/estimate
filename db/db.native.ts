@@ -232,13 +232,13 @@ export async function updatePlant(
   }
 }
 
-export async function updateCharacteristic(plantCharacteristicId: number, quantity: number): Promise<boolean> {
+export async function updateCharacteristic(DbCharacteristicId: number, quantity: number): Promise<boolean> {
   const db = await openDB();
   try {
     const result = await db.runAsync(
       "UPDATE plant_characteristics SET quantity = ? WHERE id = ?",
       quantity,
-      plantCharacteristicId
+      DbCharacteristicId
     );
     return result.changes > 0;
   } catch (error) {

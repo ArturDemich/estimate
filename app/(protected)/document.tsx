@@ -2,9 +2,10 @@ import ModalAddPlant from "@/components/DocumentScreen/ModalAddPlant";
 import PlantListItem from "@/components/DocumentScreen/PlantListItem";
 import { deleteDocument, fetchPlants } from "@/db/db.native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useBackHandler} from '@react-native-community/hooks'
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 export default function Document() {
   const params = useLocalSearchParams();
@@ -35,9 +36,9 @@ export default function Document() {
         title: params.docName?.toString() || "Document",
         headerBackVisible: false,
         headerLeft: () => (
-          <TouchableOpacity style={{marginRight: 15, height: '100%',  pointerEvents: 'auto', }} onPressOut={() => handleBackAction().then(() => router.back())}>
+          <TouchableVibrate style={{marginRight: 15, height: '100%',  pointerEvents: 'auto', }} onPressOut={() => handleBackAction().then(() => router.back())}>
             <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableVibrate>
         )
       }} />
       <PlantListItem />

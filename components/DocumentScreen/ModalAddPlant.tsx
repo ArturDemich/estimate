@@ -2,16 +2,17 @@ import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import InputDropDown from "../InputDropDown";
-import { Button, Modal, Portal } from "react-native-paper";
+import { Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { useLocalSearchParams } from "expo-router";
 import Feather from '@expo/vector-icons/Feather';
+import Entypo from '@expo/vector-icons/Entypo';
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 
 export default function ModalAddPlant() {
@@ -23,17 +24,17 @@ export default function ModalAddPlant() {
   return (
     <>
       <View style={styles.containerNBTN}>
-        <TouchableOpacity style={styles.buttonStep} onPress={() => setShow(true)}>
-          <Feather name="plus" size={18} color="#131316" />
-          <Text style={styles.textBtn}>Додати</Text>
-        </TouchableOpacity>
+        <TouchableVibrate style={styles.buttonStep} onPress={() => setShow(true)}>
+          <Feather name="plus" size={14} color="green" />
+          <Entypo name="tree" size={24} color="green" />
+        </TouchableVibrate>
       </View>
 
       <Portal>
         <Modal
           visible={show}
           onDismiss={() => setShow(false)}
-          dismissable={false}
+          //dismissable={false}
           contentContainerStyle={{ flex: 1, }}
         >
           <KeyboardAvoidingView
@@ -42,9 +43,9 @@ export default function ModalAddPlant() {
           >
             <View style={styles.modalView}>
               <View style={styles.btnBlock}>
-                <TouchableOpacity onPress={() => setShow(false)} style={styles.buttonClose}>
+                <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
                   <EvilIcons name="close" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
+                </TouchableVibrate>
                 <Text style={styles.textStr}>Назва</Text>
               </View>
               <InputDropDown docId={docId} close={() => setShow(false)} />
@@ -64,20 +65,15 @@ const styles = StyleSheet.create({
     right: 12,
     bottom: 15,
   },
-  textBtn: {
-    color: "#131316",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 14,
-  },
   buttonStep: {
-    borderRadius: 40,
-    height: 30,
-    padding: 6,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 5,
     opacity: 0.95,
     elevation: 5,
-    backgroundColor: '#FFFFFF',
-    shadowColor: "#959595",
+    backgroundColor: "#FFFFFF",
+    borderColor: '#E4E4E7',
+    shadowColor: "#131316",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 3,

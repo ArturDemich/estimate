@@ -5,13 +5,15 @@ import {
   Modal,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
 import { useRouter } from "expo-router";
 import { addDocument } from "@/db/db.native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Feather from '@expo/vector-icons/Feather';
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 type StorageItem = {
   id: string;
@@ -71,7 +73,7 @@ export default function CreateDocModal() {
 
     return (
       <View>
-        <TouchableOpacity
+        <TouchableVibrate
           style={styles.listItem}
           onPress={() => toggleExpand(item.id)} // Toggle expand
         >
@@ -80,7 +82,7 @@ export default function CreateDocModal() {
             <MaterialIcons name="expand-less" size={24} color="black" /> :
             <MaterialIcons name="expand-more" size={24} color="black" />)
             : null}
-        </TouchableOpacity>
+        </TouchableVibrate>
 
         {/* Render nested items if expanded */}
         {(expandedItems.includes(item.id) && children.length > 0) && (
@@ -88,12 +90,12 @@ export default function CreateDocModal() {
             data={children}
             keyExtractor={(child) => child.id.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <TouchableVibrate
                 style={styles.listItem}
                 onPress={() => navigateToDocument(item.name)}
               >
                 <Text style={styles.listItemText}>{item.name}</Text>
-              </TouchableOpacity>
+              </TouchableVibrate>
             )}
             style={{ marginLeft: 20 }}
           />
@@ -106,12 +108,13 @@ export default function CreateDocModal() {
   return (
     <>
       <View style={styles.containerNBTN}>
-        <TouchableOpacity
+        <TouchableVibrate
           style={styles.buttonStep}
           onPress={() => setShow(!show)}
         >
-          <Text style={styles.textBtn}>NewDoc +</Text>
-        </TouchableOpacity>
+          <Feather name="plus" size={18} color="black" />
+          <Ionicons name="document-text-outline" size={28} color="black" />
+        </TouchableVibrate>
       </View>
 
       <Modal
@@ -138,7 +141,7 @@ export default function CreateDocModal() {
             />
 
             <View style={styles.btnBlock}>
-              <TouchableOpacity
+              <TouchableVibrate
                 onPress={() => handleClose()}
                 style={styles.buttonClose}
               >
@@ -149,7 +152,7 @@ export default function CreateDocModal() {
                 >
                   Х
                 </Text>
-              </TouchableOpacity>
+              </TouchableVibrate>
             </View>
           </View>
         </View>
@@ -178,22 +181,21 @@ const styles = StyleSheet.create({
     right: 12,
     bottom: 10,
   },
-  textBtn: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "900",
-  },
   buttonStep: {
-    borderRadius: 3,
-    backgroundColor: "green",
-    height: 40,
-    padding: 5,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 5,
     opacity: 0.95,
     elevation: 5,
-    shadowColor: "#d70000",
+    backgroundColor: "#FFFFFF",
+    borderColor: '#E4E4E7',
+    shadowColor: "#131316",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 3,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   centeredView: {
     flex: 1,

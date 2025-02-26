@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Button, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { CameraView, Camera } from "expo-camera";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 const { width, height } = Dimensions.get("window"); // Get screen dimensions
 
@@ -44,9 +45,9 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
         style={styles.camera} // Apply styles here
       />
       <View style={styles.overlay}>
-        <TouchableOpacity onPress={onClose} style={styles.clearButton}>
+        <TouchableVibrate onPress={onClose} style={styles.clearButton}>
           <EvilIcons name="close-o" size={30} color="#FFFFFF" />
-        </TouchableOpacity>
+        </TouchableVibrate>
       </View>
     </View>
   );

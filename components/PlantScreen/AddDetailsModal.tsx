@@ -5,15 +5,16 @@ import {
     Modal,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { addCharacteristic, addDocument } from "@/db/db.native";
+import { addCharacteristic } from "@/db/db.native";
 import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB } from "@/redux/thunks";
 import { setExistPlantProps } from "@/redux/dataSlice";
+import Entypo from '@expo/vector-icons/Entypo';
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 interface AddDetailsProps {
     plantDBid: string;
@@ -61,12 +62,12 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     return (
         <>
             <View style={styles.containerNBTN}>
-                <TouchableOpacity
+                <TouchableVibrate
                     style={styles.buttonStep}
                     onPress={() => setShow(!show)}
                 >
-                    <Text style={styles.textBtn}>New +</Text>
-                </TouchableOpacity>
+                    <Entypo name="add-to-list" size={24} color="#131316" />
+                </TouchableVibrate>
             </View>
 
             <Modal
@@ -89,19 +90,19 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                             data={productId ? plants.filter((item) => item.product.id === productId) : plants}
                             keyExtractor={(item) => item.characteristic.id}
                             renderItem={({ item }) => (
-                                <TouchableOpacity
+                                <TouchableVibrate
                                     style={styles.listItem}
                                     onPress={() => addDetails(Number(plantDBid), item)}
                                 >
                                     <Text style={styles.listItemName}>{item.characteristic.name}</Text>
                                     <Text style={styles.listItemQty}>{item.quantity} 0 {item.unit.name}</Text>
-                                </TouchableOpacity>
+                                </TouchableVibrate>
                             )}
                             style={{ width: '100%' }}
                         />
 
                         <View style={styles.btnBlock}>
-                            <TouchableOpacity
+                            <TouchableVibrate
                                 onPress={() => handleClose()}
                                 style={styles.buttonClose}
                             >
@@ -112,7 +113,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                 >
                                     Х
                                 </Text>
-                            </TouchableOpacity>
+                            </TouchableVibrate>
                         </View>
                     </View>
                 </View>
@@ -151,19 +152,19 @@ const styles = StyleSheet.create({
         right: 12,
         bottom: 10,
     },
-    textBtn: {
-        color: "white",
-        fontSize: 14,
-        fontWeight: "900",
-    },
     buttonStep: {
-        borderRadius: 3,
-        backgroundColor: "green",
-        height: 40,
+        borderRadius: 12,
+        backgroundColor: "#FFFFFF",
+        borderColor: '#E4E4E7',
+        borderWidth: 1,
+        height: 44,
+        width: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
         padding: 5,
         opacity: 0.95,
         elevation: 5,
-        shadowColor: "#d70000",
+        shadowColor: "#131316",
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.9,
         shadowRadius: 3,

@@ -1,12 +1,13 @@
-import { deletePlant, fetchPlants } from "@/db/db.native";
+import { deletePlant } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { getUkrainianPart } from "../helpers";
 import { PlantNameDB } from "@/redux/stateServiceTypes";
+import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 export default function PlantListItem() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function PlantListItem() {
       data={palnts}
       keyExtractor={(item, index) => item.id.toString() + index} 
       renderItem={({ item, index }) => (
-          <TouchableOpacity 
+          <TouchableVibrate 
             style={styles.documentItem}
             onLongPress={async (e) => {
               e.preventDefault()
@@ -55,7 +56,7 @@ export default function PlantListItem() {
               <Text style={styles.itemNum}>{index + 1}</Text>
               <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableVibrate>
       )}
       style={{ width: "100%", height: '100%', paddingBottom: 40 }}
       ListEmptyComponent={

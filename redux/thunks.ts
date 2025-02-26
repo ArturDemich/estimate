@@ -1,7 +1,7 @@
 import { DataService } from "@/axios/service";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Alert, Platform } from "react-native";
-import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, PlantDetails, Storages } from "./stateServiceTypes";
+import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, PlantDetails, Storages, PlantDetailsResponse } from "./stateServiceTypes";
 import { RootState } from "./store";
 import { fetchCharacteristics, fetchPlants } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
@@ -114,7 +114,7 @@ export const getPlantsNameDB = createAsyncThunk<PlantNameDB[], { docId: number }
   }
 );
 
-export const getPlantsDetailsDB = createAsyncThunk<PlantDetails[], { palntId: number, docId: number }, { rejectValue: string, state: RootState }>(
+export const getPlantsDetailsDB = createAsyncThunk<PlantDetailsResponse[], { palntId: number, docId: number }, { rejectValue: string, state: RootState }>(
   'data/getPlantsDetailsDB',
   async ({ palntId, docId }, { rejectWithValue }) => {
     try {

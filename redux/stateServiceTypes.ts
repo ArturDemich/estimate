@@ -48,11 +48,15 @@ export interface PlantDetails {
     quantity: number;
 };
 
+export interface PlantDetailsResponse extends PlantDetails {
+    id: number;
+}
+
 export interface DataSlice {
     digStorages: Storages[];
     searchPlantName: PlantItemRespons[];
     dBPlantsName: PlantNameDB[];
-    dBPlantDetails: PlantDetails[];
+    dBPlantDetails: PlantDetailsResponse[];
     existPlantProps: PlantDetails | null;
 };
 
