@@ -14,6 +14,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import { EvilIcons } from "@expo/vector-icons";
 
 type StorageItem = {
   id: string;
@@ -112,7 +113,7 @@ export default function CreateDocModal() {
           style={styles.buttonStep}
           onPress={() => setShow(!show)}
         >
-          <Feather name="plus" size={18} color="black" />
+          <Feather name="plus" size={14} color="black" />
           <Ionicons name="document-text-outline" size={28} color="black" />
         </TouchableVibrate>
       </View>
@@ -145,13 +146,7 @@ export default function CreateDocModal() {
                 onPress={() => handleClose()}
                 style={styles.buttonClose}
               >
-                <Text
-                  style={styles.modalText}
-                  allowFontScaling={true}
-                  maxFontSizeMultiplier={1}
-                >
-                  Х
-                </Text>
+                <EvilIcons name="close" size={24} color="#FFFFFF" style={{lineHeight: 24 }} />
               </TouchableVibrate>
             </View>
           </View>
@@ -187,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     opacity: 0.95,
     elevation: 5,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderColor: '#E4E4E7',
     shadowColor: "#131316",
     shadowOffset: { width: 0, height: 0 },
@@ -219,7 +214,7 @@ const styles = StyleSheet.create({
     height: "70%",
     flexDirection: "column",
     margin: 1,
-    backgroundColor: "white",
+    backgroundColor: "rgba(255, 255, 255, 0.97)",
     borderRadius: 10,
     paddingLeft: 5,
     paddingRight: 5,
@@ -241,10 +236,8 @@ const styles = StyleSheet.create({
 
   btnBlock: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    // flex: 1,
     width: "100%",
-    marginTop: 10,
+    marginTop: 5,
   },
 
   buttonModal: {
@@ -259,19 +252,17 @@ const styles = StyleSheet.create({
   },
 
   buttonClose: {
-    borderRadius: 3,
-    height: 35,
+    borderRadius: 8,
     elevation: 3,
-    width: 40,
-    alignSelf: "flex-end",
-    backgroundColor: "#999999e6",
+    padding: 4,
+    backgroundColor: "rgba(199, 199, 199, 0.99)",
     justifyContent: "center",
+    alignItems: 'center',
   },
   textStyle: {
     fontWeight: "500",
     fontSize: 14,
     color: "#555555",
-    //marginBottom: 40,
     paddingLeft: 5,
     paddingRight: 5,
   },

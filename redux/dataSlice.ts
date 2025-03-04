@@ -20,12 +20,12 @@ const dataSlice = createSlice({
       state.existPlantProps = action.payload;
       console.log('dataSlice __ setExistPlantProps', state.existPlantProps)
     },
-    updateLocalCharacteristic: (state, action: PayloadAction<{ id: number, quantity: number }>) => {
+    updateLocalCharacteristic: (state, action: PayloadAction<{ id: number, currentQty: number }>) => {
       const index = state.dBPlantDetails.findIndex((char) => char.id === action.payload.id);
       if (index !== -1) {
-          state.dBPlantDetails[index].quantity = action.payload.quantity;
+          state.dBPlantDetails[index].currentQty = action.payload.currentQty;
       }
-      console.log('dataSlice __ updateLocalCharacteristic', state.dBPlantDetails[index].quantity)
+      console.log('dataSlice __ updateLocalCharacteristic', state.dBPlantDetails[index].currentQty)
   }
   },
   extraReducers: (builder) => {
@@ -37,7 +37,7 @@ const dataSlice = createSlice({
 
       .addCase(getPlantsNameThunk.fulfilled, (state, action) => {
         state.searchPlantName = action.payload;
-        console.log('dataSlice __getPlantsNameThunk', state.searchPlantName)
+        console.log('dataSlice __getPlantsNameThunk', )
       })
 
       .addCase(getPlantsNameDB.fulfilled, (state, action) => {

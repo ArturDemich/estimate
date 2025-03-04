@@ -31,7 +31,8 @@ export async function initializeDB(): Promise<void> {
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS plants (
@@ -39,6 +40,8 @@ export async function initializeDB(): Promise<void> {
         document_id INTEGER NOT NULL,
         product_id TEXT NOT NULL,
         product_name TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
       );
 
@@ -51,13 +54,35 @@ export async function initializeDB(): Promise<void> {
         unit_name TEXT NOT NULL,
         barcode TEXT NOT NULL,
         quantity INTEGER NOT NULL DEFAULT 0,
+        currentQty INTEGER NOT NULL DEFAULT 0, 
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE
       );
     `);
+    await db.execAsync(`
+      CREATE TRIGGER IF NOT EXISTS update_plants_timestamp
+      AFTER UPDATE ON plant_characteristics
+      FOR EACH ROW
+      BEGIN
+        UPDATE plants SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.plant_id;
+      END;
+    `);
+
+    await db.execAsync(`
+      CREATE TRIGGER IF NOT EXISTS update_documents_timestamp
+      AFTER UPDATE ON plants
+      FOR EACH ROW
+      BEGIN
+        UPDATE documents SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.document_id;
+      END;
+    `);
     await db.execAsync("COMMIT;");
     console.log("Database initialized successfully");
-  } catch (error) {
-    console.error("Error initializing database:", error);
+  } catch (error: any) {
+    await db.execAsync("ROLLBACK;");
+    console.log("Error initializing database:", error);
+    Alert.alert("Error initializing database: ", error)
   }
 }
 
@@ -145,7 +170,7 @@ export async function fetchPlants(documentId: number): Promise<any[]> {
   console.log('fetchPlants__', documentId)
   try {
     const rows = await db.getAllAsync(
-      "SELECT * FROM plants WHERE document_id = ?",
+      "SELECT * FROM plants WHERE document_id = ? ORDER BY created_at DESC",
       documentId
     );
     return rows;
@@ -163,7 +188,7 @@ export async function fetchCharacteristics(plantId: number, docId: number): Prom
       `SELECT pc.*
        FROM plant_characteristics pc
        JOIN plants p ON pc.plant_id = p.id
-       WHERE pc.plant_id = ? AND p.document_id = ?`,
+       WHERE pc.plant_id = ? AND p.document_id = ? ORDER BY created_at DESC`,
       [plantId, docId]
     );
   } catch (error) {
@@ -232,17 +257,16 @@ export async function updatePlant(
   }
 }
 
-export async function updateCharacteristic(DbCharacteristicId: number, quantity: number): Promise<boolean> {
+export async function updateCharacteristic(DbCharacteristicId: number, currentQty: number): Promise<boolean> {
   const db = await openDB();
   try {
     const result = await db.runAsync(
-      "UPDATE plant_characteristics SET quantity = ? WHERE id = ?",
-      quantity,
-      DbCharacteristicId
+      "UPDATE plant_characteristics SET currentQty = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [currentQty, DbCharacteristicId]
     );
     return result.changes > 0;
   } catch (error) {
-    console.error("Error updating quantity:", error);
+    console.error("Error updating currentQty:", error);
     return false;
   }
 }

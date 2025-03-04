@@ -28,12 +28,12 @@ export default function LoginScreen() {
     <ImageBackground
       source={require("../assets/globoza.jpg")}
       style={{
-        flex: 1, width: "100%",
+        flex: 1,
+        width: "100%",
         height: "100%",
+        position: "absolute",
       }}
-      resizeMode="cover"
     >
-      <View style={styles.overlay} />
       <View style={styles.container}>
         <View style={styles.formContainer}>
           <Text style={styles.title}>Login</Text>
@@ -72,31 +72,28 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  // Logo styling: adjust width/height as needed
   logo: {
     width: 140,
     height: 140,
     resizeMode: "contain",
     marginBottom: 30,
   },
-  // Form container with a semi-transparent white background and rounded corners
   formContainer: {
     width: "100%",
     padding: 20,
     borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    shadowColor: "#000",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    shadowColor: "rgba(255, 255, 255, 0.1)",
     shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 1,
-    elevation: 10,
+    //shadowOffset: { width: 0, height: 4 },
+    //shadowRadius: 10,
+    elevation: 1
   },
-  // Title styling
   title: {
     fontSize: 28,
     fontWeight: "600",
@@ -104,7 +101,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 25,
   },
-  // Input fields occupy full width with increased height and padding for better touch experience
   input: {
     width: "100%",
     height: 50,
@@ -113,15 +109,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     fontSize: 16,
     color: "#333",
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject, // Makes it cover the whole screen
-    backgroundColor: "rgba(0, 0, 0, 0.3)", // Dark transparent overlay
-  },
-  // Attractive button styling with a bright color, rounded corners, and shadow for depth
   button: {
     width: "100%",
     backgroundColor: "#ff6f61", // Bright, attractive button color
@@ -135,7 +126,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  // Button text styling
   buttonText: {
     color: "#fff",
     fontSize: 18,

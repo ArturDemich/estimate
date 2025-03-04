@@ -29,7 +29,7 @@ export interface PlantItemRespons {
     product: { id: string; name: string; };
     characteristic: { id: string; name: string; };
     unit: { id: string; name: string; };
-    barcode: number;
+    barcode: string;
     quantity?: number;
 };
 export interface PlantNameDB {
@@ -44,12 +44,13 @@ export interface PlantDetails {
     characteristic_name: string;
     unit_id: string;
     unit_name: string;
-    barcode: number;
+    barcode: string;
     quantity: number;
 };
 
 export interface PlantDetailsResponse extends PlantDetails {
     id: number;
+    currentQty: number;
 }
 
 export interface DataSlice {

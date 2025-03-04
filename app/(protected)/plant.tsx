@@ -5,7 +5,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { Ionicons } from "@expo/vector-icons";
 import { useBackHandler } from "@react-native-community/hooks";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
 
 export default function Plant() {
   const params = useLocalSearchParams();
@@ -32,14 +32,14 @@ export default function Plant() {
   });
 
   return (
-    <View style={{position: 'relative', height: '100%', display: 'flex'}}>
+    <View style={{position: 'relative', height: '100%', display: 'flex', }}>
       <Stack.Screen options={{
         headerBackVisible: false,
         headerLeft: () => (
-          <TouchableVibrate style={{marginRight: 15}} onPressOut={() => handleBackAction().then(() => router.back())}>
+          <TouchableVibrate style={{marginLeft: -5,  height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto',}} onPressOut={() => handleBackAction().then(() => router.back())}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>
-        )
+        ),
       }} />
       <View style={{paddingLeft: 15, paddingVertical: 5, }}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
       <PlantSizeItem />

@@ -11,7 +11,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 
 export default function RootLayout() {
-  console.log('RootLayout__', );
+  console.log('RootLayout__',);
   useEffect(() => {
     if (Platform.OS !== "web") {
       initializeDB();
@@ -22,7 +22,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <PaperProvider>
         <SafeAreaProvider>
-          <StatusBar style="dark" />
+            <StatusBar style="dark" />
             <Slot />
         </SafeAreaProvider>
       </PaperProvider>

@@ -2,11 +2,12 @@ import { PlantDetails } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsDetailsDB } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, Text, View } from "react-native";
 import { connect, useDispatch, useSelector } from "react-redux";
 import RenderPlantDetail from "./RenderPlantDetail";
 import { setExistPlantProps } from "@/redux/dataSlice";
+import EmptyList from "@/components/ui/EmptyList";
 
 
  const PlantSizeItem = memo(({existPlantProps}: {existPlantProps: PlantDetails | null}) => {
@@ -24,6 +25,17 @@ import { setExistPlantProps } from "@/redux/dataSlice";
     console.log('PlantSizeItem___',  )
   };
 
+  const handleFocus = (index: number) => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+  }
+};
+  
+
   useEffect(() => {
     if (existPlantProps?.characteristic_id && flatListRef.current) {
       console.log('PlantSizeItem___ existPlantProps?',  existPlantProps?.characteristic_id)
@@ -35,27 +47,31 @@ import { setExistPlantProps } from "@/redux/dataSlice";
   }, [existPlantProps]);
 
   useFocusEffect(
+    
     useCallback(() => {
+      console.log('params', params)
       loadDBDetails()
     }, [])
   );
 
   return (
+    <SafeAreaView style={{flex: 1,}}>
+    <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <FlatList
         ref={flatListRef}
         data={palntDetails}
         onTouchStart={() => existPlantProps && dispatch(setExistPlantProps(null))}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => <RenderPlantDetail item={item} index={index} reloadList={() => loadDBDetails()}/>}
-        style={{ width: "100%", paddingBottom: 40 }}
-        ListEmptyComponent={
-          <View>
-            <Text>Немає доданих х-ка</Text>
-          </View>
-        }
+        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
+        style={{ width: "100%", paddingBottom: 40, flex: 1 }}
+        ListEmptyComponent={<EmptyList text="Немає доданих х-ка" />}
         ListFooterComponent={<View></View>}
-        ListFooterComponentStyle={{ height: 50 }}
+        ListFooterComponentStyle={{ height: 150 }}
+        scrollEnabled={true}
       />
+      </KeyboardAvoidingView>
+      </SafeAreaView>
+      
   );
 }, (prevProps, nextProps) => {
   console.log('__ PlantSizeItem ___ MEMO_ ', prevProps.existPlantProps?.characteristic_id, nextProps.existPlantProps?.characteristic_id)

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import moment from "moment";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import EmptyList from "@/components/ui/EmptyList";
 
 
 interface DocumentList {
@@ -59,11 +60,7 @@ export default function DocumentList() {
           </TouchableVibrate>
         )}
         style={{ width: "100%", height: '100%', paddingBottom: 40}}
-        ListEmptyComponent={
-          <View>
-            <Text>Немає створених документів</Text>
-          </View>
-        }
+        ListEmptyComponent={<EmptyList text="Немає створених документів" />}
         ListFooterComponent={<View></View>}
         ListFooterComponentStyle={{height: 50}}
       />

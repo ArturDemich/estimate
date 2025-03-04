@@ -1,20 +1,23 @@
 import { AppDispatch, RootState } from "@/redux/store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     FlatList,
     Modal,
     StyleSheet,
     Text,
+    TextInput,
     View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { addCharacteristic } from "@/db/db.native";
 import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB } from "@/redux/thunks";
 import { setExistPlantProps } from "@/redux/dataSlice";
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import { EvilIcons } from "@expo/vector-icons";
+import { getUkrainianPart } from "@/components/helpers";
 
 interface AddDetailsProps {
     plantDBid: string;
@@ -24,14 +27,25 @@ interface AddDetailsProps {
 
 export default function AddDetailsModal({ plantDBid, docId, productId }: AddDetailsProps) {
     const dispatch = useDispatch<AppDispatch>();
-   // const router = useRouter();
-    const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
+    const params = useLocalSearchParams();
+    // const router = useRouter();
     const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
-    console.log('AddDetailsModal', )
+    const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
+    const dataPlant = plants.filter((item) => item.product.id === productId);
+    console.log('AddDetailsModal', params.barcode, plants)
     const [show, setShow] = useState(false);
+    const [input, setInput] = useState("");
 
     const handleClose = () => {
         setShow(false);
+    };
+
+    const serachDetail = (data: PlantItemRespons[]) => {
+        return data.filter((item) => {
+            return (
+                item.characteristic.name.toLowerCase().includes(input.toLowerCase())
+            );
+        });
     };
 
     const isCharacteristicAdded = (characteristicId: string) => {
@@ -41,7 +55,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     const addDetails = async (plantNameId: number, plantItem: PlantItemRespons) => {
         if (isCharacteristicAdded(plantItem.characteristic.id)) {
             dispatch(setExistPlantProps({
-                plant_id: plantNameId, 
+                plant_id: plantNameId,
                 characteristic_id: plantItem.characteristic.id,
                 characteristic_name: plantItem.characteristic.name,
                 unit_id: plantItem.unit.id,
@@ -54,10 +68,17 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
         }
         const addCharact = await addCharacteristic(plantNameId, plantItem);
         if (addCharact != null) await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId: Number(docId) }));
-        
+
         setShow(false);
     };
 
+    useEffect(() => {
+        if(params.barcode) {
+            if(plants.length === 1 && plants.some((item) => item.barcode === params.barcode)) {
+                addDetails(Number(plantDBid), plants[0])
+            }
+        }
+    }, [])
 
     return (
         <>
@@ -86,8 +107,31 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                             Оберіть х-ка
                         </Text>
 
+                        <View style={styles.inputContainer}>
+                            <TextInput
+                                style={styles.input}
+                                onChangeText={(text) => {
+                                    setInput(text);
+                                }}
+                                value={getUkrainianPart(input)}
+                                placeholder={input ? "" : "Оберіть назву рослини"}
+                                placeholderTextColor="#A0A0AB"
+                            />
+                            
+                            {input ? (
+                                <TouchableVibrate
+                                    onPress={() => {
+                                        setInput("");
+                                    }}
+                                    style={styles.clearButton}
+                                >
+                                    <EvilIcons name="close-o" size={24} color="#FFFFFF" style={{lineHeight: 24}} />
+                                </TouchableVibrate>
+                            ) : null}
+                        </View>
+
                         <FlatList
-                            data={productId ? plants.filter((item) => item.product.id === productId) : plants}
+                            data={input !== '' ? serachDetail(dataPlant) : dataPlant}
                             keyExtractor={(item) => item.characteristic.id}
                             renderItem={({ item }) => (
                                 <TouchableVibrate
@@ -99,6 +143,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                 </TouchableVibrate>
                             )}
                             style={{ width: '100%' }}
+                            keyboardShouldPersistTaps="handled"
                         />
 
                         <View style={styles.btnBlock}>
@@ -106,13 +151,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                 onPress={() => handleClose()}
                                 style={styles.buttonClose}
                             >
-                                <Text
-                                    style={styles.modalText}
-                                    allowFontScaling={true}
-                                    maxFontSizeMultiplier={1}
-                                >
-                                    Х
-                                </Text>
+                                <EvilIcons name="close" size={24} color="#FFFFFF" style={{lineHeight: 24}} />
                             </TouchableVibrate>
                         </View>
                     </View>
@@ -151,10 +190,11 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 12,
         bottom: 10,
+        zIndex: 10
     },
     buttonStep: {
         borderRadius: 12,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: 'rgba(255, 255, 255, 0.99)',
         borderColor: '#E4E4E7',
         borderWidth: 1,
         height: 44,
@@ -162,24 +202,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 5,
-        opacity: 0.95,
-        elevation: 5,
+        opacity: 0.97,
+        elevation: 10,
         shadowColor: "#131316",
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.9,
         shadowRadius: 3,
+        zIndex: 10
     },
     centeredView: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "#00002329",
-    },
-    inputContainer: {
-        backgroundColor: "white",
-        borderRadius: 5,
-        padding: 8,
-        elevation: 3,
     },
     suggestionsContainer: {
         backgroundColor: "white",
@@ -191,7 +226,7 @@ const styles = StyleSheet.create({
         height: "70%",
         flexDirection: "column",
         margin: 1,
-        backgroundColor: "white",
+        backgroundColor: "rgba(255, 255, 255, 0.97)",
         borderRadius: 10,
         paddingLeft: 5,
         paddingRight: 5,
@@ -213,10 +248,8 @@ const styles = StyleSheet.create({
 
     btnBlock: {
         flexDirection: "row",
-        justifyContent: "space-between",
-        // flex: 1,
         width: "100%",
-        marginTop: 10,
+        marginTop: 5,
     },
 
     buttonModal: {
@@ -231,19 +264,18 @@ const styles = StyleSheet.create({
     },
 
     buttonClose: {
-        borderRadius: 3,
-        height: 35,
+        borderRadius: 8,
         elevation: 3,
-        width: 40,
+        padding: 4,
         alignSelf: "flex-end",
-        backgroundColor: "#999999e6",
+        backgroundColor: "rgba(199, 199, 199, 0.99)",
         justifyContent: "center",
+        alignItems: 'center',
     },
     textStyle: {
         fontWeight: "500",
         fontSize: 14,
         color: "#555555",
-        //marginBottom: 40,
         paddingLeft: 5,
         paddingRight: 5,
     },
@@ -258,20 +290,38 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    input: {
-        borderWidth: 1,
-        borderRadius: 3,
-        borderColor: "#e8e7e3",
-        width: "90%",
-        minHeight: 35,
-        padding: 3,
-        backgroundColor: "#f0ede6",
-        marginBottom: 3,
-        marginTop: 10,
-    },
     qtyBlock: {
         width: "97%",
         flexDirection: "row",
         justifyContent: "space-between",
+    },
+
+    inputContainer: {
+        position: "relative",
+        width: "100%",
+    },
+    input: {
+        borderWidth: 1,
+        borderRadius: 5,
+        borderColor: "#E4E4E7",
+        width: "100%",
+        paddingVertical: 10,
+        paddingLeft: 10,
+        paddingRight: 45,
+        backgroundColor: "#f6f6f6",
+        marginBottom: 5,
+        marginTop: 5,
+    },
+    clearButton: {
+        position: "absolute",
+        right: 10,
+        top: 13,
+        backgroundColor: "#A0A0AB",
+        borderRadius: 8,
+        width: 25,
+        height: 25,
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1
     },
 });

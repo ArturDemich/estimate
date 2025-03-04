@@ -8,12 +8,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { getUkrainianPart } from "../helpers";
 import { PlantNameDB } from "@/redux/stateServiceTypes";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import EmptyList from "@/components/ui/EmptyList";
 
 export default function PlantListItem() {
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const params = useLocalSearchParams();
   const docId = params.docId;
-  const dispatch = useDispatch<AppDispatch>();
+  
   const palnts = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
   console.log('ModalAddPlant', params)
 
@@ -22,11 +24,11 @@ export default function PlantListItem() {
     console.log('PlantListItem___', )
   };
 
-  const toPlantDetails = async (product_name: string, plantDBid: number) => {
+  const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {
     await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' }));
     router.push({
       pathname: "/plant",
-      params: { plantName: product_name, plantId: plantDBid, docId: docId },
+      params: { plantName: product_name, plantId: plantDBid, docId: docId, productId },
     });
   };
 
@@ -50,20 +52,16 @@ export default function PlantListItem() {
               await deletePlant(Number(docId), item.id) 
               loadDBPlants();
             }}
-            onPress={() => toPlantDetails(item.product_name, item.id)}
+            onPress={() => toPlantDetails(item.product_name, item.id, item.product_id)}
           >
             <View style={{ display: "flex", flexDirection: "row", gap: 5 }}> 
-              <Text style={styles.itemNum}>{index + 1}</Text>
+              <Text style={styles.itemNum}>{palnts.length - index}.</Text>
               <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
             </View>
           </TouchableVibrate>
       )}
       style={{ width: "100%", height: '100%', paddingBottom: 40 }}
-      ListEmptyComponent={
-        <View>
-          <Text>Немає доданих рослин</Text>
-        </View>
-      }
+      ListEmptyComponent={<EmptyList text="Немає доданих рослин" />}
       ListFooterComponent={<View></View>}
       ListFooterComponentStyle={{ height: 50 }}
     />
@@ -73,6 +71,7 @@ export default function PlantListItem() {
 const styles = StyleSheet.create({
   documentItem: {
     backgroundColor: "#fff",
+    opacity: 0.9,
     justifyContent: "center",
     minHeight: 40,
     borderRadius: 5,

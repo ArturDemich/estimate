@@ -16,9 +16,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsNameThunk } from "@/redux/thunks";
 import { addPlant } from "@/db/db.native";
-import { getUkrainianPart } from "./helpers";
+import { getUkrainianPart } from "../helpers";
 import { useRouter } from "expo-router";
-import BarcodeScanner from "./BarcodeScanner";
+import BarcodeScanner from "../BarcodeScanner";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 interface InputDropDownProps {
@@ -56,10 +56,10 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
         }
     };
 
-    const navigateToPlantScreen = (name: string, id: number | null, productId?: string) => {
+    const navigateToPlantScreen = (name: string, id: number | null, productId?: string,) => {
         router.push({
             pathname: "/plant",
-            params: { plantName: name, plantId: id, docId: docId, productId: productId },
+            params: { plantName: name, plantId: id, docId: docId, productId: productId, barcode },
         });
     };
     const checkIfPlantExists = async (productid: string) => {
@@ -173,7 +173,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
                         }}
                         style={styles.clearButton}
                     >
-                        <EvilIcons name="close-o" size={24} color="#FFFFFF" />
+                        <EvilIcons name="close-o" size={24} color="#FFFFFF" style={{lineHeight: 24}} />
                     </TouchableVibrate>
                 ) : null}
             </View>

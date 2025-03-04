@@ -6,7 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import InputDropDown from "../InputDropDown";
+import InputDropDown from "./InputDropDown";
 import { Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { useLocalSearchParams } from "expo-router";
@@ -44,7 +44,7 @@ export default function ModalAddPlant() {
             <View style={styles.modalView}>
               <View style={styles.btnBlock}>
                 <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
-                  <EvilIcons name="close" size={24} color="#FFFFFF" />
+                  <EvilIcons name="close" size={24} color="#FFFFFF" style={{lineHeight: 24}} />
                 </TouchableVibrate>
                 <Text style={styles.textStr}>Назва</Text>
               </View>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     opacity: 0.95,
     elevation: 5,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderColor: '#E4E4E7',
     shadowColor: "#131316",
     shadowOffset: { width: 0, height: 0 },
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: "93%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255, 255, 255, 0.97)",
     borderRadius: 10,
     padding: 10,
     alignItems: "center",
@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
   },
   btnBlock: {
     flexDirection: "row",
-    justifyContent: "space-between",
     width: "100%",
   },
   buttonModal: {
@@ -116,9 +115,8 @@ const styles = StyleSheet.create({
   },
   buttonClose: {
     borderRadius: 8,
-    height: 35,
-    width: 35,
-    backgroundColor: "#A0A0AB",
+    padding: 4,
+    backgroundColor: "rgba(199, 199, 199, 0.99)",
     borderColor: '#E4E4E7',
     borderWidth: 1,
     justifyContent: "center",

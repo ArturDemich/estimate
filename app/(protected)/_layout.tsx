@@ -16,10 +16,10 @@ export default function ProtectedLayout() {
   useEffect(() => {
     console.log('ProtectedLayout___useEffect')
     const checkToken = async () => {
-     const token = await dispatch(loginThunk())
+      const token = await dispatch(loginThunk())
       console.log('ProtectedLayout__ checkToken',)
 
-      if (!token.payload || Object.keys(token.payload).length === 0 ) {
+      if (!token.payload || Object.keys(token.payload).length === 0) {
         console.log('ProtectedLayout__ checkToken_ replace', Boolean(token.payload))
         router.replace("/login");
       } else {
@@ -40,22 +40,28 @@ export default function ProtectedLayout() {
 
   return (
     <ImageBackground
-                  source={require("../../assets/globoza.jpg")}
-                  style={{flex: 1, width: "100%",
-                    height: "100%",
-                    position: "absolute",}}
-                  resizeMode="cover"
-                >
-    <Stack 
-    screenOptions={{
-      headerStyle: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      },
-      
-    }}
+        source={require("../../assets/globoza.jpg")}
+        style={{
+          flex: 1, 
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+        }}
+        blurRadius={15}
+      >
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        },
+        contentStyle: {
+          backgroundColor: "rgba(255, 255, 255, 0.3)",
+        },
+        animation: 'slide_from_right'
+      }}
     >
-      <Stack.Screen name="index" options={{title: "Всі документи", headerRight: () => <HeaderLogout />,}} />
-      <Stack.Screen name="document" options={{ title: "Документ #", headerRight: () => <HeaderLogout />, }} />
+      <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderLogout />, }} />
+      <Stack.Screen name="document"  options={{ title: "Документ #", headerRight: () => <HeaderLogout />,  }} />
       <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => <HeaderLogout />, }} />
     </Stack>
     </ImageBackground>

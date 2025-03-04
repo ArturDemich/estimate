@@ -6,11 +6,12 @@ import { View } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useBackHandler} from '@react-native-community/hooks'
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import UpLoadBtn from "@/components/DocumentScreen/UpLoadBtn";
 
 export default function Document() {
   const params = useLocalSearchParams();
   const router = useRouter();
-
+  console.log('Document screen', params)
   const handleBackAction = async () => {
     if (!params.docId) return;
     try {
@@ -31,18 +32,19 @@ export default function Document() {
 
   
   return (
-    <View>
+    <View> 
       <Stack.Screen options={{
         title: params.docName?.toString() || "Document",
         headerBackVisible: false,
         headerLeft: () => (
-          <TouchableVibrate style={{marginRight: 15, height: '100%',  pointerEvents: 'auto', }} onPressOut={() => handleBackAction().then(() => router.back())}>
+          <TouchableVibrate style={{ marginLeft: -5,  height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto',}} onPressOut={() => handleBackAction().then(() => router.back())}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>
-        )
+        ),
       }} />
       <PlantListItem />
       <ModalAddPlant />
+      <UpLoadBtn />
     </View>
   );
 }
