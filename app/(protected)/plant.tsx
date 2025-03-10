@@ -1,6 +1,7 @@
 import { getUkrainianPart } from "@/components/helpers";
 import AddDetailsModal from "@/components/PlantScreen/AddDetailsModal";
 import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
+import LabelImgShot from "@/components/Printer/LabelImgShot";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { Ionicons } from "@expo/vector-icons";
 import { useBackHandler } from "@react-native-community/hooks";
@@ -36,18 +37,19 @@ export default function Plant() {
       <Stack.Screen options={{
         headerBackVisible: false,
         headerLeft: () => (
-          <TouchableVibrate style={{marginLeft: -5,  height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto',}} onPressOut={() => handleBackAction().then(() => router.back())}>
+          <TouchableVibrate style={{marginLeft: -5, height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto',}} onPressOut={() => handleBackAction().then(() => router.back())}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>
         ),
       }} />
-      <View style={{paddingLeft: 15, paddingVertical: 5, }}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
-      <PlantSizeItem />
+      <View style={{paddingLeft: 15,   paddingVertical: 5, }}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
+      <PlantSizeItem plantName={namePlant} />
       <AddDetailsModal 
         plantDBid={params.plantId && params.plantId.toString()} 
         docId={params.docId && params.docId.toString()} 
         productId={params.productId && params.productId.toString()}
         />
+        <LabelImgShot />
     </View>
   );
 }

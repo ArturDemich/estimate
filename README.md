@@ -1,50 +1,49 @@
-# Welcome to your Expo app 👋
+replace getBitmapFromURL in: node_modules/@conodene/react-native-thermal-receipt-printer-image-qr/android/src/main/java/com/pinmi/react/printer/adapter/BLEPrinterAdapter.java
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+public static Bitmap getBitmapFromURL(String src) {
+        try {
+            if (src.startsWith("file://")) {
+                // If the URI is a file URI, load the file directly
+                File file = new File(new URI(src));
+                if (file.exists()) {
+                    return BitmapFactory.decodeFile(file.getAbsolutePath());
+                } else {
+                   // Log.e(LOG_TAG, "File not found: " + src);
+                    return null;
+                }
+            } else if (src.startsWith("http://") || src.startsWith("https://")) {
+                // If the URI is an HTTP URL, use HttpURLConnection
+                URL url = new URL(src);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                Bitmap myBitmap = BitmapFactory.decodeStream(input);
+                input.close();
+                return myBitmap;
+            } else {
+                //Log.e(LOG_TAG, "Unsupported URL scheme: " + src);
+                return null;
+            }
+        } catch (Exception e) {
+           // Log.e(LOG_TAG, "Error loading image: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-## Get started
+    +add in top
+        import java.io.File;
+        import java.net.URI;
 
-1. Install dependencies
+    +add in line 55, 56
+        private final static byte[] SET_LINE_SPACE_08 = new byte[] { ESC_CHAR, 0x33, 8 };
 
-   ```bash
-   npm install
-   ```
+    change func - printImageData:
+        replace props SET_LINE_SPACE_08 && 8 insted SET_LINE_SPACE_16 && 32
 
-2. Start the app
 
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+in BLEPrinterAdapter.java - printRawData, printRawDataAsync:
+    +printerOutputStream.write(new byte[]{0x1B, 0x64, 0x00}); // Feed adjustment (0 lines)
+    printerOutputStream.write(bytes, 0, bytes.length);
+    +printerOutputStream.write(new byte[]{0x1D, 0x0C}); // Label end feed

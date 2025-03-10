@@ -1,7 +1,7 @@
 import { deletePlant } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
-import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +9,7 @@ import { getUkrainianPart } from "../helpers";
 import { PlantNameDB } from "@/redux/stateServiceTypes";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
+
 
 export default function PlantListItem() {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,7 +29,7 @@ export default function PlantListItem() {
     await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' }));
     router.push({
       pathname: "/plant",
-      params: { plantName: product_name, plantId: plantDBid, docId: docId, productId },
+      params: { plantName: product_name, plantId: plantDBid, docId: docId, productId, docName: params.docName },
     });
   };
 
@@ -39,7 +40,7 @@ export default function PlantListItem() {
   );
 
   return (
-
+<>
     <FlatList
       data={palnts}
       keyExtractor={(item, index) => item.id.toString() + index} 
@@ -65,6 +66,8 @@ export default function PlantListItem() {
       ListFooterComponent={<View></View>}
       ListFooterComponentStyle={{ height: 50 }}
     />
+    
+    </>
   );
 }
 
@@ -82,25 +85,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 7,
-  },
-  btnPlus: {
-    backgroundColor: "green",
-    width: 40,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnRes: {
-    backgroundColor: "orange",
-    padding: 4,
-    borderRadius: 3,
-    alignItems: "center",
-    justifyContent: "center",
-    width: 70
-  },
-  itemQty: {
-    alignSelf: "flex-end",
-    fontSize: 17,
   },
   itemSize: {
     fontSize: 13,

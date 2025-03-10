@@ -23,10 +23,11 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 interface InputDropDownProps {
     docId: string;
+    docName:string;
     close: () => void;
 };
 
-export default function InputDropDown({ docId, close }: InputDropDownProps) {
+export default function InputDropDown({ docId, close, docName }: InputDropDownProps) {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const searchPlantsList = useSelector<RootState, PlantItemRespons[]>((state) => state.data.searchPlantName);
@@ -59,7 +60,7 @@ export default function InputDropDown({ docId, close }: InputDropDownProps) {
     const navigateToPlantScreen = (name: string, id: number | null, productId?: string,) => {
         router.push({
             pathname: "/plant",
-            params: { plantName: name, plantId: id, docId: docId, productId: productId, barcode },
+            params: { plantName: name, plantId: id, docId: docId, productId: productId, barcode, docName },
         });
     };
     const checkIfPlantExists = async (productid: string) => {

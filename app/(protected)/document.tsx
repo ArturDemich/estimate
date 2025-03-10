@@ -42,7 +42,9 @@ export default function Document() {
           </TouchableVibrate>
         ),
       }} />
+      
       <PlantListItem />
+
       <ModalAddPlant />
       <UpLoadBtn />
     </View>

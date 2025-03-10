@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "moduleResolution": "bundler", // or "nodenext" or "bundler"
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": [
         "./*"
@@ -13,5 +17,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "db/db.js"  ]
+, "db/db.js"  ] 
 }

@@ -51,7 +51,15 @@ export interface PlantDetails {
 export interface PlantDetailsResponse extends PlantDetails {
     id: number;
     currentQty: number;
-}
+};
+
+export interface Label {
+    product_name: string;
+    characteristic_name: string;
+    barcode: string;
+    storageName: string;
+    qtyPrint: number;
+};
 
 export interface DataSlice {
     digStorages: Storages[];
@@ -59,6 +67,7 @@ export interface DataSlice {
     dBPlantsName: PlantNameDB[];
     dBPlantDetails: PlantDetailsResponse[];
     existPlantProps: PlantDetails | null;
+    labelData: Label | null;
 };
 
 export interface PalntNameInput {

@@ -1,4 +1,4 @@
-import { PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
+import { Label, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
 import { Alert, Dimensions, Modal, StyleSheet, Text, TextInput, View } from "react-native";
@@ -7,9 +7,12 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { deleteCharacteristic, updateCharacteristic } from "@/db/db.native";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import PressableVibrate from "@/components/ui/PressableVibrate";
-import { updateLocalCharacteristic } from "@/redux/dataSlice";
+import { setLabelPrint, updateLocalCharacteristic } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import LabelImgShot from "@/components/Printer/LabelImgShot";
+import { useSegments } from "expo-router";
+import { getUkrainianPart } from "@/components/helpers";
 
 const nullId = '00000000-0000-0000-0000-000000000000';
 
@@ -19,12 +22,14 @@ interface RenderPlantDetailProps {
     reloadList: () => void;
     numRow: number;
     flatListRef?: () => void;
+    plantName: string;
+    docName: string;
 };
 
-const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id === item.characteristic_id;
-    console.log('__RenderPlantDetail___ #ff6f61')
+    console.log('__RenderPlantDetail___ #ff6f61',)
     const [showMenu, setShowMenu] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
     const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
@@ -72,8 +77,15 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     };
 
     const handlePrint = () => {
+        const label: Label = {
+            product_name: plantName,
+            characteristic_name: item.characteristic_name,
+            storageName: docName,
+            barcode: item.barcode,
+            qtyPrint: Number(printQty)
+        }
+        dispatch(setLabelPrint(label))
         console.log("Print action for", item.characteristic_name, menuPosition, screenHeight);
-        // setShowMenu(false);
     };
 
     useEffect(() => {
@@ -131,7 +143,6 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                 </View>
             </View>
             <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdateQtyOne(item.currentQty + 1)} onLongPress={() => handleUpdateQtyOne(item.currentQty - 1)}>
-            
                 <Text style={styles.btnPlusText}>+1</Text>
             </TouchableVibrate>
 

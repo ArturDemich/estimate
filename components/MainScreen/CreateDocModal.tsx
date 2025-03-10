@@ -198,17 +198,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#00002329",
   },
-  inputContainer: {
-    backgroundColor: "white",
-    borderRadius: 5,
-    padding: 8,
-    elevation: 3,
-  },
-  suggestionsContainer: {
-    backgroundColor: "white",
-    borderRadius: 5,
-    elevation: 3,
-  },
   modalView: {
     width: "80%",
     height: "70%",
@@ -239,18 +228,6 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 5,
   },
-
-  buttonModal: {
-    borderRadius: 3,
-    textAlign: "center",
-    backgroundColor: "#45aa45",
-    width: 110,
-    alignSelf: "flex-end",
-    height: 35,
-    elevation: 3,
-    justifyContent: "center",
-  },
-
   buttonClose: {
     borderRadius: 8,
     elevation: 3,
@@ -259,38 +236,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: 'center',
   },
-  textStyle: {
-    fontWeight: "500",
-    fontSize: 14,
-    color: "#555555",
-    paddingLeft: 5,
-    paddingRight: 5,
-  },
   textStr: {
     fontWeight: "600",
     fontSize: 13,
-  },
-  modalText: {
-    textAlign: "center",
-    alignSelf: "center",
-    color: "snow",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 3,
-    borderColor: "#e8e7e3",
-    width: "90%",
-    minHeight: 35,
-    padding: 3,
-    backgroundColor: "#f0ede6",
-    marginBottom: 3,
-    marginTop: 10,
-  },
-  qtyBlock: {
-    width: "97%",
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
 });

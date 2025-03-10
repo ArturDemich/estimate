@@ -10,13 +10,13 @@ import { setExistPlantProps } from "@/redux/dataSlice";
 import EmptyList from "@/components/ui/EmptyList";
 
 
- const PlantSizeItem = memo(({existPlantProps}: {existPlantProps: PlantDetails | null}) => {
-  //const router = useRouter();
-  const params = useLocalSearchParams();
+ const PlantSizeItem = memo(({existPlantProps, plantName}: {existPlantProps: PlantDetails | null, plantName: string}) => {
   const dispatch = useDispatch<AppDispatch>();
   const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
+  const params = useLocalSearchParams();
+  const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const flatListRef = useRef<FlatList>(null);
-  console.log('PlantSizeItem ____P', existPlantProps)
+  console.log('PlantSizeItem ____P', params)
   
   const loadDBDetails = async () => {
     const plantId = params.plantId;
@@ -49,7 +49,7 @@ import EmptyList from "@/components/ui/EmptyList";
   useFocusEffect(
     
     useCallback(() => {
-      console.log('params', params)
+      console.log('params barcode', params)
       loadDBDetails()
     }, [])
   );
@@ -62,7 +62,7 @@ import EmptyList from "@/components/ui/EmptyList";
         data={palntDetails}
         onTouchStart={() => existPlantProps && dispatch(setExistPlantProps(null))}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
+        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} plantName={plantName} docName={docName} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
         style={{ width: "100%", paddingBottom: 40, flex: 1 }}
         ListEmptyComponent={<EmptyList text="Немає доданих х-ка" />}
         ListFooterComponent={<View></View>}

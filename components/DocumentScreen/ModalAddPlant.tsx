@@ -18,6 +18,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 export default function ModalAddPlant() {
   const params = useLocalSearchParams();
   const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
+  const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const [show, setShow] = useState(false);
   console.log('ModalAddPlant', params)
 
@@ -48,7 +49,7 @@ export default function ModalAddPlant() {
                 </TouchableVibrate>
                 <Text style={styles.textStr}>Назва</Text>
               </View>
-              <InputDropDown docId={docId} close={() => setShow(false)} />
+              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} />
               
             </View>
           </KeyboardAvoidingView>

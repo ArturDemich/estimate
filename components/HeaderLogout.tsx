@@ -8,8 +8,8 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as SecureStore from "expo-secure-store";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import Foundation from '@expo/vector-icons/Foundation';
-import Feather from '@expo/vector-icons/Feather';
 import Fontisto from '@expo/vector-icons/Fontisto';
+import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
 
 
 export default function HeaderLogout() {
@@ -28,9 +28,11 @@ export default function HeaderLogout() {
     };
 
     const isProtectedIndex = segments[0] === "(protected)" && segments.length === 1;
+    const isPlantScreen = segments[1] === "plant";
 
     return (
         <View style={{ flexDirection: 'row', gap: 10, }}>
+            {isPlantScreen && <BluetoothPrintImg />}
             {!isProtectedIndex &&
                 <TouchableVibrate style={{ alignItems: 'center', width: 40 }}>
                     <Fontisto name="cloud-down" size={18} color="black" style={{ lineHeight: 18, }} />
