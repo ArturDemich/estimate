@@ -30,7 +30,8 @@ export async function initializeDB(): Promise<void> {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        name TEXT NOT NULL DEFAULT '',
+        comment TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
@@ -92,9 +93,8 @@ export async function addDocument(name: string): Promise<number | null> {
   const createdAt = new Date().toISOString();
   try {
     const result = await db.runAsync(
-      "INSERT INTO documents (name, created_at) VALUES (?, ?)",
-      name,
-      createdAt
+      "INSERT INTO documents (name, comment, created_at) VALUES (?, ?, ?)",
+      [name, '', createdAt]
     );
     return result.lastInsertRowId;
   } catch (error) {
@@ -238,31 +238,26 @@ export async function deleteCharacteristic(characteristicId: number): Promise<bo
 }
 
 
-
-export async function updatePlant(
-  plantId: number,
-  quantity: number
-): Promise<boolean> {
-  const db = await openDB();
-  try {
-    const result = await db.runAsync(
-      "UPDATE plants SET quantity = ? WHERE id = ?",
-      quantity,
-      plantId
-    );
-    return result.changes > 0;
-  } catch (error) {
-    console.error("Error updating plant:", error);
-    return false;
-  }
-}
-
 export async function updateCharacteristic(DbCharacteristicId: number, currentQty: number): Promise<boolean> {
   const db = await openDB();
   try {
     const result = await db.runAsync(
       "UPDATE plant_characteristics SET currentQty = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       [currentQty, DbCharacteristicId]
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error updating currentQty:", error);
+    return false;
+  }
+}
+
+export async function updateDocComment(DbDocumentId: number, newComment: string): Promise<boolean> {
+  const db = await openDB();
+  try {
+    const result = await db.runAsync(
+      "UPDATE documents SET comment = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [newComment, DbDocumentId]
     );
     return result.changes > 0;
   } catch (error) {

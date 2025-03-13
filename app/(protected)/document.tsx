@@ -7,6 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {useBackHandler} from '@react-native-community/hooks'
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import UpLoadBtn from "@/components/DocumentScreen/UpLoadBtn";
+import DocComment from "@/components/DocComment";
 
 export default function Document() {
   const params = useLocalSearchParams();
@@ -47,6 +48,7 @@ export default function Document() {
 
       <ModalAddPlant />
       <UpLoadBtn />
+      <DocComment />
     </View>
   );
 }

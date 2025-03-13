@@ -9,10 +9,8 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import PressableVibrate from "@/components/ui/PressableVibrate";
 import { setLabelPrint, updateLocalCharacteristic } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import LabelImgShot from "@/components/Printer/LabelImgShot";
-import { useSegments } from "expo-router";
-import { getUkrainianPart } from "@/components/helpers";
+import { checkBluetoothEnabled } from "@/components/helpers";
+import { myToast } from "@/utils/toastConfig";
 
 const nullId = '00000000-0000-0000-0000-000000000000';
 
@@ -39,7 +37,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const [isEditing, setIsEditing] = useState(false);
     const [printQty, setPrintQty] = useState<string | number>(1);
 
-   
+
     const handleUpdateQtyOne = async (currentQty: number) => {
         const success = await updateCharacteristic(item.id, currentQty);
         if (success) {
@@ -76,7 +74,12 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
         setShowMenu(false);
     };
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
+        const isBluetoothOn = await checkBluetoothEnabled();
+        if (!isBluetoothOn) {
+            myToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
+            return;
+        }
         const label: Label = {
             product_name: plantName,
             characteristic_name: item.characteristic_name,
@@ -153,14 +156,14 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                         onPress={() => setShowMenu(false)}
                     >
                         <View style={[styles.menuContainer, { top: menuPosition.y, left: menuPosition.x, width: menuSize.width, height: menuSize.height }]}>
-                           <View style={{alignSelf: 'flex-end'}}>
-                            <TouchableVibrate style={styles.menuItem} onPress={handleDelete}>
-                                <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
-                                <Text style={[styles.menuText, { color: '#EF4444' }]}>Видалити</Text>
-                            </TouchableVibrate>
+                            <View style={{ alignSelf: 'flex-end' }}>
+                                <TouchableVibrate style={styles.menuItem} onPress={handleDelete}>
+                                    <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
+                                    <Text style={[styles.menuText, { color: '#EF4444' }]}>Видалити</Text>
+                                </TouchableVibrate>
                             </View>
 
-                            <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5}}>
+                            <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
                                 <TextInput
                                     style={styles.inputPrint}
                                     value={printQty.toString()}

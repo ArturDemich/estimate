@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%",
-    backgroundColor: "#ff6f61", // Bright, attractive button color
+    backgroundColor: "rgba(255, 111, 97, 1)", // Bright, attractive button color
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",

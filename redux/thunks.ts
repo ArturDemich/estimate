@@ -3,7 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Alert, Platform } from "react-native";
 import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, PlantDetails, Storages, PlantDetailsResponse } from "./stateServiceTypes";
 import { RootState } from "./store";
-import { fetchCharacteristics, fetchPlants } from "@/db/db.native";
+import { fetchCharacteristics, fetchPlants, updateDocComment } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
 
 const TOKEN = 'BB3C4F93C70785389584F3A1AC9A5F8E-';
@@ -126,3 +126,16 @@ export const getPlantsDetailsDB = createAsyncThunk<PlantDetailsResponse[], { pal
     }
   }
 );
+
+/* export const getDocCommentDB = createAsyncThunk<{comment: string}[], { docId: number, newComment: string }, { rejectValue: string, state: RootState }>(
+  'data/getDocCommentDB',
+  async ({ docId, newComment }, { rejectWithValue }) => {
+    try {
+      const comment = await updateDocComment(docId, newComment);
+      return comment
+    } catch (error) {
+      console.error("Error in thunk getPlantsNameDB: ", error);
+      return rejectWithValue("Failed to fetch plants name");
+    }
+  }
+); */

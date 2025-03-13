@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 import { initializeDB } from "@/db/db.native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { toastConfig } from "@/utils/toastConfig";
 
 
 
@@ -25,7 +26,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
             <StatusBar style="dark" />
             <Slot />
-            <Toast />
+            <Toast config={toastConfig} />
         </SafeAreaProvider>
       </PaperProvider>
     </Provider>

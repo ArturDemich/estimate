@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
 import { DataSlice, Label, PlantDetails } from './stateServiceTypes';
+import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 
 
 const initialState: DataSlice = {
@@ -10,6 +11,9 @@ const initialState: DataSlice = {
   dBPlantDetails: [],
   existPlantProps: null,
   labelData: null,
+  pairedDevices: [],
+  connectedPrinter: null,
+  docComment: '',
 };
 
 
@@ -32,6 +36,18 @@ const dataSlice = createSlice({
       state.labelData = action.payload;
       console.log('dataSlice __ setLabelPrint', state.labelData)
     },
+    setDevices(state, action: PayloadAction<IBLEPrinter[]>) {
+      state.pairedDevices = action.payload;
+      console.log('dataSlice __ setDevices', state.pairedDevices)
+    },
+    connectPrinter(state, action: PayloadAction<IBLEPrinter | null>) {
+      state.connectedPrinter = action.payload;
+      console.log('dataSlice __ connectPrinter', state.connectedPrinter)
+    },
+    setDocComment(state, action: PayloadAction<string>) {
+      state.docComment = action.payload;
+      console.log('dataSlice __ setDocComment', state.docComment)
+    },
     logOut(state) {
       state.digStorages = [];
       state.searchPlantName = [];
@@ -39,6 +55,9 @@ const dataSlice = createSlice({
       state.dBPlantDetails = [];
       state.existPlantProps = null;
       state.labelData = null;
+      state.pairedDevices = [];
+      state.connectedPrinter = null;
+      state.docComment = '';
       console.log('dataSlice __ logOut')
     },
   },
@@ -66,5 +85,5 @@ const dataSlice = createSlice({
   },
 });
 
-export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, logOut } = dataSlice.actions;
+export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, connectPrinter, setDocComment, logOut } = dataSlice.actions;
 export default dataSlice.reducer;

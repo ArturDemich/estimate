@@ -28,11 +28,10 @@ interface AddDetailsProps {
 export default function AddDetailsModal({ plantDBid, docId, productId }: AddDetailsProps) {
     const dispatch = useDispatch<AppDispatch>();
     const params = useLocalSearchParams();
-    // const router = useRouter();
     const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
     const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
-    const dataPlant = plants.length > 0 ? plants.filter((item) => item.product.id === productId) : [];
-    console.log('AddDetailsModal', params.barcode,)
+    const dataPlant = plants?.length > 0 ? plants.filter((item) => item.product.id === productId) : [];
+    console.log('AddDetailsModal', params?.barcode,)
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
 

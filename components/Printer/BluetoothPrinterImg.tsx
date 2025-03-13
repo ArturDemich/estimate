@@ -1,25 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
     View,
     Text,
-    Button,
     Alert,
     PermissionsAndroid,
     Platform,
-    ScrollView,
     Modal,
     StyleSheet,
-    ToastAndroid
+    ActivityIndicator,
+    FlatList,
+    Dimensions,
 } from "react-native";
 import { BLEPrinter, IBLEPrinter, } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Label } from "@/redux/stateServiceTypes";
 import Toast from "react-native-toast-message";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { connectPrinter, setDevices } from "@/redux/dataSlice";
+import { muToast } from "@/utils/toastConfig";
+import EmptyList from "@/components/ui/EmptyList";
+import { checkBluetoothEnabled } from "@/components/helpers";
 
 export const printLabel = async (img: string | null, label: Label | null) => {
     if (!img || !label) {
-        Alert.alert("No Image", "Please try more.");
+        Alert.alert("Немає зображення", "Спробуйте ще раз або перезавантажте додаток");
         return;
     }
     const barcode = label.barcode !== '0' ? label.barcode : null;
@@ -44,11 +50,11 @@ const print = (img: string, barcode: string | null) => {
             barcode
         );
         Toast.show({
-            type: "success",  // Can be 'success', 'error', 'info'
+            type: "customToast",  // Can be 'success', 'error', 'info'
             text1: "Друк...",
             position: "bottom",
-            //visibilityTime: 3000,
-            
+            visibilityTime: 3000,
+            bottomOffset: 90,
         })
     } catch (error) {
         console.error("Print failed:", error);
@@ -56,18 +62,27 @@ const print = (img: string, barcode: string | null) => {
     }
 };
 
-
-const BluetoothPrintImg: React.FC = () => {
-    const [printers, setPrinters] = useState<IBLEPrinter[]>([]);
-    const [selectedPrinter, setSelectedPrinter] = useState<IBLEPrinter | null>(null);
-    const [labelShow, setLabelShow] = useState(false);
+const BluetoothPrintImg = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    const pairedDevices = useSelector<RootState, IBLEPrinter[]>((state) => state.data.pairedDevices);
+    const connectedPrinter = useSelector<RootState, IBLEPrinter | null>((state) => state.data.connectedPrinter);
     const [printerShow, setPrinterShow] = useState(false);
+    const screenHeight = Dimensions.get("window").height;
+    const modalPosition = screenHeight - screenHeight * 0.6;
+
+    const handleOpenModal = async () => {
+        const isBluetoothOn = await checkBluetoothEnabled();
+        if (!isBluetoothOn) {
+            muToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
+            return;
+        }
+        setPrinterShow(!printerShow)
+    }
 
     useEffect(() => {
-        requestBluetoothPermissions();
-    }, []);
+        printerShow && requestBluetoothPermissions();
+    }, [printerShow]);
 
-    /** Requests Bluetooth Permissions (Android 12+) */
     const requestBluetoothPermissions = async () => {
         if (Platform.OS === "android" && Platform.Version >= 31) {
             try {
@@ -76,11 +91,10 @@ const BluetoothPrintImg: React.FC = () => {
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
                 ]);
 
-                if (
-                    granted["android.permission.BLUETOOTH_SCAN"] !== PermissionsAndroid.RESULTS.GRANTED ||
+                if (granted["android.permission.BLUETOOTH_SCAN"] !== PermissionsAndroid.RESULTS.GRANTED ||
                     granted["android.permission.BLUETOOTH_CONNECT"] !== PermissionsAndroid.RESULTS.GRANTED
                 ) {
-                    Alert.alert("Permission Denied", "Bluetooth permissions are required to scan and connect.");
+                    Alert.alert("Дозвіл для Bluetooth відмовлено", "Надайте дозвіл додатку для використання Bluetooth в налаштуваннях.");
                     return;
                 }
             } catch (error) {
@@ -89,106 +103,76 @@ const BluetoothPrintImg: React.FC = () => {
             }
         }
 
-        initBluetooth();
+        // Initialize Bluetooth only if permissions are granted and Bluetooth is ON
+        pairedDevices.length === 0 && initBluetooth();
     };
 
     /** Initializes Bluetooth Printer */
     const initBluetooth = () => {
+        console.log('initBluetooth', pairedDevices)
         BLEPrinter.init()
-            .then(() => BLEPrinter.getDeviceList().then(setPrinters))
+            .then(() => BLEPrinter.getDeviceList().then((data) => dispatch(setDevices(data))))
             .catch((error) => console.error("Bluetooth init failed:", error));
     };
 
     /** Connects to Selected Printer */
     const connectToPrinter = async (printer: IBLEPrinter) => {
+        if(connectedPrinter != null) {
+            dispatch(connectPrinter(null))
+        }
         try {
-            await BLEPrinter.connectPrinter(printer.inner_mac_address);
-            setSelectedPrinter(printer);
-            Alert.alert("Connected!", `Printer: ${printer.device_name}`);
+            await BLEPrinter
+                .connectPrinter(printer.inner_mac_address,)
+                .then((data) => {
+                    dispatch(connectPrinter(data))
+                    muToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
+                })
+                .catch((error) => {
+                    console.log(error)
+                    muToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
+                });
+
         } catch (error) {
             console.error("Connection failed:", error);
             Alert.alert("Error", "Failed to connect to the printer.");
         }
     };
+    console.log('BluetoothPrintImg', screenHeight)
 
-    /** Prints a Test Receipt */
-    const testPrint = async (img: string) => {
-        if (!selectedPrinter) {
-            Alert.alert("No Printer", "Please connect to a printer first.");
-            return;
-        }
-        try {
-            BLEPrinter.printImage(
-                img,
-                {
-                    imageWidth: 300,  // 380 max for 50mm; 300 for 40mm
-                    imageHeight: 120,  //200 max for 30mm
-                },
-            );
-            BLEPrinter.printText(
-                //"\x1B\x33\x08" +  // Line spacing smaller value (8 dots ≈ 1mm)
-                //"\x1B\x24\x00\x3C" + // Move right 60dot
-                //"\x1B\x61\x01" +  // Center alignment
-                //"\x1B\x24\x00\x3C" + // Move right 60dot
-                //"\x1B\x45\x01" +  // Bold ON
-                //`Test print sent\n` +
-                //"\x1B\x45\x01" +  // Bold ON
-                //"\x1B\x61\x01" +  // Center alignment
-                // "WRB, H280-300, SPIRAL\n" //+
-                //'\x1b\x6c' +
-                //"\x1B\x24\x00\x00" +
-                //"\x1B\x69" +
-                //"\n" +
-                "\x1B\x64\x01" +
-                "\x1B\x61\x01" +  // Center barcode
-                "\x1D\x6B\x08" + "2100000062195" + "\x00" +  // Barcode
-                "2100000062195" //+ 
-                // "\x1B\x61\x01" +  // Center alignment
-                // "\x1D\x21\x00" +  // Standard font size (smaller to fit)
-                // "Дубриничі " //+ " 04.03.25"
-                //"\x1B\x24\x1E\x04" + "04.03.25"
-                // "\x1D\x0C"  //feed 
-                //"\x1B\x64" + "\x1B\x63" 
-                //"\x1C\x28\x4C\x02\x42"
-                //"\x1D\x28\x41\x02\x00\x42\x51"
-                //"\x1B\x64" + "\x1B\x63\x34\x01"
-
-                //"\x1D\x0C" + "\x1B\x64\x00" 
-                //"\x1B\x0C"
-            );
-            // setLabelShow(false)
-
-            Alert.alert("Success", "Test print sent.");
-        } catch (error) {
-            console.error("Print failed:", error);
-            Alert.alert("Error", "Failed to print.");
-        }
-    };
 
     return (
         <>
-            <TouchableVibrate onPressOut={() => setPrinterShow(!printerShow)}>
+            <TouchableVibrate onPressOut={handleOpenModal}>
                 <MaterialCommunityIcons name="printer-wireless" size={24} color="black" />
             </TouchableVibrate>
             <Modal visible={printerShow} animationType="slide" transparent onRequestClose={() => setPrinterShow(false)}>
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10, color: 'red' }}>Available Printers:</Text>
-                        <ScrollView style={{ gap: 8, display: 'flex', }}>
-                            {printers.map((printer) => (
-                                <Button
-                                    key={printer.inner_mac_address}
-                                    title={`Connect to ${printer.device_name}`}
-                                    onPress={() => connectToPrinter(printer)}
+                <View style={[styles.centeredView, ]}>
+                    <View style={[styles.modalView, {top: modalPosition - 3}]}>
+                        <Text style={styles.modalTitle}>Раніше підключені пристрої:</Text>
+                        <FlatList
+                            data={pairedDevices}
+                            keyExtractor={(item) => item.inner_mac_address.toString()}
+                            renderItem={({ item }) => (
+                                <View style={styles.deviceItem}>
+                                    <Text style={styles.deviceName}>{item.device_name}</Text>
+                                    {connectedPrinter?.inner_mac_address === item.inner_mac_address ?
+                                        <TouchableVibrate style={styles.deviceBtnDisc} onPress={() => BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))}>
+                                            <Text style={styles.deviceBtnText}>Відключити</Text>
+                                        </TouchableVibrate>
+                                        :
+                                        <ConnectBtn connectToPrinter={() => connectToPrinter(item)} />
+                                    }
+                                </View>
+                            )}
+                            style={{ width: "100%", maxHeight: 220, paddingRight: 5, paddingBottom: 40 }}
+                            contentContainerStyle={{ gap: 8 }}
+                            ListEmptyComponent={<EmptyList text="Немає раніше підключених пристроїв" />}
+                        />
 
-                                />
-                            ))}
-                        </ScrollView>
-
-                        {selectedPrinter && (
-                            <View style={{ marginTop: 20 }}>
-                                <Text>Connected to: {selectedPrinter.device_name}</Text>
-                                <Button title="🖨️ Print Test Receipt" onPress={() => setLabelShow(true)} />
+                        {connectedPrinter && (
+                            <View style={{ marginTop: 10, flexDirection: 'row', alignSelf: 'flex-start' }}>
+                                <Text>підключено до: </Text>
+                                <Text style={styles.connectedTitle}> {connectedPrinter.device_name}</Text>
                             </View>
                         )}
                     </View>
@@ -198,7 +182,20 @@ const BluetoothPrintImg: React.FC = () => {
     );
 };
 
-export default BluetoothPrintImg;
+export default memo(BluetoothPrintImg);
+
+const ConnectBtn = ({ connectToPrinter }: { connectToPrinter: () => Promise<void> }) => {
+    const [connect, setConnect] = useState(false);
+    const handlePress = async () => {
+        setConnect(true)
+        connectToPrinter().then(() => setConnect(false))
+    };
+    return (
+        <TouchableVibrate style={styles.deviceBtn} onPress={handlePress}>
+            {connect ? <ActivityIndicator /> : <Text style={styles.deviceBtnText}>Підключити</Text>}
+        </TouchableVibrate>
+    )
+};
 
 
 
@@ -206,22 +203,23 @@ const styles = StyleSheet.create({
     centeredView: {
         flex: 1,
         alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: 'rgba(0,0,0,0.1)',
+        height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.2)',
     },
     modalView: {
-        width: "80%",
+        //width: "80%",
         height: "60%",
         flexDirection: "column",
         margin: 1,
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        borderRadius: 10,
-        paddingLeft: 5,
-        paddingRight: 5,
+        backgroundColor: "rgba(255, 255, 255, 0.97)",
+        //borderRadius: 10,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
+        paddingLeft: 10,
+        paddingRight: 10,
         paddingBottom: 5,
         paddingTop: 5,
         alignItems: "center",
-        justifyContent: "center",
         shadowColor: "rgba(255, 255, 255, 0.4)",
         shadowOffset: {
             width: 0,
@@ -232,5 +230,67 @@ const styles = StyleSheet.create({
         elevation: 5,
         minHeight: "15%",
         maxHeight: "70%",
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 10,
+    },
+    deviceItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        borderColor: "rgb(232, 232, 232)",
+        borderWidth: 1,
+        minHeight: 50,
+        borderRadius: 5,
+        paddingLeft: 10,
+        paddingRight: 5,
+        paddingVertical: 5,
+        elevation: 10,
+        shadowColor: "rgba(255, 255, 255, 0.5)",
+        shadowOpacity: 0.4,
+        shadowOffset: { width: 0, height: 0 },
+        shadowRadius: 7,
+        opacity: 0.9
+    },
+    deviceName: {
+        fontWeight: 500,
+        maxWidth: 190
+    },
+    deviceBtn: {
+        backgroundColor: "rgba(3, 172, 20, 0.95)",
+        borderRadius: 5,
+        justifyContent: 'center',
+        height: 40,
+        padding: 5,
+        elevation: 1,
+        shadowColor: "rgba(255, 255, 255, 0.5)",
+        width: 90,
+        alignItems: 'center'
+    },
+    deviceBtnText: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: 'rgb(249, 249, 249)',
+
+    },
+    deviceBtnDisc: {
+        backgroundColor: "rgb(247, 80, 9)",
+        borderRadius: 5,
+        justifyContent: 'center',
+        height: 40,
+        padding: 5,
+        elevation: 0,
+        shadowColor: "rgba(255, 255, 255, 0.5)",
+        width: 90,
+        alignItems: 'center'
+    },
+    connectedTitle: {
+        fontWeight: 600,
+        textAlign: 'left',
+        justifyContent: 'flex-start'
     },
 })

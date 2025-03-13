@@ -1,3 +1,5 @@
+import { IBLEPrinter } from "@conodene/react-native-thermal-receipt-printer-image-qr";
+
 export interface LoginData {
     login: string;
     pass: string;
@@ -68,6 +70,9 @@ export interface DataSlice {
     dBPlantDetails: PlantDetailsResponse[];
     existPlantProps: PlantDetails | null;
     labelData: Label | null;
+    pairedDevices: IBLEPrinter[];
+    connectedPrinter: IBLEPrinter | null;
+    docComment: string;
 };
 
 export interface PalntNameInput {

@@ -8,6 +8,7 @@ import {
     findNodeHandle,
     UIManager,
     Keyboard,
+    ActivityIndicator,
 } from "react-native";
 import { Button, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
@@ -23,7 +24,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
 interface InputDropDownProps {
     docId: string;
-    docName:string;
+    docName: string;
     close: () => void;
 };
 
@@ -45,6 +46,7 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
 
     const [barcode, setBarcode] = useState("");
     const [isScanning, setIsScanning] = useState(false);
+    const [isSendSearch, setSendSearch] = useState(false);
 
     const showDropdown = () => {
         if (inputRef.current) {
@@ -65,7 +67,7 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
     };
     const checkIfPlantExists = async (productid: string) => {
         const plant = docPlantsList.find(plant => plant.product_id === productid);
-        return plant ? {existId: plant.id, productId: plant.product_id} : null
+        return plant ? { existId: plant.id, productId: plant.product_id } : null
     };
     const handleCreatePlant = async (name: string, productId: string) => {
         console.log('handleCreatePlant()__START',)
@@ -83,13 +85,18 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
         close();
     };
 
+    const handleSetSearch = async () => {
+        setSendSearch(true)
+        dispatch(getPlantsNameThunk({ name: input, barcode: '' })).then(() => setSendSearch(false))
+    }
+
     const uniquePlants = Array.from(
         searchPlantsList ? new Map(searchPlantsList.map((item) => [item.product.name, item])).values() : []
     );
 
     function isNumericBarcode(barcode: string): boolean {
         return /^\d+$/.test(barcode);
-      }
+    }
 
     useLayoutEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
@@ -107,14 +114,14 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
 
     useEffect(() => {
         if (typingTimeout.current) {
-            console.log('InputDropDown222' )
+            console.log('InputDropDown222')
             clearTimeout(typingTimeout.current);
         }
 
         if (input.trim() !== "" && input.length > 3 && dropdownVisible) {
             console.log('InputDropDown333')
             typingTimeout.current = setTimeout(() => {
-                dispatch(getPlantsNameThunk({ name: input, barcode: '' }));
+                handleSetSearch()
             }, 1000);
         }
     }, [input, dispatch,]);
@@ -122,15 +129,15 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
     useEffect(() => {
         if (barcode) {
             if (isNumericBarcode(barcode)) {
-               dispatch(getPlantsNameThunk({ name: '', barcode: barcode }))
-               .unwrap()
-               .then(((data: PlantItemRespons[]) => {
-                console.log('barcode res', data.length)
-                if (data.length === 1) {
-                    handleCreatePlant(data[0].product.name, data[0].product.id)
-                }
-            }))
-               
+                dispatch(getPlantsNameThunk({ name: '', barcode: barcode }))
+                    .unwrap()
+                    .then(((data: PlantItemRespons[]) => {
+                        console.log('barcode res', data.length)
+                        if (data.length === 1) {
+                            handleCreatePlant(data[0].product.name, data[0].product.id)
+                        }
+                    }))
+
             } else {
                 dispatch(getPlantsNameThunk({ name: barcode, barcode: '' }));
             }
@@ -155,7 +162,7 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
                     placeholderTextColor="#A0A0AB"
                 />
                 <Button onPress={() => setIsScanning(true)}>Barcode</Button>
-                <Text>Barcode / QR Code: {barcode}</Text>
+                
                 {isScanning && (
                     <BarcodeScanner
                         onScan={(scannedData) => {
@@ -174,7 +181,7 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
                         }}
                         style={styles.clearButton}
                     >
-                        <EvilIcons name="close-o" size={24} color="#FFFFFF" style={{lineHeight: 24}} />
+                        <EvilIcons name="close-o" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                     </TouchableVibrate>
                 ) : null}
             </View>
@@ -192,28 +199,32 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
                             },
                         ]}
                     >
-                        <FlatList
-                            data={uniquePlants}
-                            keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item }) => (
-                                <TouchableVibrate
-                                    style={styles.pressItemList}
-                                    onPress={async () => {
-                                        await handleCreatePlant(item.product.name, item.product.id)
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
-                                </TouchableVibrate>
-                            )}
-                            ItemSeparatorComponent={() => (
-                                <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
-                            )}
-                            ListFooterComponent={() => (
-                                <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
-                            )}
-                            keyboardShouldPersistTaps="handled"
-                            contentContainerStyle={{ paddingBottom: 10 }}
-                        />
+                        {isSendSearch ?
+                            <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" />
+                            :
+                            <FlatList
+                                data={uniquePlants}
+                                keyExtractor={(item, index) => index.toString()}
+                                renderItem={({ item }) => (
+                                    <TouchableVibrate
+                                        style={styles.pressItemList}
+                                        onPress={async () => {
+                                            await handleCreatePlant(item.product.name, item.product.id)
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
+                                    </TouchableVibrate>
+                                )}
+                                ItemSeparatorComponent={() => (
+                                    <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
+                                )}
+                                ListFooterComponent={() => (
+                                    <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
+                                )}
+                                keyboardShouldPersistTaps="handled"
+                                contentContainerStyle={{ paddingBottom: 10 }}
+                            />
+                        }
                     </View>
                 </Portal>
             )
@@ -255,10 +266,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1
-    },
-    clearButtonText: {
-        fontSize: 12,
-        color: "#333",
     },
     listContainer: {
         position: "absolute",

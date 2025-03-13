@@ -1,3 +1,4 @@
+import DocComment from "@/components/DocComment";
 import { getUkrainianPart } from "@/components/helpers";
 import AddDetailsModal from "@/components/PlantScreen/AddDetailsModal";
 import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
@@ -7,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useBackHandler } from "@react-native-community/hooks";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Plant() {
   const params = useLocalSearchParams();
@@ -33,7 +35,7 @@ export default function Plant() {
   });
 
   return (
-    <View style={{position: 'relative', height: '100%', display: 'flex', }}>
+    <SafeAreaView style={{position: 'relative', height: '100%', display: 'flex', }}>
       <Stack.Screen options={{
         headerBackVisible: false,
         headerLeft: () => (
@@ -50,7 +52,8 @@ export default function Plant() {
         productId={params.productId && params.productId.toString()}
         />
         <LabelImgShot />
-    </View>
+        <DocComment />
+    </SafeAreaView>
   );
 }
 
