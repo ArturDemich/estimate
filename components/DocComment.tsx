@@ -1,34 +1,19 @@
 
-import React, { useState, useEffect, memo, useLayoutEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import {
     View,
     Text,
-    Alert,
-    PermissionsAndroid,
-    Platform,
-
     StyleSheet,
-    ActivityIndicator,
-    FlatList,
-    Dimensions,
     TextInput,
-    Keyboard,
-    KeyboardAvoidingView,
     Animated,
     ScrollView,
 } from "react-native";
-import { BLEPrinter, IBLEPrinter, } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Label } from "@/redux/stateServiceTypes";
-import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { connectPrinter, setDevices, setDocComment } from "@/redux/dataSlice";
+import { setDocComment } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
-import EmptyList from "@/components/ui/EmptyList";
-import { checkBluetoothEnabled } from "@/components/helpers";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { updateDocComment } from "@/db/db.native";

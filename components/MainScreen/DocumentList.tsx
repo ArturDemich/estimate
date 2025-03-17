@@ -1,7 +1,7 @@
 import { deleteDocument, fetchDocuments } from "@/db/db.native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
 import moment from "moment";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
@@ -23,6 +23,27 @@ export default function DocumentList() {
     console.log('loadDocuments', )
   };
 
+  const handleDelete = (e: GestureResponderEvent, item: DocumentList) => {
+      e.preventDefault()
+      Alert.alert(
+        'Увага!',
+        'Бажаєте видалити документ і всі його записи?',
+        [
+          {
+            text: 'Скасувати',
+            style: 'cancel'
+          },
+          {
+            text: 'Видалити',
+            onPress: async () => {
+              await deleteDocument(item.id)
+              loadDocuments();
+            },
+          }
+        ]
+      )
+    }
+
   function formatDate(timestamp: string): string { 
     return moment(timestamp).format("DD.MM.YYYY - HH:mm");
   }
@@ -40,12 +61,7 @@ export default function DocumentList() {
         renderItem={({ item }) => (
           <TouchableVibrate
             style={styles.documentItem}
-            onLongPress={async (e) => {
-              e.preventDefault()
-              console.log("Document");
-              await deleteDocument(item.id)
-              loadDocuments();
-            }}
+            onLongPress={async (e) => handleDelete(e, item)}
             onPress={() => {
               router.push({
                 pathname: "/document",

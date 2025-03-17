@@ -11,8 +11,9 @@ import { setLabelPrint, updateLocalCharacteristic } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { checkBluetoothEnabled } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
+import { nullID } from "@/types/typesScreen";
 
-const nullId = '00000000-0000-0000-0000-000000000000';
+//const nullId = '00000000-0000-0000-0000-000000000000';
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -27,7 +28,7 @@ interface RenderPlantDetailProps {
 const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id === item.characteristic_id;
-    console.log('__RenderPlantDetail___ #ff6f61',)
+
     const [showMenu, setShowMenu] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
     const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
@@ -37,6 +38,8 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const [isEditing, setIsEditing] = useState(false);
     const [printQty, setPrintQty] = useState<string | number>(1);
 
+    const isManual = item.characteristic_id === nullID && item.unit_id === nullID && item.barcode === '0';
+    console.log('__RenderPlantDetail___ #ff6f61',)
 
     const handleUpdateQtyOne = async (currentQty: number) => {
         const success = await updateCharacteristic(item.id, currentQty);
@@ -68,9 +71,23 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     };
 
     const handleDelete = async () => {
-        console.log("Delete action for", item);
-        await deleteCharacteristic(item.id);
-        await reloadList()
+        Alert.alert(
+            'Увага!',
+            'Бажаєте видалити характеристику?',
+            [
+                {
+                    text: 'Скасувати',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Видалити',
+                    onPress: async () => {
+                        await deleteCharacteristic(item.id);
+                        await reloadList()
+                    },
+                }
+            ]
+        )
         setShowMenu(false);
     };
 
@@ -106,8 +123,8 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             <View style={{ flex: 1, }}>
                 <View style={{ display: "flex", flexDirection: "row", maxWidth: '100%' }}>
                     <Text style={styles.itemNum}>{numRow}.</Text>
-                    <Text style={styles.itemSize}>{
-                        item.characteristic_id === nullId || null ? 'Немає характеристики' : item.characteristic_name
+                    <Text style={[styles.itemSize, isManual && styles.manualSize]}>{
+                        item.characteristic_name === '' || null ? 'Немає характеристики' : item.characteristic_name
                     }</Text>
                 </View>
 
@@ -338,5 +355,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 4,
         minHeight: 30,
+    },
+    manualSize: {
+        color: "rgba(255, 111, 97, 1)"
     },
 });

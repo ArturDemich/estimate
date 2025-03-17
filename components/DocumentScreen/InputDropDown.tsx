@@ -21,6 +21,7 @@ import { getUkrainianPart } from "../helpers";
 import { useRouter } from "expo-router";
 import BarcodeScanner from "../BarcodeScanner";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import { myToast } from "@/utils/toastConfig";
 
 interface InputDropDownProps {
     docId: string;
@@ -85,9 +86,23 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
         close();
     };
 
-    const handleSetSearch = async () => {
-        setSendSearch(true)
-        dispatch(getPlantsNameThunk({ name: input, barcode: '' })).then(() => setSendSearch(false))
+    const handleSetSearch = async (name?: string, barcode?: string) => {
+        setSendSearch(true);
+        try {
+            return await dispatch(getPlantsNameThunk({ name: name ? name : '', barcode: barcode ? barcode : '' })).unwrap();
+        } catch (error: any) {
+            console.log("Search Error:", error);
+            myToast({
+                type: "customError",
+                text1: "Список рослин не отримано!",
+                text2: error,
+                visibilityTime: 6000,
+                position: 'bottom',
+                bottomOffset: 50
+            });
+        } finally {
+            setSendSearch(false);
+        }
     }
 
     const uniquePlants = Array.from(
@@ -117,31 +132,44 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
             console.log('InputDropDown222')
             clearTimeout(typingTimeout.current);
         }
-
         if (input.trim() !== "" && input.length > 3 && dropdownVisible) {
             console.log('InputDropDown333')
-            typingTimeout.current = setTimeout(() => {
-                handleSetSearch()
-            }, 1000);
+            typingTimeout.current = setTimeout(() => { handleSetSearch(input) }, 1000);
         }
+        return () => {
+            if (typingTimeout.current) clearTimeout(typingTimeout.current);
+        };
     }, [input, dispatch,]);
 
     useEffect(() => {
-        if (barcode) {
-            if (isNumericBarcode(barcode)) {
-                dispatch(getPlantsNameThunk({ name: '', barcode: barcode }))
-                    .unwrap()
-                    .then(((data: PlantItemRespons[]) => {
-                        console.log('barcode res', data.length)
-                        if (data.length === 1) {
-                            handleCreatePlant(data[0].product.name, data[0].product.id)
-                        }
-                    }))
+        if (!barcode) return;
 
-            } else {
-                dispatch(getPlantsNameThunk({ name: barcode, barcode: '' }));
+        const fetchPlantByBarcode = async () => {
+            try {
+                if (isNumericBarcode(barcode)) {
+                    const data = await handleSetSearch('', barcode);
+                    console.log("Barcode response:", data?.length);
+                    if (data?.length === 1) {
+                        handleCreatePlant(data[0].product.name, data[0].product.id);
+                    }
+                } else {
+                    await dispatch(getPlantsNameThunk({ name: barcode, barcode: '' })).unwrap();
+                }
+            } catch (error: any) {
+                const errorMessage = error?.message || "Unknown error occurred";
+                console.log("Barcode search error:", error);
+                myToast({
+                    type: "customError",
+                    text1: "Помилка пошук по баркоду!",
+                    text2: errorMessage,
+                    visibilityTime: 6000,
+                    position: 'bottom',
+                    bottomOffset: 50
+                });
             }
-        }
+        };
+
+        fetchPlantByBarcode();
     }, [barcode]);
 
     return (
@@ -162,7 +190,7 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
                     placeholderTextColor="#A0A0AB"
                 />
                 <Button onPress={() => setIsScanning(true)}>Barcode</Button>
-                
+
                 {isScanning && (
                     <BarcodeScanner
                         onScan={(scannedData) => {

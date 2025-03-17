@@ -6,6 +6,7 @@ import { getStoragesThunk } from "@/redux/thunks";
 import { useEffect, useState } from "react";
 import { AppDispatch } from "@/redux/store";
 import { useBackHandler } from "@react-native-community/hooks";
+import { myToast } from "@/utils/toastConfig";
 
 export default function HomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
@@ -13,12 +14,23 @@ export default function HomeScreen() {
   console.log('HomeScreen__',);
   
   const getData = async () => {
+    let toastShown = false;
+  
     try {
       await dispatch(getStoragesThunk()).unwrap();
-      console.log("DocumentList Fetched data:",);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      alert("Failed to fetch data. Please try again later.");
+      console.log("DocumentList Fetched data:");
+    } catch (error: any) {
+      console.log("Error fetching Storage:", error);
+  
+      if (!toastShown) {
+        myToast({
+          type: "customError",
+          text1: "Список складів не отримано!",
+          text2: error,
+          visibilityTime: 5000,
+        });
+        toastShown = true;
+      }
     }
   };
 

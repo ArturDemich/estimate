@@ -122,18 +122,18 @@ export async function addPlant(documentId: number, product: { id: string; name: 
 }
 
 export async function addCharacteristic(
-  plantId: number,
+  plantDBId: number,
   plantItem: PlantItemRespons
 ): Promise<number | null> {
   const db = await openDB();
   try {
-    console.log('addCharacteristic___', plantId, plantItem.barcode)
+    console.log('addCharacteristic___', plantDBId, plantItem.barcode)
     const result = await db.runAsync(
       `INSERT INTO plant_characteristics 
        (plant_id, characteristic_id, characteristic_name, unit_id, unit_name, barcode, quantity) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        plantId,
+        plantDBId,
         plantItem.characteristic.id ? plantItem.characteristic.id : 'null',
         plantItem.characteristic.name ? plantItem.characteristic.name : 'null',
         plantItem.unit.id ? plantItem.unit.id : 'null',
@@ -265,6 +265,131 @@ export async function updateDocComment(DbDocumentId: number, newComment: string)
     return false;
   }
 }
+
+interface PlantResult {
+  productId: string;
+  productName: string;
+  characteristicId: string;
+  characteristicName: string;
+  unitId: string;
+  unitName: string;
+  qty: number;
+}
+interface DocumentResult {
+  id: string; // ID документа
+  date: string; // Дата документа у форматі "yyyy-dd-mm hh-mm-ss"
+  number: string; // Номер документа
+  comment: string; // Коментар
+  storage: {
+      id: string; // ID складу
+      name: string; // Назва складу
+  };
+  products: ProductWithCharacteristics[]; // Масив продуктів з характеристиками
+  newproducts: NewProduct[]; // Масив нових продуктів
+}
+
+// Окремий інтерфейс для продукту з характеристиками
+interface ProductWithCharacteristics {
+  product: {
+      id: string;
+      name: string;
+  };
+  characteristic: {
+      id: string;
+      name: string;
+  };
+  unit: {
+      id: string;
+      name: string;
+  };
+  qty: number; // Кількість
+}
+
+// Окремий інтерфейс для нових продуктів (без characteristicId)
+interface NewProduct {
+  product: {
+      id: string;
+      name: string;
+  };
+  characteristic: {
+      name: string;
+  };
+  qty: number;
+}
+
+export async function getDocumentWithDetails( documentId: string) {
+  const db = await openDB();
+  try {
+      // Отримання документа
+      const docResult: DocumentResult | null = await db.getFirstAsync(
+          `SELECT id, name AS number, comment, created_at AS date FROM documents WHERE id = ?`, 
+          [documentId]
+      );
+
+      if (!docResult) {
+          throw new Error("Документ не знайдено!");
+      }
+
+      // Отримання рослин та їх характеристик
+      const plantResults: PlantResult[] = await db.getAllAsync(
+          `SELECT 
+              p.product_id AS productId, 
+              p.product_name AS productName, 
+              c.characteristic_id AS characteristicId, 
+              c.characteristic_name AS characteristicName, 
+              c.unit_id AS unitId, 
+              c.unit_name AS unitName, 
+              c.quantity AS qty
+          FROM plants p
+          LEFT JOIN plant_characteristics c ON p.id = c.plant_id
+          WHERE p.document_id = ?`,
+          [documentId]
+      );
+
+      // Формування структури
+      const productsMap = new Map();
+
+      for (const row of plantResults) {
+          const productKey = row.productId;
+
+          if (!productsMap.has(productKey)) {
+              productsMap.set(productKey, {
+                  product: {
+                      id: row.productId,
+                      name: row.productName
+                  },
+                  characteristics: []
+              });
+          }
+
+          productsMap.get(productKey).characteristics.push({
+              id: row.characteristicId,
+              name: row.characteristicName,
+              unit: {
+                  id: row.unitId,
+                  name: row.unitName
+              },
+              qty: row.qty
+          });
+      }
+
+      // Формування JSON-результату
+      return {
+          document: {
+              id: docResult.id,
+              date: docResult.date,
+              number: docResult.number,
+              comment: docResult.comment,
+              products: Array.from(productsMap.values())
+          }
+      };
+
+  } catch (error) {
+      console.error("Помилка отримання документа:", error);
+      throw new Error("Не вдалося отримати дані з бази");
+  }
+}
+
 
 
 

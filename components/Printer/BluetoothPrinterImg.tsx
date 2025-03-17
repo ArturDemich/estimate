@@ -19,34 +19,40 @@ import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { connectPrinter, setDevices } from "@/redux/dataSlice";
-import { muToast } from "@/utils/toastConfig";
+import { myToast } from "@/utils/toastConfig";
 import EmptyList from "@/components/ui/EmptyList";
 import { checkBluetoothEnabled } from "@/components/helpers";
+import { Entypo } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
+
+const KEYLableStorage = 'labelWeight';
 
 export const printLabel = async (img: string | null, label: Label | null) => {
     if (!img || !label) {
         Alert.alert("Немає зображення", "Спробуйте ще раз або перезавантажте додаток");
         return;
     }
+    const size = await SecureStore.getItemAsync(KEYLableStorage) || '40';
     const barcode = label.barcode !== '0' ? label.barcode : null;
     for (let i = 0; i < label.qtyPrint; i++) {
-        print(img, barcode)
+        print(img, barcode, size)
     }
 };
 
-const print = (img: string, barcode: string | null) => {
+const print = (img: string, barcode: string | null, size: string) => {
+    const sizeWidth = Number(size) === 40 ? 300 : 380;
     try {
         BLEPrinter.printImage(
             img,
             {
-                imageWidth: 380,  // 380 max for 50mm; 300 for 40mm
+                imageWidth: sizeWidth,  // 380 max for 50mm; 300 for 40mm
                 imageHeight: 120,  //200 max for 30mm
             },
         );
         BLEPrinter.printText(
             "\x1B\x33\x00\n" +
             "\x1B\x61\x01" +  // Center barcode
-            `${barcode && "\x1D\x6B\x08" + barcode + "\x00"}` +  // Barcode
+            `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
             barcode
         );
         Toast.show({
@@ -62,6 +68,12 @@ const print = (img: string, barcode: string | null) => {
     }
 };
 
+enum SizeLabel {
+    Fifty = 50,
+    Forty = 40,
+};
+
+
 const BluetoothPrintImg = () => {
     const dispatch = useDispatch<AppDispatch>();
     const pairedDevices = useSelector<RootState, IBLEPrinter[]>((state) => state.data.pairedDevices);
@@ -69,14 +81,35 @@ const BluetoothPrintImg = () => {
     const [printerShow, setPrinterShow] = useState(false);
     const screenHeight = Dimensions.get("window").height;
     const modalPosition = screenHeight - screenHeight * 0.6;
+    const [selectedSizeLabel, setSelectedSizeLabel] = useState<SizeLabel | null>(null);
 
     const handleOpenModal = async () => {
         const isBluetoothOn = await checkBluetoothEnabled();
         if (!isBluetoothOn) {
-            muToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
+            myToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
             return;
         }
-        setPrinterShow(!printerShow)
+        checkLabelSizeStor()
+        setPrinterShow(true)
+    };
+
+    const checkLabelSizeStor = async () => {
+        if (Platform.OS !== 'web') {
+           const size = await SecureStore.getItemAsync(KEYLableStorage);
+           if(size) {
+            !selectedSizeLabel && setSelectedSizeLabel(Number(size))
+           } else {
+            await SecureStore.setItemAsync(KEYLableStorage, '40');
+            setSelectedSizeLabel(40)
+           }
+        } 
+    };
+
+    const handleSetSizeLabel = async (size: number) => {
+        if (Platform.OS !== 'web') {
+            await SecureStore.setItemAsync(KEYLableStorage, size.toString());
+            setSelectedSizeLabel(size)
+        } 
     }
 
     useEffect(() => {
@@ -103,6 +136,9 @@ const BluetoothPrintImg = () => {
             }
         }
 
+        (BLEPrinter as any).removeListeners = () => { }; // suppress the warning 
+        (BLEPrinter as any).addListener = () => { }; // suppress the warning 
+
         // Initialize Bluetooth only if permissions are granted and Bluetooth is ON
         pairedDevices.length === 0 && initBluetooth();
     };
@@ -117,7 +153,7 @@ const BluetoothPrintImg = () => {
 
     /** Connects to Selected Printer */
     const connectToPrinter = async (printer: IBLEPrinter) => {
-        if(connectedPrinter != null) {
+        if (connectedPrinter != null) {
             dispatch(connectPrinter(null))
         }
         try {
@@ -125,11 +161,11 @@ const BluetoothPrintImg = () => {
                 .connectPrinter(printer.inner_mac_address,)
                 .then((data) => {
                     dispatch(connectPrinter(data))
-                    muToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
+                    myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
                 })
                 .catch((error) => {
                     console.log(error)
-                    muToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
+                    myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
                 });
 
         } catch (error) {
@@ -143,11 +179,11 @@ const BluetoothPrintImg = () => {
     return (
         <>
             <TouchableVibrate onPressOut={handleOpenModal}>
-                <MaterialCommunityIcons name="printer-wireless" size={24} color="black" />
+                <MaterialCommunityIcons name="printer-wireless" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />
             </TouchableVibrate>
             <Modal visible={printerShow} animationType="slide" transparent onRequestClose={() => setPrinterShow(false)}>
-                <View style={[styles.centeredView, ]}>
-                    <View style={[styles.modalView, {top: modalPosition - 3}]}>
+                <View style={[styles.centeredView,]}>
+                    <View style={[styles.modalView, { top: modalPosition - 3 }]}>
                         <Text style={styles.modalTitle}>Раніше підключені пристрої:</Text>
                         <FlatList
                             data={pairedDevices}
@@ -171,10 +207,34 @@ const BluetoothPrintImg = () => {
 
                         {connectedPrinter && (
                             <View style={{ marginTop: 10, flexDirection: 'row', alignSelf: 'flex-start' }}>
-                                <Text>підключено до: </Text>
+                                <Text style={{ fontWeight: 500, color: 'grey' }}>підключено до: </Text>
                                 <Text style={styles.connectedTitle}> {connectedPrinter.device_name}</Text>
                             </View>
                         )}
+
+                        <View style={styles.labeleSizeBlock}>
+                            <Text style={{ fontWeight: 500, color: 'grey' }}>Оберіть розмір наклейки:</Text>
+                            <TouchableVibrate 
+                                style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Fifty && styles.labeleSizeLock]} 
+                                onPress={() => handleSetSizeLabel(SizeLabel.Fifty)}
+                                disabled={selectedSizeLabel === SizeLabel.Fifty}
+                            >
+                                <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
+                                <Text style={styles.labeleSizeText}>50x30mm</Text>
+                                {selectedSizeLabel === SizeLabel.Fifty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
+                            </TouchableVibrate>
+
+
+                            <TouchableVibrate 
+                                style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Forty && styles.labeleSizeLock]} 
+                                onPress={() => handleSetSizeLabel(SizeLabel.Forty)}
+                                disabled={selectedSizeLabel === SizeLabel.Forty}
+                            >
+                                <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
+                                <Text style={styles.labeleSizeText}>40x30mm</Text>
+                                {selectedSizeLabel === SizeLabel.Forty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
+                            </TouchableVibrate>
+                        </View>
                     </View>
                 </View>
             </Modal>
@@ -191,8 +251,8 @@ const ConnectBtn = ({ connectToPrinter }: { connectToPrinter: () => Promise<void
         connectToPrinter().then(() => setConnect(false))
     };
     return (
-        <TouchableVibrate style={styles.deviceBtn} onPress={handlePress}>
-            {connect ? <ActivityIndicator /> : <Text style={styles.deviceBtnText}>Підключити</Text>}
+        <TouchableVibrate style={[styles.deviceBtn, connect && { backgroundColor: 'rgba(201, 201, 201, 0.92)' }]} onPress={handlePress}>
+            {connect ? <ActivityIndicator size='large' color='#ff6f61' /> : <Text style={styles.deviceBtnText}>Підключити</Text>}
         </TouchableVibrate>
     )
 };
@@ -207,12 +267,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.2)',
     },
     modalView: {
-        //width: "80%",
         height: "60%",
         flexDirection: "column",
         margin: 1,
         backgroundColor: "rgba(255, 255, 255, 0.97)",
-        //borderRadius: 10,
         borderTopLeftRadius: 10,
         borderTopRightRadius: 10,
         paddingLeft: 10,
@@ -261,7 +319,7 @@ const styles = StyleSheet.create({
         maxWidth: 190
     },
     deviceBtn: {
-        backgroundColor: "rgba(3, 172, 20, 0.95)",
+        backgroundColor: 'rgba(106, 159, 53, 0.95)',
         borderRadius: 5,
         justifyContent: 'center',
         height: 40,
@@ -292,5 +350,37 @@ const styles = StyleSheet.create({
         fontWeight: 600,
         textAlign: 'left',
         justifyContent: 'flex-start'
+    },
+    labeleSizeBlock: {
+        alignSelf: 'flex-start',
+        marginTop: 8,
+        //gap: 15,
+    },
+    labeleSizeItem: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 8,
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        width: 160,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(131, 131, 131, 0.18)",
+        borderRadius: 5,
+        shadowColor: "rgba(131, 131, 131, 0.67)",
+        backgroundColor: "rgba(255, 255, 255, 0.9)",
+    },
+    labeleSizeText: {
+        fontSize: 15,
+        lineHeight: 24,
+        fontWeight: 500,
+    },
+    labeleSizeLock: {
+        elevation: 0,
+        borderColor: 'unset',
+        borderWidth: 0,
+        shadowColor: 'unset',
+        backgroundColor: "rgba(255, 255, 255, 0.39)",
     },
 })

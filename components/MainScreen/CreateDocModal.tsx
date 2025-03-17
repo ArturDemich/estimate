@@ -15,6 +15,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
+import EmptyList from "@/components/ui/EmptyList";
 
 type StorageItem = {
   id: string;
@@ -27,7 +28,7 @@ type StorageItem = {
 export default function CreateDocModal() {
   const router = useRouter();
   const storages: StorageItem[] = useSelector((state: RootState) => state.data.digStorages);
-  console.log('CreateDocModal')
+  console.log('CreateDocModal', storages)
   const [show, setShow] = useState(false);
 
   const [expandedItems, setExpandedItems] = useState<number[]>([]);
@@ -139,6 +140,7 @@ export default function CreateDocModal() {
               keyExtractor={(item) => item.id.toString()}
               renderItem={renderItem}
               style={{ width: '100%' }}
+              ListEmptyComponent={<EmptyList text="Склади не завантажено" />}
             />
 
             <View style={styles.btnBlock}>

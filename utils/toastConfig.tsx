@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import Toast, { BaseToast, ErrorToast, ToastPosition } from 'react-native-toast-message';
+import Toast, { BaseToast, ErrorToast, ToastPosition, ToastType } from 'react-native-toast-message';
 
 export const toastConfig = {
   success: (props: any) => (
@@ -72,8 +72,9 @@ export const toastConfig = {
   ),
 };
 
+type ToastCustomType = 'customToast' | 'customError' | (string & {});
 interface muToastProps {
-  type: string;
+  type: ToastType | ToastCustomType;
   text1: string;
   text2?: string;
   title?: string;

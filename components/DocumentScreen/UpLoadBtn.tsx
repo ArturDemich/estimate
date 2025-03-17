@@ -1,8 +1,11 @@
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
+import { RootState } from '@/redux/store';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { StyleSheet, View } from 'react-native';
+import { useSelector } from 'react-redux';
 
 const UpLoadBtn = () => {
+  const data = useSelector<RootState>((state) => state.data)
     return (
         <View style={styles.containerNBTN}>
         <TouchableVibrate style={styles.buttonStep}>

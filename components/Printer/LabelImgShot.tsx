@@ -11,18 +11,11 @@ import { printLabel } from "@/components/Printer/BluetoothPrinterImg";
 import { setLabelPrint } from "@/redux/dataSlice";
 import Toast from "react-native-toast-message";
 
-type LabelImgShotProps = {
-    isVisible?: boolean;
-    onClose?: () => void;
-    print?: (img: string) => void;
-};
 
-
-const LabelImgShot = ({ isVisible, onClose, print }: LabelImgShotProps) => {
+const LabelImgShot = () => {
     const label = useSelector<RootState, Label | null>(state => state.data.labelData);
     const dispatch = useDispatch<AppDispatch>();
     const [showView, setShowView] = useState(false);
-    //const [capturedUri, setCapturedUri] = useState<string | null>(null);
     const ref = useRef<ViewShot>(null);
     const DateNow = moment().format('DD.MM.YY');
 
@@ -36,13 +29,12 @@ const LabelImgShot = ({ isVisible, onClose, print }: LabelImgShotProps) => {
                     width: 512,
                     height: 200
                 });
-                //setCapturedUri(uri);
                 return uri
 
             }
         } catch (error) {
             Toast.show({
-                type: "error",  // Can be 'success', 'error', 'info'
+                type: "customError",  // Can be 'success', 'error', 'info'
                 text1: "Failed to capture image!",
                 position: "bottom",
                 visibilityTime: 3000,
@@ -52,15 +44,6 @@ const LabelImgShot = ({ isVisible, onClose, print }: LabelImgShotProps) => {
         }
     };
 
-    /* const printImage = async() => {
-        if (capturedUri) {
-            //print(capturedUri)
-            const uri =  await shot();
-            print && print(uri ? uri : 'kkk')
-            console.log("Printing Image URL:", capturedUri);
-            ToastAndroid.show("Printing...", ToastAndroid.SHORT);
-        }
-    }; */
     const sendPrint = async () => {
         const uri = await shot();
         await printLabel(uri ? uri : null, label);

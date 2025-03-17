@@ -5,6 +5,7 @@ import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB
 import { RootState } from "./store";
 import { fetchCharacteristics, fetchPlants, updateDocComment } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
+import { myToast } from "@/utils/toastConfig";
 
 const TOKEN = 'BB3C4F93C70785389584F3A1AC9A5F8E-';
 function isTokenResponse(token: TokenResponse | {}): token is TokenResponse {
@@ -32,7 +33,7 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
         const response = await DataService.getToken(loginData.login, loginData.pass);
         console.log('loginThunk__ server', response)
         if (!response.success) {
-          Alert.alert('From Server:', response.errors[0])
+          myToast({ type: 'customError', text1: 'Не авторизовано! Сервер відповідає: ', text2: response.errors[0], visibilityTime: 5000 });
           return {}
         }
         const token = Array.isArray(response.data) ? response.data[0] : response.data;
@@ -44,8 +45,7 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
         return token;
 
       } catch (error: any) {
-        console.error("API Error in thunk login:", error);
-        Alert.alert("API Error in thunk login!", error);
+        console.log("API Error in thunk login:", error);
         return rejectWithValue("Failed to login");
       }
     }
@@ -57,20 +57,19 @@ export const getStoragesThunk = createAsyncThunk<Storages[], void, { rejectValue
   async (_, { rejectWithValue, getState }) => {
     try {
       const tokenState = getState().login.token;
-      if (isTokenResponse(tokenState)) {
-        const response = await DataService.getStorages(tokenState.token);
-        if (!response.success) {
-          Alert.alert('From Server:', response.errors[0])
-          return []
-        }
-        console.log('getStoragesThunk',)
-        return response.data;
-      } else {
-        throw new Error("No token available");
+      if (!isTokenResponse(tokenState)) {
+        return rejectWithValue("No valid token available");
       }
-    } catch (error) {
-      console.error("Error in thunk:", error);
-      return rejectWithValue("Failed to fetch storages");
+
+      const response = await DataService.getStorages(tokenState.token);
+      if (!response.success) {
+        return rejectWithValue(response.errors?.[0] || "Unknown error");
+      }
+
+      console.log("getStoragesThunk successful");
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch storages");
     }
   }
 );
@@ -80,23 +79,17 @@ export const getPlantsNameThunk = createAsyncThunk<PlantItemRespons[], PalntName
   async (inputData, { rejectWithValue, getState }) => {
     try {
       const tokenState = getState().login.token;
-      if (isTokenResponse(tokenState)) {
-        const response = await DataService.getPlants(tokenState.token, inputData.name, inputData.barcode);
+      if (!isTokenResponse(tokenState)) {
+        return rejectWithValue("No valid token available");
+      }
+      const response = await DataService.getPlants(tokenState.token, inputData.name, inputData.barcode);
         if (!response.success) {
-          Alert.alert('From Server:', response.errors[0])
-          return []
+          return rejectWithValue(response.errors?.[0] || "Unknown error");
         }
         console.log('getPlantsNameThunk___',)
         return response.data;
-      } else {
-        Alert.alert('From State:', 'No token available!')
-        throw new Error("No token available");
-      }
-    } catch (error) {
-      Alert.alert('From getPlantsNameThunk :', 'Failed to fetch plants name')
-      console.error("Error in thunk: getPlantsNameThunk", error);
-      rejectWithValue("Failed to fetch plants name");
-      return 
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch Plants");
     }
   }
 );
@@ -126,16 +119,3 @@ export const getPlantsDetailsDB = createAsyncThunk<PlantDetailsResponse[], { pal
     }
   }
 );
-
-/* export const getDocCommentDB = createAsyncThunk<{comment: string}[], { docId: number, newComment: string }, { rejectValue: string, state: RootState }>(
-  'data/getDocCommentDB',
-  async ({ docId, newComment }, { rejectWithValue }) => {
-    try {
-      const comment = await updateDocComment(docId, newComment);
-      return comment
-    } catch (error) {
-      console.error("Error in thunk getPlantsNameDB: ", error);
-      return rejectWithValue("Failed to fetch plants name");
-    }
-  }
-); */

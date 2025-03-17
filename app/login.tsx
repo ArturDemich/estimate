@@ -20,7 +20,7 @@ export default function LoginScreen() {
       .then(() => {
         router.replace("/");
       })
-      .catch((error) => console.error("Login error:", error));
+      .catch((error) => console.log("Login error:"));
   };
 
   console.log('LoginScreen')
@@ -62,7 +62,7 @@ export default function LoginScreen() {
             </TouchableVibrate>
           )}
 
-          {status === "failed" && <Text style={styles.errorText}>Login failed. Please try again.</Text>}
+          {status === "failed" && <Text style={styles.errorText}>Помилка входу. Спробуйте ще раз.</Text>}
         </View>
       </View>
     </ImageBackground>

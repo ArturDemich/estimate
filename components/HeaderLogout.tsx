@@ -31,13 +31,13 @@ export default function HeaderLogout() {
     const isPlantScreen = segments[1] === "plant";
 
     return (
-        <View style={{ flexDirection: 'row', gap: 10, }}>
+        <View style={{ flexDirection: 'row', gap: 15, }}>
             {isPlantScreen && <BluetoothPrintImg />}
-            {!isProtectedIndex &&
+            {/* {!isProtectedIndex &&
                 <TouchableVibrate style={{ alignItems: 'center', width: 40 }}>
                     <Fontisto name="cloud-down" size={18} color="black" style={{ lineHeight: 18, }} />
                     <Foundation name="trees" size={12} color="black" style={{ lineHeight: 10, marginTop: -3, }} />
-                </TouchableVibrate>}
+                </TouchableVibrate>} */}
 
             <TouchableVibrate onPressOut={handleLogout} >
                 <MaterialCommunityIcons name="logout" size={24} color="black" />
