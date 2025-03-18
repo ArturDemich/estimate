@@ -14,6 +14,7 @@ const initialState: DataSlice = {
   pairedDevices: [],
   connectedPrinter: null,
   docComment: '',
+  autoPrint: false,
 };
 
 
@@ -48,7 +49,11 @@ const dataSlice = createSlice({
       state.docComment = action.payload;
       console.log('dataSlice __ setDocComment', state.docComment)
     },
-    logOut(state) {
+    setAutoPrint(state, action: PayloadAction<boolean>) {
+      state.autoPrint = action.payload;
+      console.log('dataSlice __ setAutoPrint', state.autoPrint)
+    },
+    clearDataState(state) {
       state.digStorages = [];
       state.searchPlantName = [];
       state.dBPlantsName = [];
@@ -58,7 +63,8 @@ const dataSlice = createSlice({
       state.pairedDevices = [];
       state.connectedPrinter = null;
       state.docComment = '';
-      console.log('dataSlice __ logOut')
+      state.autoPrint = false;
+      console.log('dataSlice __ clearDataState')
     },
   },
   extraReducers: (builder) => {
@@ -85,5 +91,5 @@ const dataSlice = createSlice({
   },
 });
 
-export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, connectPrinter, setDocComment, logOut } = dataSlice.actions;
+export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, connectPrinter, setDocComment, setAutoPrint, clearDataState } = dataSlice.actions;
 export default dataSlice.reducer;

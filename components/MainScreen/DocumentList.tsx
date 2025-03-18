@@ -9,7 +9,7 @@ import EmptyList from "@/components/ui/EmptyList";
 
 interface DocumentList {
   id: number;
-  name: string;
+  storage_name: string;
   created_at: string
 };
 
@@ -20,7 +20,7 @@ export default function DocumentList() {
   const loadDocuments = async () => {
     const data = await fetchDocuments();
     setDocuments(data)
-    console.log('loadDocuments', )
+    console.log('loadDocuments', data)
   };
 
   const handleDelete = (e: GestureResponderEvent, item: DocumentList) => {
@@ -65,12 +65,12 @@ export default function DocumentList() {
             onPress={() => {
               router.push({
                 pathname: "/document",
-                params: { docName: item.name, docId: item.id },
+                params: { docName: item.storage_name, docId: item.id },
               });
             }}
           >
             <View style={styles.itemRow}>
-              <Text>{item.name}</Text>
+              <Text>{item.storage_name}</Text>
               <Text>{formatDate(item.created_at)}</Text>
             </View>
           </TouchableVibrate>

@@ -61,12 +61,12 @@ export default function CreateDocModal() {
     setShow(false);
   };
 
-  const navigateToDocument = async (docName: string) => {
+  const navigateToDocument = async (storeName: string, storeId: string) => {
     setShow(false);
-    const docId = await addDocument(docName)
+    const docId = await addDocument(storeName, storeId)
     router.push({
       pathname: "/document",
-      params: { docName, docId },
+      params: { docName: storeName, docId },
     });
   };
 
@@ -94,7 +94,7 @@ export default function CreateDocModal() {
             renderItem={({ item }) => (
               <TouchableVibrate
                 style={styles.listItem}
-                onPress={() => navigateToDocument(item.name)}
+                onPress={() => navigateToDocument(item.name, item.id)}
               >
                 <Text style={styles.listItemText}>{item.name}</Text>
               </TouchableVibrate>

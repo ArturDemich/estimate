@@ -11,9 +11,7 @@ import { setLabelPrint, updateLocalCharacteristic } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { checkBluetoothEnabled } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
-import { nullID } from "@/types/typesScreen";
-
-//const nullId = '00000000-0000-0000-0000-000000000000';
+import { newSIZE } from "@/types/typesScreen";
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -23,11 +21,12 @@ interface RenderPlantDetailProps {
     flatListRef?: () => void;
     plantName: string;
     docName: string;
+    autoPrint: boolean;
 };
 
-const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
-    const selected = existPlantProps?.characteristic_id === item.characteristic_id;
+    const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
     const [showMenu, setShowMenu] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -38,13 +37,15 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const [isEditing, setIsEditing] = useState(false);
     const [printQty, setPrintQty] = useState<string | number>(1);
 
-    const isManual = item.characteristic_id === nullID && item.unit_id === nullID && item.barcode === '0';
+    const isManual = item.characteristic_id === newSIZE;
     console.log('__RenderPlantDetail___ #ff6f61',)
 
     const handleUpdateQtyOne = async (currentQty: number) => {
         const success = await updateCharacteristic(item.id, currentQty);
         if (success) {
             dispatch(updateLocalCharacteristic({ id: item.id, currentQty: currentQty }));
+            console.log('handleUpdateQtyOne', autoPrint)
+            autoPrint && handlePrint()
         } else {
             console.error("Failed to update characteristic in DB.");
         }
@@ -57,7 +58,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             setIsEditing(false);
             return
         }
-        dispatch(updateLocalCharacteristic({ id: item.id, currentQty: Number(currentQty) }));
+        await dispatch(updateLocalCharacteristic({ id: item.id, currentQty: Number(currentQty) }));
     };
 
     const handleLongPress = () => {
@@ -135,7 +136,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                                 <View style={styles.btnRes}>
                                     <Text>склад:</Text>
                                 </View>
-                                <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}5555{item.unit_name}</Text>
+                                <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
                             </View>
 
                             {isEditing ? (
@@ -206,6 +207,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
 
 const mapStateToProps = (state: RootState) => ({
     existPlantProps: state.data.existPlantProps,
+    autoPrint: state.data.autoPrint,
 })
 
 export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
@@ -214,7 +216,8 @@ export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, next
     return (
         prevProps.item.currentQty === nextProps.item.currentQty &&
         prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
-        prevProps.item.characteristic_id === nextProps.item.characteristic_id
+        prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
+        prevProps.autoPrint === nextProps.autoPrint
     );
 }));
 

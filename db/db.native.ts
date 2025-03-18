@@ -1,5 +1,7 @@
 import { PlantItemRespons } from "@/redux/stateServiceTypes";
+import { newSIZE, nullID } from "@/types/typesScreen";
 import * as SQLite from "expo-sqlite";
+import moment from "moment";
 import { Alert } from "react-native";
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -30,8 +32,9 @@ export async function initializeDB(): Promise<void> {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL DEFAULT '',
-        comment TEXT NOT NULL,
+        storage_id TEXT NOT NULL DEFAULT '',
+        storage_name TEXT NOT NULL DEFAULT '',
+        comment TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
@@ -88,13 +91,13 @@ export async function initializeDB(): Promise<void> {
 }
 
 
-export async function addDocument(name: string): Promise<number | null> {
+export async function addDocument(nameStore: string, storeId: string): Promise<number | null> {
   const db = await openDB();
   const createdAt = new Date().toISOString();
   try {
     const result = await db.runAsync(
-      "INSERT INTO documents (name, comment, created_at) VALUES (?, ?, ?)",
-      [name, '', createdAt]
+      "INSERT INTO documents (storage_name, storage_id, comment, created_at) VALUES (?, ?, ?, ?)",
+      [nameStore, storeId, '', createdAt]
     );
     return result.lastInsertRowId;
   } catch (error) {
@@ -266,72 +269,83 @@ export async function updateDocComment(DbDocumentId: number, newComment: string)
   }
 }
 
-interface PlantResult {
-  productId: string;
-  productName: string;
-  characteristicId: string;
-  characteristicName: string;
-  unitId: string;
-  unitName: string;
-  qty: number;
-}
-interface DocumentResult {
-  id: string; // ID документа
-  date: string; // Дата документа у форматі "yyyy-dd-mm hh-mm-ss"
-  number: string; // Номер документа
-  comment: string; // Коментар
-  storage: {
-      id: string; // ID складу
-      name: string; // Назва складу
-  };
-  products: ProductWithCharacteristics[]; // Масив продуктів з характеристиками
-  newproducts: NewProduct[]; // Масив нових продуктів
+
+
+interface StorageInfo {
+    id: string;
+    name: string;
 }
 
-// Окремий інтерфейс для продукту з характеристиками
+interface Characteristic {
+    id: string;
+    name: string;
+    unit: {
+        id: string;
+        name: string;
+    };
+    qty: number;
+}
+
+interface Product {
+    id: string;
+    name: string;
+}
+
 interface ProductWithCharacteristics {
-  product: {
-      id: string;
-      name: string;
-  };
-  characteristic: {
-      id: string;
-      name: string;
-  };
-  unit: {
-      id: string;
-      name: string;
-  };
-  qty: number; // Кількість
+    product: Product;
+    characteristics: Characteristic[];
 }
 
-// Окремий інтерфейс для нових продуктів (без characteristicId)
 interface NewProduct {
-  product: {
-      id: string;
-      name: string;
-  };
-  characteristic: {
-      name: string;
-  };
-  qty: number;
+    product: Product;
+    characteristic: {
+        id: string;
+        name: string;
+    };
+    qty: number;
 }
 
-export async function getDocumentWithDetails( documentId: string) {
+export interface DocumentResult {
+    id: string;
+    date: string;
+    number: string;
+    comment: string;
+    storage: StorageInfo;
+    products: ProductWithCharacteristics[];
+    newproducts: NewProduct[];
+}
+
+interface PlantResult {
+    productId: string | null;
+    productName: string | null;
+    characteristicId: string | null;
+    characteristicName: string | null;
+    unitId: string | null;
+    unitName: string | null;
+    qty: number | null;
+}
+
+
+
+export async function getDocumentWithDetails(docId: number): Promise<DocumentResult | null> {
   const db = await openDB();
+
   try {
-      // Отримання документа
-      const docResult: DocumentResult | null = await db.getFirstAsync(
-          `SELECT id, name AS number, comment, created_at AS date FROM documents WHERE id = ?`, 
-          [documentId]
+      const docResult = await db.getFirstAsync<{
+          id: string;
+          storage_id: string | null;
+          storage_name: string | null;
+          comment: string | null;
+          date: string | null;
+      }>(
+          `SELECT id, storage_id, storage_name, comment, created_at AS date 
+           FROM documents WHERE id = ?`, 
+          [docId]
       );
 
-      if (!docResult) {
-          throw new Error("Документ не знайдено!");
-      }
+      if (!docResult) return null;
 
-      // Отримання рослин та їх характеристик
-      const plantResults: PlantResult[] = await db.getAllAsync(
+      const plantResults = await db.getAllAsync<PlantResult>(
           `SELECT 
               p.product_id AS productId, 
               p.product_name AS productName, 
@@ -339,49 +353,55 @@ export async function getDocumentWithDetails( documentId: string) {
               c.characteristic_name AS characteristicName, 
               c.unit_id AS unitId, 
               c.unit_name AS unitName, 
-              c.quantity AS qty
-          FROM plants p
-          LEFT JOIN plant_characteristics c ON p.id = c.plant_id
-          WHERE p.document_id = ?`,
-          [documentId]
+              c.currentQty AS qty
+           FROM plants p
+           LEFT JOIN plant_characteristics c ON p.id = c.plant_id
+           WHERE p.document_id = ?`,
+          [docId]
       );
 
-      // Формування структури
-      const productsMap = new Map();
+      const productsMap = new Map<string, ProductWithCharacteristics>();
+      const newProducts: NewProduct[] = [];
 
       for (const row of plantResults) {
-          const productKey = row.productId;
+          const productKey = row.productId || "";
 
           if (!productsMap.has(productKey)) {
               productsMap.set(productKey, {
-                  product: {
-                      id: row.productId,
-                      name: row.productName
-                  },
+                  product: { id: row.productId || "", name: row.productName || "" },
                   characteristics: []
               });
           }
 
-          productsMap.get(productKey).characteristics.push({
-              id: row.characteristicId,
-              name: row.characteristicName,
-              unit: {
-                  id: row.unitId,
-                  name: row.unitName
-              },
-              qty: row.qty
-          });
+          const characteristic: Characteristic = {
+              id: row.characteristicId || "",
+              name: row.characteristicName || "",
+              unit: { id: row.unitId || "", name: row.unitName || "" },
+              qty: row.qty ?? 0
+          };
+
+          if (row.characteristicId === newSIZE) {
+              newProducts.push({
+                  product: { id: row.productId || "", name: row.productName || "" },
+                  characteristic: { id: nullID, name: row.characteristicName || "" },
+                  qty: row.qty ?? 0
+              });
+          } else {
+              productsMap.get(productKey)?.characteristics.push(characteristic);
+          }
       }
 
-      // Формування JSON-результату
       return {
-          document: {
-              id: docResult.id,
-              date: docResult.date,
-              number: docResult.number,
-              comment: docResult.comment,
-              products: Array.from(productsMap.values())
-          }
+          id: nullID,
+          date: moment(docResult.date).format("YYYY-DD-MM HH-mm-ss"),
+          number: docResult.id.toString() || "0",
+          comment: docResult.comment || "",
+          storage: {
+              id: docResult.storage_id || "",
+              name: docResult.storage_name || ""
+          },
+          products: Array.from(productsMap.values()),
+          newproducts: newProducts
       };
 
   } catch (error) {
@@ -389,6 +409,8 @@ export async function getDocumentWithDetails( documentId: string) {
       throw new Error("Не вдалося отримати дані з бази");
   }
 }
+
+
 
 
 

@@ -38,11 +38,10 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Ensure CameraView has height and width */}
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{ barcodeTypes: ["qr", "ean13", "upc_a"] }}
-        style={styles.camera} // Apply styles here
+        style={styles.camera}
       />
       <View style={styles.overlay}>
         <TouchableVibrate onPress={onClose} style={styles.clearButton}>
@@ -74,8 +73,6 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: "absolute", // Make buttons overlay the camera
-    //bottom: '100%', // Move buttons to the bottom
-    //top: '100%',
     width: "100%",
     alignItems: "center",
     zIndex: 2

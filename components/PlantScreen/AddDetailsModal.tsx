@@ -21,7 +21,7 @@ import { EvilIcons } from "@expo/vector-icons";
 import { getUkrainianPart } from "@/components/helpers";
 import EmptyList from "@/components/ui/EmptyList";
 import ManualDetailsAdd from "@/components/PlantScreen/ManualDetailsAdd";
-import { nullID, unitPC } from "@/types/typesScreen";
+import { newSIZE, nullID, unitPC } from "@/types/typesScreen";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 interface AddDetailsProps {
@@ -70,7 +70,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
             },
             characteristic: {
                 name: plantDetail,
-                id: nullID
+                id: newSIZE
             },
             unit: {
                 name: unitPC.name,
@@ -82,7 +82,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
         if (isCharacteristicAdded('', plantDetail)) {
             dispatch(setExistPlantProps({
                 plant_id: Number(plantDBid),
-                characteristic_id: nullID,
+                characteristic_id: newSIZE,
                 characteristic_name: plantDetail,
                 unit_id: unitPC.name,
                 unit_name: unitPC.id,
