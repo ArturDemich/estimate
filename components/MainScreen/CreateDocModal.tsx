@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { addDocument } from "@/db/db.native";
+import { addDocument, deleteDatabase, listDatabases } from "@/db/db.native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
@@ -61,12 +61,12 @@ export default function CreateDocModal() {
     setShow(false);
   };
 
-  const navigateToDocument = async (docName: string) => {
+  const navigateToDocument = async (storeName: string, storeId: string) => {
     setShow(false);
-    const docId = await addDocument(docName)
+    const docId = await addDocument(storeName, storeId)
     router.push({
       pathname: "/document",
-      params: { docName, docId },
+      params: { docName: storeName, docId },
     });
   };
 
@@ -94,7 +94,7 @@ export default function CreateDocModal() {
             renderItem={({ item }) => (
               <TouchableVibrate
                 style={styles.listItem}
-                onPress={() => navigateToDocument(item.name)}
+                onPress={() => navigateToDocument(item.name, item.id)}
               >
                 <Text style={styles.listItemText}>{item.name}</Text>
               </TouchableVibrate>
@@ -113,9 +113,11 @@ export default function CreateDocModal() {
         <TouchableVibrate
           style={styles.buttonStep}
           onPress={() => setShow(!show)}
+          //onPress={() => deleteDatabase()}
+          //onPress={() => listDatabases()}
         >
-          <Feather name="plus" size={14} color="black" />
-          <Ionicons name="document-text-outline" size={28} color="black" />
+          <Feather name="plus" size={22} color="black" />
+          <Ionicons name="document-text-outline" size={26} color="black" />
         </TouchableVibrate>
       </View>
 

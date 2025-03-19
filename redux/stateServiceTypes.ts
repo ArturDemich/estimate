@@ -73,6 +73,7 @@ export interface DataSlice {
     pairedDevices: IBLEPrinter[];
     connectedPrinter: IBLEPrinter | null;
     docComment: string;
+    autoPrint: boolean;
 };
 
 export interface PalntNameInput {

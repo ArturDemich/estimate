@@ -1,6 +1,9 @@
 import { PlantItemRespons } from "@/redux/stateServiceTypes";
 import * as SQLite from "expo-sqlite";
 import { Alert } from "react-native";
+import * as FileSystem from 'expo-file-system';
+import { newSIZE, nullID } from "@/types/typesScreen";
+import moment from "moment";
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
@@ -22,6 +25,7 @@ export async function openDB(): Promise<SQLite.SQLiteDatabase> {
  * Initializes the database by setting the journal mode and creating the tables.
  */
 export async function initializeDB(): Promise<void> {
+  //checkDatabaseSchema()
   const db = await openDB();
   try {
     await db.execAsync("PRAGMA foreign_keys = ON;");
@@ -31,7 +35,9 @@ export async function initializeDB(): Promise<void> {
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL DEFAULT '',
-        comment TEXT NOT NULL,
+        storage_id TEXT NOT NULL DEFAULT '',
+        storage_name TEXT NOT NULL DEFAULT '',
+        comment TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
@@ -88,13 +94,13 @@ export async function initializeDB(): Promise<void> {
 }
 
 
-export async function addDocument(name: string): Promise<number | null> {
+export async function addDocument(nameStore: string, storeId: string): Promise<number | null> {
   const db = await openDB();
   const createdAt = new Date().toISOString();
   try {
     const result = await db.runAsync(
-      "INSERT INTO documents (name, comment, created_at) VALUES (?, ?, ?)",
-      [name, '', createdAt]
+      "INSERT INTO documents (storage_name, storage_id, comment, created_at) VALUES (?, ?, ?, ?)",
+      [nameStore, storeId, '', createdAt]
     );
     return result.lastInsertRowId;
   } catch (error) {
@@ -154,7 +160,7 @@ export async function addCharacteristic(
 
 export async function fetchDocuments(): Promise<any[]> {
   const db = await openDB();
-  
+
   try {
     const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
     console.log('fetchDocuments__', rows)
@@ -266,129 +272,193 @@ export async function updateDocComment(DbDocumentId: number, newComment: string)
   }
 }
 
-interface PlantResult {
-  productId: string;
-  productName: string;
-  characteristicId: string;
-  characteristicName: string;
-  unitId: string;
-  unitName: string;
-  qty: number;
-}
-interface DocumentResult {
-  id: string; // ID документа
-  date: string; // Дата документа у форматі "yyyy-dd-mm hh-mm-ss"
-  number: string; // Номер документа
-  comment: string; // Коментар
-  storage: {
-      id: string; // ID складу
-      name: string; // Назва складу
-  };
-  products: ProductWithCharacteristics[]; // Масив продуктів з характеристиками
-  newproducts: NewProduct[]; // Масив нових продуктів
+interface StorageInfo {
+  id: string;
+  name: string;
 }
 
-// Окремий інтерфейс для продукту з характеристиками
-interface ProductWithCharacteristics {
-  product: {
-      id: string;
-      name: string;
-  };
-  characteristic: {
-      id: string;
-      name: string;
-  };
+interface Characteristic {
+  id: string;
+  name: string;
   unit: {
-      id: string;
-      name: string;
-  };
-  qty: number; // Кількість
-}
-
-// Окремий інтерфейс для нових продуктів (без characteristicId)
-interface NewProduct {
-  product: {
-      id: string;
-      name: string;
-  };
-  characteristic: {
-      name: string;
+    id: string;
+    name: string;
   };
   qty: number;
 }
 
-export async function getDocumentWithDetails( documentId: string) {
+interface Product {
+  id: string;
+  name: string;
+}
+
+interface ProductWithCharacteristics {
+  product: Product;
+  characteristics: Characteristic[];
+}
+
+interface NewProduct {
+  product: Product;
+  characteristic: {
+    id: string;
+    name: string;
+  };
+  qty: number;
+}
+
+export interface DocumentResult {
+  id: string;
+  date: string;
+  number: string;
+  comment: string;
+  storage: StorageInfo;
+  products: ProductWithCharacteristics[];
+  newproducts: NewProduct[];
+}
+
+interface PlantResult {
+  productId: string | null;
+  productName: string | null;
+  characteristicId: string | null;
+  characteristicName: string | null;
+  unitId: string | null;
+  unitName: string | null;
+  qty: number | null;
+}
+
+
+
+export async function getDocumentWithDetails(docId: number): Promise<DocumentResult | null> {
   const db = await openDB();
+
   try {
-      // Отримання документа
-      const docResult: DocumentResult | null = await db.getFirstAsync(
-          `SELECT id, name AS number, comment, created_at AS date FROM documents WHERE id = ?`, 
-          [documentId]
-      );
+    const docResult = await db.getFirstAsync<{
+      id: string;
+      storage_id: string | null;
+      storage_name: string | null;
+      comment: string | null;
+      date: string | null;
+    }>(
+      `SELECT id, storage_id, storage_name, comment, created_at AS date 
+         FROM documents WHERE id = ?`,
+      [docId]
+    );
 
-      if (!docResult) {
-          throw new Error("Документ не знайдено!");
+    if (!docResult) return null;
+
+    const plantResults = await db.getAllAsync<PlantResult>(
+      `SELECT 
+            p.product_id AS productId, 
+            p.product_name AS productName, 
+            c.characteristic_id AS characteristicId, 
+            c.characteristic_name AS characteristicName, 
+            c.unit_id AS unitId, 
+            c.unit_name AS unitName, 
+            c.currentQty AS qty
+         FROM plants p
+         LEFT JOIN plant_characteristics c ON p.id = c.plant_id
+         WHERE p.document_id = ?`,
+      [docId]
+    );
+
+    const productsMap = new Map<string, ProductWithCharacteristics>();
+    const newProducts: NewProduct[] = [];
+
+    for (const row of plantResults) {
+      const productKey = row.productId || "";
+
+      if (!productsMap.has(productKey)) {
+        productsMap.set(productKey, {
+          product: { id: row.productId || "", name: row.productName || "" },
+          characteristics: []
+        });
       }
 
-      // Отримання рослин та їх характеристик
-      const plantResults: PlantResult[] = await db.getAllAsync(
-          `SELECT 
-              p.product_id AS productId, 
-              p.product_name AS productName, 
-              c.characteristic_id AS characteristicId, 
-              c.characteristic_name AS characteristicName, 
-              c.unit_id AS unitId, 
-              c.unit_name AS unitName, 
-              c.quantity AS qty
-          FROM plants p
-          LEFT JOIN plant_characteristics c ON p.id = c.plant_id
-          WHERE p.document_id = ?`,
-          [documentId]
-      );
-
-      // Формування структури
-      const productsMap = new Map();
-
-      for (const row of plantResults) {
-          const productKey = row.productId;
-
-          if (!productsMap.has(productKey)) {
-              productsMap.set(productKey, {
-                  product: {
-                      id: row.productId,
-                      name: row.productName
-                  },
-                  characteristics: []
-              });
-          }
-
-          productsMap.get(productKey).characteristics.push({
-              id: row.characteristicId,
-              name: row.characteristicName,
-              unit: {
-                  id: row.unitId,
-                  name: row.unitName
-              },
-              qty: row.qty
-          });
-      }
-
-      // Формування JSON-результату
-      return {
-          document: {
-              id: docResult.id,
-              date: docResult.date,
-              number: docResult.number,
-              comment: docResult.comment,
-              products: Array.from(productsMap.values())
-          }
+      const characteristic: Characteristic = {
+        id: row.characteristicId || "",
+        name: row.characteristicName || "",
+        unit: { id: row.unitId || "", name: row.unitName || "" },
+        qty: row.qty ?? 0
       };
 
+      if (row.characteristicId === newSIZE) {
+        newProducts.push({
+          product: { id: row.productId || "", name: row.productName || "" },
+          characteristic: { id: nullID, name: row.characteristicName || "" },
+          qty: row.qty ?? 0
+        });
+      } else {
+        productsMap.get(productKey)?.characteristics.push(characteristic);
+      }
+    }
+
+    return {
+      id: nullID,
+      date: moment(docResult.date).format("YYYY-DD-MM HH-mm-ss"),
+      number: docResult.id.toString() || "0",
+      comment: docResult.comment || "",
+      storage: {
+        id: docResult.storage_id || "",
+        name: docResult.storage_name || ""
+      },
+      products: Array.from(productsMap.values()),
+      newproducts: newProducts
+    };
+
   } catch (error) {
-      console.error("Помилка отримання документа:", error);
-      throw new Error("Не вдалося отримати дані з бази");
+    console.error("Помилка отримання документа:", error);
+    throw new Error("Не вдалося отримати дані з бази");
   }
 }
+
+
+
+
+const DB_NAME = 'app.db';
+const DB_PATH = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
+export const deleteDatabase = async () => {
+  const dbDirectory = FileSystem.documentDirectory + 'SQLite/';
+  try {
+    const dbInfo = await FileSystem.getInfoAsync(DB_PATH);
+    if (dbInfo.exists) {
+      await FileSystem.deleteAsync(dbDirectory + 'app.db', { idempotent: true });
+      await FileSystem.deleteAsync(dbDirectory + 'app.db-shm', { idempotent: true });
+      await FileSystem.deleteAsync(dbDirectory + 'app.db-wal', { idempotent: true });
+      console.log('База даних видалена успішно.');
+    } else {
+      console.log('База даних не знайдена.');
+    }
+  } catch (error) {
+    console.error('Помилка при видаленні бази даних:', error);
+  }
+};
+
+export const checkDatabaseSchema = async () => {
+  const db = await openDB();
+  try {
+    const resultSet: any = await db.getAllAsync("PRAGMA table_info(documents);");
+    console.log("resultSet____", resultSet);
+    const columns = resultSet.map((row: any) => row.name);
+    const requiredColumns = ["storage_id", "storage_name", "comment"];
+    const missingColumns = requiredColumns.filter(col => !columns.includes(col));
+
+    if (missingColumns.length > 0) {
+      //await deleteDatabase();
+      console.log(`Базу даних потрібно було перезапустити. Відсутні колонки: ${missingColumns.join(", ")}`);
+    } else {
+      console.log("Усі необхідні колонки присутні.");
+    }
+  } catch (error) {
+    console.error("Помилка перевірки схеми:", error);
+  }
+};
+
+export const listDatabases = async () => {
+  const dbDir = FileSystem.documentDirectory + 'SQLite/';
+  console.log('Databases dbDir:', dbDir);
+  const files = await FileSystem.readDirectoryAsync(dbDir);
+  console.log('Databases:', files);
+};
 
 
 

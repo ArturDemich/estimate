@@ -36,15 +36,15 @@ export default function LoginScreen() {
     >
       <View style={styles.container}>
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Login</Text>
+          <Text style={styles.title}>Авторизація</Text>
           <TextInput
-            placeholder="Username"
+            placeholder="Логін"
             value={username}
             onChangeText={setUsername}
             style={styles.input}
           />
           <TextInput
-            placeholder="Password"
+            placeholder="Пароль"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -58,7 +58,7 @@ export default function LoginScreen() {
               style={[styles.button, (username === '' || password === '') && styles.lock]}
               onPress={handleLogin}
             >
-              <Text style={styles.buttonText}>Login</Text>
+              <Text style={styles.buttonText}>Вхід</Text>
             </TouchableVibrate>
           )}
 

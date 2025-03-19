@@ -12,4 +12,5 @@ export const nullID = '00000000-0000-0000-0000-000000000000';
 export const unitPC = {
     name: "шт",
     id: "b3243323-c0df-11ea-8275-00c12700489e"
-}
+};
+export const newSIZE = 'newSize';

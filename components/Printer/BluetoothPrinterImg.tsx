@@ -10,6 +10,9 @@ import {
     ActivityIndicator,
     FlatList,
     Dimensions,
+    Switch,
+    TouchableWithoutFeedback,
+    Pressable,
 } from "react-native";
 import { BLEPrinter, IBLEPrinter, } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
@@ -18,7 +21,7 @@ import { Label } from "@/redux/stateServiceTypes";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { connectPrinter, setDevices } from "@/redux/dataSlice";
+import { connectPrinter, setAutoPrint, setDevices } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
 import EmptyList from "@/components/ui/EmptyList";
 import { checkBluetoothEnabled } from "@/components/helpers";
@@ -60,7 +63,7 @@ const print = (img: string, barcode: string | null, size: string) => {
             text1: "Друк...",
             position: "bottom",
             visibilityTime: 3000,
-            bottomOffset: 90,
+            bottomOffset: 130,
         })
     } catch (error) {
         console.error("Print failed:", error);
@@ -78,6 +81,7 @@ const BluetoothPrintImg = () => {
     const dispatch = useDispatch<AppDispatch>();
     const pairedDevices = useSelector<RootState, IBLEPrinter[]>((state) => state.data.pairedDevices);
     const connectedPrinter = useSelector<RootState, IBLEPrinter | null>((state) => state.data.connectedPrinter);
+    const autoPrint = useSelector<RootState, boolean>((state) => state.data.autoPrint);
     const [printerShow, setPrinterShow] = useState(false);
     const screenHeight = Dimensions.get("window").height;
     const modalPosition = screenHeight - screenHeight * 0.6;
@@ -95,22 +99,26 @@ const BluetoothPrintImg = () => {
 
     const checkLabelSizeStor = async () => {
         if (Platform.OS !== 'web') {
-           const size = await SecureStore.getItemAsync(KEYLableStorage);
-           if(size) {
-            !selectedSizeLabel && setSelectedSizeLabel(Number(size))
-           } else {
-            await SecureStore.setItemAsync(KEYLableStorage, '40');
-            setSelectedSizeLabel(40)
-           }
-        } 
+            const size = await SecureStore.getItemAsync(KEYLableStorage);
+            if (size) {
+                !selectedSizeLabel && setSelectedSizeLabel(Number(size))
+            } else {
+                await SecureStore.setItemAsync(KEYLableStorage, '40');
+                setSelectedSizeLabel(40)
+            }
+        }
     };
 
     const handleSetSizeLabel = async (size: number) => {
         if (Platform.OS !== 'web') {
             await SecureStore.setItemAsync(KEYLableStorage, size.toString());
             setSelectedSizeLabel(size)
-        } 
-    }
+        }
+    };
+
+    const handleSwitch = () => {
+        dispatch(setAutoPrint(!autoPrint))
+    };
 
     useEffect(() => {
         printerShow && requestBluetoothPermissions();
@@ -179,17 +187,20 @@ const BluetoothPrintImg = () => {
     return (
         <>
             <TouchableVibrate onPressOut={handleOpenModal}>
-                <MaterialCommunityIcons name="printer-wireless" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />
+                {(!connectedPrinter && !autoPrint) && <MaterialCommunityIcons name="printer-settings" size={24} color="black" />}
+                {(!connectedPrinter && autoPrint || connectedPrinter && autoPrint) && <MaterialCommunityIcons name="printer-eye" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />}
+                {(connectedPrinter && !autoPrint) && <MaterialCommunityIcons name="printer-wireless" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />}
             </TouchableVibrate>
             <Modal visible={printerShow} animationType="slide" transparent onRequestClose={() => setPrinterShow(false)}>
+            <TouchableWithoutFeedback onPress={() => setPrinterShow(false)}>
                 <View style={[styles.centeredView,]}>
-                    <View style={[styles.modalView, { top: modalPosition - 3 }]}>
+                    <Pressable style={[styles.modalView, { top: modalPosition - 3 }]}>
                         <Text style={styles.modalTitle}>Раніше підключені пристрої:</Text>
                         <FlatList
                             data={pairedDevices}
                             keyExtractor={(item) => item.inner_mac_address.toString()}
                             renderItem={({ item }) => (
-                                <View style={styles.deviceItem}>
+                                <Pressable style={styles.deviceItem}>
                                     <Text style={styles.deviceName}>{item.device_name}</Text>
                                     {connectedPrinter?.inner_mac_address === item.inner_mac_address ?
                                         <TouchableVibrate style={styles.deviceBtnDisc} onPress={() => BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))}>
@@ -198,7 +209,7 @@ const BluetoothPrintImg = () => {
                                         :
                                         <ConnectBtn connectToPrinter={() => connectToPrinter(item)} />
                                     }
-                                </View>
+                                </Pressable>
                             )}
                             style={{ width: "100%", maxHeight: 220, paddingRight: 5, paddingBottom: 40 }}
                             contentContainerStyle={{ gap: 8 }}
@@ -212,31 +223,48 @@ const BluetoothPrintImg = () => {
                             </View>
                         )}
 
-                        <View style={styles.labeleSizeBlock}>
-                            <Text style={{ fontWeight: 500, color: 'grey' }}>Оберіть розмір наклейки:</Text>
-                            <TouchableVibrate 
-                                style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Fifty && styles.labeleSizeLock]} 
-                                onPress={() => handleSetSizeLabel(SizeLabel.Fifty)}
-                                disabled={selectedSizeLabel === SizeLabel.Fifty}
-                            >
-                                <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
-                                <Text style={styles.labeleSizeText}>50x30mm</Text>
-                                {selectedSizeLabel === SizeLabel.Fifty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
-                            </TouchableVibrate>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 5 }}>
+                            <View style={styles.labeleSizeBlock}>
+                                <Text style={{ fontWeight: 500, color: 'grey' }}>Обери розмір етикетки:</Text>
+                                <TouchableVibrate
+                                    style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Fifty && styles.labeleSizeLock]}
+                                    onPress={() => handleSetSizeLabel(SizeLabel.Fifty)}
+                                    disabled={selectedSizeLabel === SizeLabel.Fifty}
+                                >
+                                    <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
+                                    <Text style={styles.labeleSizeText}>50x30mm</Text>
+                                    {selectedSizeLabel === SizeLabel.Fifty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
+                                </TouchableVibrate>
 
 
-                            <TouchableVibrate 
-                                style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Forty && styles.labeleSizeLock]} 
-                                onPress={() => handleSetSizeLabel(SizeLabel.Forty)}
-                                disabled={selectedSizeLabel === SizeLabel.Forty}
-                            >
-                                <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
-                                <Text style={styles.labeleSizeText}>40x30mm</Text>
-                                {selectedSizeLabel === SizeLabel.Forty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
-                            </TouchableVibrate>
+                                <TouchableVibrate
+                                    style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Forty && styles.labeleSizeLock]}
+                                    onPress={() => handleSetSizeLabel(SizeLabel.Forty)}
+                                    disabled={selectedSizeLabel === SizeLabel.Forty}
+                                >
+                                    <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
+                                    <Text style={styles.labeleSizeText}>40x30mm</Text>
+                                    {selectedSizeLabel === SizeLabel.Forty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
+                                </TouchableVibrate>
+                            </View>
+
+                            <View style={{ alignItems: 'flex-start', }}>
+                                <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Вімкнути автодрук:</Text>
+                                <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
+                                    <MaterialCommunityIcons name="printer-eye" size={28} color={autoPrint ? 'rgba(106, 159, 53, 0.95)' : "black"} />
+                                    <Switch
+                                        trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
+                                        thumbColor={'#f4f3f4'}
+                                        ios_backgroundColor="#3e3e3e"
+                                        onValueChange={handleSwitch}
+                                        value={autoPrint}
+                                    />
+                                </View>
+                            </View>
                         </View>
-                    </View>
+                    </Pressable>
                 </View>
+                </TouchableWithoutFeedback>
             </Modal>
         </>
     );
@@ -354,7 +382,6 @@ const styles = StyleSheet.create({
     labeleSizeBlock: {
         alignSelf: 'flex-start',
         marginTop: 8,
-        //gap: 15,
     },
     labeleSizeItem: {
         flexDirection: 'row',
@@ -375,6 +402,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         lineHeight: 24,
         fontWeight: 500,
+        marginRight: 10,
     },
     labeleSizeLock: {
         elevation: 0,

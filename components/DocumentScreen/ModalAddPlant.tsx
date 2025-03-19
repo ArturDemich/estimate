@@ -13,6 +13,7 @@ import { useLocalSearchParams } from "expo-router";
 import Feather from '@expo/vector-icons/Feather';
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 
 export default function ModalAddPlant() {
@@ -20,14 +21,19 @@ export default function ModalAddPlant() {
   const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const [show, setShow] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   console.log('ModalAddPlant', params)
+
+  const handleSetScanning = (val: boolean) => {
+    setIsScanning(val)
+  };
 
   return (
     <>
       <View style={styles.containerNBTN}>
         <TouchableVibrate style={styles.buttonStep} onPress={() => setShow(true)}>
-          <Feather name="plus" size={14} color="green" />
-          <Entypo name="tree" size={24} color="green" />
+          <Feather name="plus" size={20} color="green" />
+          <Entypo name="tree" size={22} color="green" />
         </TouchableVibrate>
       </View>
 
@@ -35,7 +41,6 @@ export default function ModalAddPlant() {
         <Modal
           visible={show}
           onDismiss={() => setShow(false)}
-          //dismissable={false}
           contentContainerStyle={{ flex: 1, }}
         >
           <KeyboardAvoidingView
@@ -44,12 +49,15 @@ export default function ModalAddPlant() {
           >
             <View style={styles.modalView}>
               <View style={styles.btnBlock}>
-                <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
-                  <EvilIcons name="close" size={24} color="#FFFFFF" style={{lineHeight: 24}} />
+              <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
+                  <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                 </TouchableVibrate>
-                <Text style={styles.textStr}>Назва</Text>
+                <Text style={styles.textStr}>Пошук</Text>
+                <TouchableVibrate onPress={() => handleSetScanning(true)}>
+                  <MaterialCommunityIcons name="barcode-scan" size={28} color="black" />
+                </TouchableVibrate>
               </View>
-              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} />
+              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
               
             </View>
           </KeyboardAvoidingView>

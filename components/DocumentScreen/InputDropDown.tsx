@@ -10,7 +10,7 @@ import {
     Keyboard,
     ActivityIndicator,
 } from "react-native";
-import { Button, Portal } from "react-native-paper";
+import { Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,9 +27,11 @@ interface InputDropDownProps {
     docId: string;
     docName: string;
     close: () => void;
+    handleSetScanning: (val: boolean) => void;
+    isScanning: boolean;
 };
 
-export default function InputDropDown({ docId, close, docName }: InputDropDownProps) {
+export default function InputDropDown({ docId, close, docName, handleSetScanning, isScanning }: InputDropDownProps) {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const searchPlantsList = useSelector<RootState, PlantItemRespons[]>((state) => state.data.searchPlantName);
@@ -46,7 +48,6 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const [barcode, setBarcode] = useState("");
-    const [isScanning, setIsScanning] = useState(false);
     const [isSendSearch, setSendSearch] = useState(false);
 
     const showDropdown = () => {
@@ -189,16 +190,15 @@ export default function InputDropDown({ docId, close, docName }: InputDropDownPr
                     placeholder={input ? "" : "Оберіть назву рослини"}
                     placeholderTextColor="#A0A0AB"
                 />
-                <Button onPress={() => setIsScanning(true)}>Barcode</Button>
 
                 {isScanning && (
                     <BarcodeScanner
                         onScan={(scannedData) => {
                             setBarcode(scannedData);
                             setInput(scannedData)
-                            setIsScanning(false);
+                            handleSetScanning(false);
                         }}
-                        onClose={() => setIsScanning(false)}
+                        onClose={() => handleSetScanning(false)}
                     />
                 )}
                 {input ? (

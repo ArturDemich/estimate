@@ -1,3 +1,4 @@
+import { DocumentResult } from "@/db/db.native";
 import { myToast } from "@/utils/toastConfig";
 import axios from "axios";
 import { Buffer } from 'buffer';
@@ -8,9 +9,11 @@ const tok = `${username}:${password}`;
 const encodedToken = Buffer.from(tok).toString('base64');
 
 
-const TOKEN_URL = 'http://194.42.195.241:41001/UTP/hs/api/getToken';
-const getStorages_URL = 'http://194.42.195.241:41001/UTP/hs/api/getStorages';
-const getPlants_URL = 'http://194.42.195.241:41001/UTP/hs/api/getProductInfo';
+const API = 'http://194.42.195.241:41001/UTP/hs/api';
+const TOKEN_URL = `${API}/getToken`;
+const getStorages_URL = `${API}/getStorages`;
+const getPlants_URL = `${API}/getProductInfo`;
+const sendData_URL = `${API}/CreateStorageDoc`;
 
 export class DataService {
   static async getStorages(token: string) {
@@ -76,5 +79,28 @@ export class DataService {
       }
       throw new Error(errorMessage);
     }
-  }
+  };
+
+  static async sendDataToServer(token: string, document: DocumentResult) {
+    try {
+      return await axios.post(
+        sendData_URL,
+        { token, document },
+        { headers: { Authorization: "Basic " + encodedToken } }
+      )
+        .then((response) => response.data);
+    } catch (error: any) {
+      console.log("Error in service sendDataToServer:", error);
+      let errorMessage = "Failed to send Data to server";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  };
 };
