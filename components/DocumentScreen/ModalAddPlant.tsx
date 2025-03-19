@@ -32,8 +32,8 @@ export default function ModalAddPlant() {
     <>
       <View style={styles.containerNBTN}>
         <TouchableVibrate style={styles.buttonStep} onPress={() => setShow(true)}>
-          <Feather name="plus" size={14} color="green" />
-          <Entypo name="tree" size={24} color="green" />
+          <Feather name="plus" size={20} color="green" />
+          <Entypo name="tree" size={22} color="green" />
         </TouchableVibrate>
       </View>
 
@@ -49,7 +49,7 @@ export default function ModalAddPlant() {
           >
             <View style={styles.modalView}>
               <View style={styles.btnBlock}>
-                <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
+              <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
                   <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                 </TouchableVibrate>
                 <Text style={styles.textStr}>Пошук</Text>
@@ -58,6 +58,7 @@ export default function ModalAddPlant() {
                 </TouchableVibrate>
               </View>
               <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
+              
             </View>
           </KeyboardAvoidingView>
         </Modal>

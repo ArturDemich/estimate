@@ -44,7 +44,6 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
         const success = await updateCharacteristic(item.id, currentQty);
         if (success) {
             dispatch(updateLocalCharacteristic({ id: item.id, currentQty: currentQty }));
-            console.log('handleUpdateQtyOne', autoPrint)
             autoPrint && handlePrint()
         } else {
             console.error("Failed to update characteristic in DB.");
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         opacity: 0.9,
         justifyContent: "center",
-        minHeight: 40,
+        minHeight: 65,
         borderRadius: 5,
         margin: 7,
         padding: 5,

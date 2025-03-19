@@ -11,6 +11,8 @@ import {
     FlatList,
     Dimensions,
     Switch,
+    TouchableWithoutFeedback,
+    Pressable,
 } from "react-native";
 import { BLEPrinter, IBLEPrinter, } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
@@ -19,7 +21,7 @@ import { Label } from "@/redux/stateServiceTypes";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { connectPrinter, setDevices, setAutoPrint } from "@/redux/dataSlice";
+import { connectPrinter, setAutoPrint, setDevices } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
 import EmptyList from "@/components/ui/EmptyList";
 import { checkBluetoothEnabled } from "@/components/helpers";
@@ -61,7 +63,7 @@ const print = (img: string, barcode: string | null, size: string) => {
             text1: "Друк...",
             position: "bottom",
             visibilityTime: 3000,
-            bottomOffset: 90,
+            bottomOffset: 130,
         })
     } catch (error) {
         console.error("Print failed:", error);
@@ -145,6 +147,7 @@ const BluetoothPrintImg = () => {
         (BLEPrinter as any).removeListeners = () => { }; // suppress the warning 
         (BLEPrinter as any).addListener = () => { }; // suppress the warning 
 
+        // Initialize Bluetooth only if permissions are granted and Bluetooth is ON
         pairedDevices.length === 0 && initBluetooth();
     };
 
@@ -189,14 +192,15 @@ const BluetoothPrintImg = () => {
                 {(connectedPrinter && !autoPrint) && <MaterialCommunityIcons name="printer-wireless" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />}
             </TouchableVibrate>
             <Modal visible={printerShow} animationType="slide" transparent onRequestClose={() => setPrinterShow(false)}>
+            <TouchableWithoutFeedback onPress={() => setPrinterShow(false)}>
                 <View style={[styles.centeredView,]}>
-                    <View style={[styles.modalView, { top: modalPosition - 3 }]}>
+                    <Pressable style={[styles.modalView, { top: modalPosition - 3 }]}>
                         <Text style={styles.modalTitle}>Раніше підключені пристрої:</Text>
                         <FlatList
                             data={pairedDevices}
                             keyExtractor={(item) => item.inner_mac_address.toString()}
                             renderItem={({ item }) => (
-                                <View style={styles.deviceItem}>
+                                <Pressable style={styles.deviceItem}>
                                     <Text style={styles.deviceName}>{item.device_name}</Text>
                                     {connectedPrinter?.inner_mac_address === item.inner_mac_address ?
                                         <TouchableVibrate style={styles.deviceBtnDisc} onPress={() => BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))}>
@@ -205,7 +209,7 @@ const BluetoothPrintImg = () => {
                                         :
                                         <ConnectBtn connectToPrinter={() => connectToPrinter(item)} />
                                     }
-                                </View>
+                                </Pressable>
                             )}
                             style={{ width: "100%", maxHeight: 220, paddingRight: 5, paddingBottom: 40 }}
                             contentContainerStyle={{ gap: 8 }}
@@ -219,7 +223,7 @@ const BluetoothPrintImg = () => {
                             </View>
                         )}
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 5}}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 5 }}>
                             <View style={styles.labeleSizeBlock}>
                                 <Text style={{ fontWeight: 500, color: 'grey' }}>Обери розмір етикетки:</Text>
                                 <TouchableVibrate
@@ -258,8 +262,9 @@ const BluetoothPrintImg = () => {
                                 </View>
                             </View>
                         </View>
-                    </View>
+                    </Pressable>
                 </View>
+                </TouchableWithoutFeedback>
             </Modal>
         </>
     );
@@ -377,7 +382,6 @@ const styles = StyleSheet.create({
     labeleSizeBlock: {
         alignSelf: 'flex-start',
         marginTop: 8,
-        //gap: 15,
     },
     labeleSizeItem: {
         flexDirection: 'row',
@@ -398,6 +402,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         lineHeight: 24,
         fontWeight: 500,
+        marginRight: 10,
     },
     labeleSizeLock: {
         elevation: 0,

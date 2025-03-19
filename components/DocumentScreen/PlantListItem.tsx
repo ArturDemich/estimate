@@ -2,8 +2,8 @@ import { deletePlant } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback } from "react";
-import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { getUkrainianPart } from "../helpers";
 import { PlantNameDB } from "@/redux/stateServiceTypes";
@@ -17,6 +17,7 @@ export default function PlantListItem() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const docId = params.docId;
+  const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const palnts = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
   console.log('ModalAddPlant', params)
 
@@ -24,6 +25,38 @@ export default function PlantListItem() {
     const data = await dispatch(getPlantsNameDB({ docId: Number(docId) }))
     console.log('PlantListItem___',)
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDBPlants()
+    }, [])
+  );
+
+  return (
+      <FlatList
+        data={palnts}
+        keyExtractor={(item, index) => item.id.toString() + index}
+        renderItem={({ item, index }) => <PlantNameItem docName={docName} item={item} loadDB={() => loadDBPlants()} docId={Number(docId)} numRow={palnts.length - index} />}
+        style={{ width: "100%", height: '100%', paddingBottom: 40 }}
+        ListEmptyComponent={<EmptyList text="Немає доданих рослин" />}
+        ListFooterComponent={<View></View>}
+        ListFooterComponentStyle={{ height: 50 }}
+      />
+  )
+};
+
+interface PlantNameItemProps {
+  item: PlantNameDB;
+  loadDB: () => void;
+  docId: number;
+  numRow: number;
+  docName: string;
+};
+
+const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const [isLoding, setLoding] = useState(false);
 
   const handleDelete = (e: GestureResponderEvent, item: PlantNameDB) => {
     e.preventDefault()
@@ -38,8 +71,8 @@ export default function PlantListItem() {
         {
           text: 'Видалити',
           onPress: async () => {
-            await deletePlant(Number(docId), item.id)
-            loadDBPlants();
+            await deletePlant(docId, item.id)
+            loadDB();
           },
         }
       ]
@@ -47,8 +80,9 @@ export default function PlantListItem() {
   }
 
   const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {
+    setLoding(true)
     try {
-      await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' })).unwrap();
+      await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' })).unwrap().then(() => setLoding(false));
     } catch (error: any) {
       console.log("Failed to fetch plant details:", error);
       myToast({
@@ -59,49 +93,35 @@ export default function PlantListItem() {
       });
     }
     router.push({
-      pathname: "/plant", params: { plantName: product_name, plantId: plantDBid, docId: docId, productId: productId, docName: params?.docName || "" },
+      pathname: "/plant", params: { plantName: product_name, plantId: plantDBid, docId: docId, productId: productId, docName: docName || "" },
     });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadDBPlants()
-    }, [])
-  );
 
   return (
-    <>
-      <FlatList
-        data={palnts}
-        keyExtractor={(item, index) => item.id.toString() + index}
-        renderItem={({ item, index }) => (
-          <TouchableVibrate
-            style={styles.documentItem}
-            onLongPress={async (e) => handleDelete(e, item)}
-            onPress={() => toPlantDetails(item.product_name, item.id, item.product_id)}
-          >
-            <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
-              <Text style={styles.itemNum}>{palnts.length - index}.</Text>
-              <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
-            </View>
-          </TouchableVibrate>
-        )}
-        style={{ width: "100%", height: '100%', paddingBottom: 40 }}
-        ListEmptyComponent={<EmptyList text="Немає доданих рослин" />}
-        ListFooterComponent={<View></View>}
-        ListFooterComponentStyle={{ height: 50 }}
-      />
-
-    </>
-  );
-}
+    <TouchableVibrate
+      style={styles.documentItem}
+      onLongPress={async (e) => handleDelete(e, item)}
+      onPress={() => toPlantDetails(item.product_name, item.id, item.product_id)}
+    >
+      {isLoding ?
+        <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)"/>
+        :
+        <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
+          <Text style={styles.itemNum}>{numRow}.</Text>
+          <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
+        </View>
+      }
+    </TouchableVibrate>
+  )
+};
 
 const styles = StyleSheet.create({
   documentItem: {
     backgroundColor: "#fff",
     opacity: 0.9,
     justifyContent: "center",
-    minHeight: 40,
+    minHeight: 50,
     borderRadius: 5,
     margin: 7,
     padding: 5,

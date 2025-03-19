@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   containerNBTN: {
     elevation: 5,
     position: "absolute",
-    right: 82,
+    right: '45%',
     bottom: 15,
   },
   buttonStep: {

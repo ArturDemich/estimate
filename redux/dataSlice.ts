@@ -64,7 +64,7 @@ const dataSlice = createSlice({
       state.connectedPrinter = null;
       state.docComment = '';
       state.autoPrint = false;
-      console.log('dataSlice __ clearDataState')
+      console.log('dataSlice __ logOut')
     },
   },
   extraReducers: (builder) => {

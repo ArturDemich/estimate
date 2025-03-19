@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { addDocument } from "@/db/db.native";
+import { addDocument, deleteDatabase, listDatabases } from "@/db/db.native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
@@ -113,9 +113,11 @@ export default function CreateDocModal() {
         <TouchableVibrate
           style={styles.buttonStep}
           onPress={() => setShow(!show)}
+          //onPress={() => deleteDatabase()}
+          //onPress={() => listDatabases()}
         >
-          <Feather name="plus" size={14} color="black" />
-          <Ionicons name="document-text-outline" size={28} color="black" />
+          <Feather name="plus" size={22} color="black" />
+          <Ionicons name="document-text-outline" size={26} color="black" />
         </TouchableVibrate>
       </View>
 

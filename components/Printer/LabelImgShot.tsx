@@ -10,12 +10,14 @@ import { Label } from "@/redux/stateServiceTypes";
 import { printLabel } from "@/components/Printer/BluetoothPrinterImg";
 import { setLabelPrint } from "@/redux/dataSlice";
 import Toast from "react-native-toast-message";
+import { IBLEPrinter } from "@conodene/react-native-thermal-receipt-printer-image-qr";
 
 
 const LabelImgShot = () => {
     const label = useSelector<RootState, Label | null>(state => state.data.labelData);
     const dispatch = useDispatch<AppDispatch>();
-    const [showView, setShowView] = useState(false);
+    const connectedPrinter = useSelector<RootState, IBLEPrinter | null>((state) => state.data.connectedPrinter);
+    const [showView, setShowView] = useState(false); 
     const ref = useRef<ViewShot>(null);
     const DateNow = moment().format('DD.MM.YY');
 
@@ -30,13 +32,13 @@ const LabelImgShot = () => {
                     height: 200
                 });
                 return uri
-
             }
         } catch (error) {
             Toast.show({
                 type: "customError",  // Can be 'success', 'error', 'info'
                 text1: "Failed to capture image!",
                 position: "bottom",
+                bottomOffset: 150,
                 visibilityTime: 3000,
             })
             console.error("Snapshot failed", error);
@@ -53,12 +55,23 @@ const LabelImgShot = () => {
 
     useEffect(() => {
         if (label) {
+            if (!connectedPrinter) {
+                Toast.show({
+                    type: "customError", 
+                    text1: "Принтер не підключено!",
+                    text2: "Підключи принтер в меню.",
+                    position: "bottom",
+                    bottomOffset: 150,
+                    visibilityTime: 4000,
+                })
+                dispatch(setLabelPrint(null));
+                return;
+            }
             setShowView(true)
         }
     }, [label])
 
     useEffect(() => {
-
         const interval = setInterval(() => {
             if (showView) {
                 sendPrint()
@@ -72,9 +85,8 @@ const LabelImgShot = () => {
 
     return (
         <Modal visible={showView} animationType="slide" transparent>
-            <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                <View style={{ backgroundColor: '#fff', padding: 10, borderRadius: 10, alignItems: 'center' }}>
-
+            <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                <View style={{ backgroundColor: '#fff', padding: 10, borderRadius: 10, marginBottom: 5, alignItems: 'center' }}>
                     <ViewShot ref={ref} >
                         <View style={{ backgroundColor: '#ffffff', width: 280, height: 100, }}>
                             <View style={{ flexDirection: 'row', }}>
@@ -85,9 +97,6 @@ const LabelImgShot = () => {
                                 <Entypo name="ruler" size={16} color="black" style={{ transform: 'rotate(135deg)', }} />
                                 <Text style={{ fontSize: 16, fontWeight: '800', alignSelf: 'baseline' }}>{label?.characteristic_name}</Text>
                             </View>
-
-
-
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4, marginTop: 3 }}>
                                 <Text style={{ fontSize: 14, fontWeight: '900' }}> {label?.storageName}</Text>
                                 <Text style={{ fontSize: 14, fontWeight: '900' }}> {DateNow}</Text>
@@ -95,15 +104,6 @@ const LabelImgShot = () => {
                             <View style={{ backgroundColor: 'rgb(0, 0, 0)', height: 3, width: '100%' }}></View>
                         </View>
                     </ViewShot>
-
-                    {/* <Button title="Capture Image" onPress={shot} />
-                    {capturedUri && (
-                        <>
-                            <Image source={{ uri: capturedUri }} style={{ width: 200, height: 100, marginVertical: 10, borderColor: 'red', borderWidth: 1 }} />
-                            <Button title="Print Image" onPress={printImage} />
-                        </>
-                    )}
-                    <Button title="Close" onPress={onClose} /> */}
                 </View>
             </View>
         </Modal>

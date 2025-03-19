@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderBottomColor: "black",
     justifyContent: "center",
-    minHeight: 40,
+    minHeight: 50,
     borderRadius: 5,
     margin: 5,
     paddingLeft: 10,

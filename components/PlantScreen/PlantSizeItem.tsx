@@ -3,7 +3,7 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsDetailsDB } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { memo, useCallback, useEffect, useRef } from "react";
-import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, Text, View } from "react-native";
+import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, View } from "react-native";
 import { connect, useDispatch, useSelector } from "react-redux";
 import RenderPlantDetail from "./RenderPlantDetail";
 import { setExistPlantProps } from "@/redux/dataSlice";
@@ -47,7 +47,6 @@ import EmptyList from "@/components/ui/EmptyList";
   }, [existPlantProps]);
 
   useFocusEffect(
-    
     useCallback(() => {
       console.log('params barcode', params)
       loadDBDetails()
@@ -68,6 +67,15 @@ import EmptyList from "@/components/ui/EmptyList";
         ListFooterComponent={<View></View>}
         ListFooterComponentStyle={{ height: 150 }}
         scrollEnabled={true}
+        getItemLayout={(data, index) => ({
+          length: 65, // Approximate item height (adjust if needed)
+          offset: 65 * index,
+          index,
+        })}
+        onScrollToIndexFailed={(info) => {
+          console.warn("Scroll to index failed: ", info);
+          flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
+        }}
       />
       </KeyboardAvoidingView>
       </SafeAreaView>

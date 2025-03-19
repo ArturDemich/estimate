@@ -4,7 +4,7 @@ import { CameraView, Camera } from "expo-camera";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 
-const { width, height } = Dimensions.get("window"); // Get screen dimensions
+const { width, height } = Dimensions.get("window");
 
 interface Props {
   onScan: (data: string) => void;

@@ -1,8 +1,9 @@
 import { PlantItemRespons } from "@/redux/stateServiceTypes";
-import { newSIZE, nullID } from "@/types/typesScreen";
 import * as SQLite from "expo-sqlite";
-import moment from "moment";
 import { Alert } from "react-native";
+import * as FileSystem from 'expo-file-system';
+import { newSIZE, nullID } from "@/types/typesScreen";
+import moment from "moment";
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
@@ -24,6 +25,7 @@ export async function openDB(): Promise<SQLite.SQLiteDatabase> {
  * Initializes the database by setting the journal mode and creating the tables.
  */
 export async function initializeDB(): Promise<void> {
+  //checkDatabaseSchema()
   const db = await openDB();
   try {
     await db.execAsync("PRAGMA foreign_keys = ON;");
@@ -32,6 +34,7 @@ export async function initializeDB(): Promise<void> {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL DEFAULT '',
         storage_id TEXT NOT NULL DEFAULT '',
         storage_name TEXT NOT NULL DEFAULT '',
         comment TEXT NOT NULL DEFAULT '',
@@ -157,7 +160,7 @@ export async function addCharacteristic(
 
 export async function fetchDocuments(): Promise<any[]> {
   const db = await openDB();
-  
+
   try {
     const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
     console.log('fetchDocuments__', rows)
@@ -269,60 +272,58 @@ export async function updateDocComment(DbDocumentId: number, newComment: string)
   }
 }
 
-
-
 interface StorageInfo {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
 }
 
 interface Characteristic {
+  id: string;
+  name: string;
+  unit: {
     id: string;
     name: string;
-    unit: {
-        id: string;
-        name: string;
-    };
-    qty: number;
+  };
+  qty: number;
 }
 
 interface Product {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
 }
 
 interface ProductWithCharacteristics {
-    product: Product;
-    characteristics: Characteristic[];
+  product: Product;
+  characteristics: Characteristic[];
 }
 
 interface NewProduct {
-    product: Product;
-    characteristic: {
-        id: string;
-        name: string;
-    };
-    qty: number;
+  product: Product;
+  characteristic: {
+    id: string;
+    name: string;
+  };
+  qty: number;
 }
 
 export interface DocumentResult {
-    id: string;
-    date: string;
-    number: string;
-    comment: string;
-    storage: StorageInfo;
-    products: ProductWithCharacteristics[];
-    newproducts: NewProduct[];
+  id: string;
+  date: string;
+  number: string;
+  comment: string;
+  storage: StorageInfo;
+  products: ProductWithCharacteristics[];
+  newproducts: NewProduct[];
 }
 
 interface PlantResult {
-    productId: string | null;
-    productName: string | null;
-    characteristicId: string | null;
-    characteristicName: string | null;
-    unitId: string | null;
-    unitName: string | null;
-    qty: number | null;
+  productId: string | null;
+  productName: string | null;
+  characteristicId: string | null;
+  characteristicName: string | null;
+  unitId: string | null;
+  unitName: string | null;
+  qty: number | null;
 }
 
 
@@ -331,86 +332,133 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
   const db = await openDB();
 
   try {
-      const docResult = await db.getFirstAsync<{
-          id: string;
-          storage_id: string | null;
-          storage_name: string | null;
-          comment: string | null;
-          date: string | null;
-      }>(
-          `SELECT id, storage_id, storage_name, comment, created_at AS date 
-           FROM documents WHERE id = ?`, 
-          [docId]
-      );
+    const docResult = await db.getFirstAsync<{
+      id: string;
+      storage_id: string | null;
+      storage_name: string | null;
+      comment: string | null;
+      date: string | null;
+    }>(
+      `SELECT id, storage_id, storage_name, comment, created_at AS date 
+         FROM documents WHERE id = ?`,
+      [docId]
+    );
 
-      if (!docResult) return null;
+    if (!docResult) return null;
 
-      const plantResults = await db.getAllAsync<PlantResult>(
-          `SELECT 
-              p.product_id AS productId, 
-              p.product_name AS productName, 
-              c.characteristic_id AS characteristicId, 
-              c.characteristic_name AS characteristicName, 
-              c.unit_id AS unitId, 
-              c.unit_name AS unitName, 
-              c.currentQty AS qty
-           FROM plants p
-           LEFT JOIN plant_characteristics c ON p.id = c.plant_id
-           WHERE p.document_id = ?`,
-          [docId]
-      );
+    const plantResults = await db.getAllAsync<PlantResult>(
+      `SELECT 
+            p.product_id AS productId, 
+            p.product_name AS productName, 
+            c.characteristic_id AS characteristicId, 
+            c.characteristic_name AS characteristicName, 
+            c.unit_id AS unitId, 
+            c.unit_name AS unitName, 
+            c.currentQty AS qty
+         FROM plants p
+         LEFT JOIN plant_characteristics c ON p.id = c.plant_id
+         WHERE p.document_id = ?`,
+      [docId]
+    );
 
-      const productsMap = new Map<string, ProductWithCharacteristics>();
-      const newProducts: NewProduct[] = [];
+    const productsMap = new Map<string, ProductWithCharacteristics>();
+    const newProducts: NewProduct[] = [];
 
-      for (const row of plantResults) {
-          const productKey = row.productId || "";
+    for (const row of plantResults) {
+      const productKey = row.productId || "";
 
-          if (!productsMap.has(productKey)) {
-              productsMap.set(productKey, {
-                  product: { id: row.productId || "", name: row.productName || "" },
-                  characteristics: []
-              });
-          }
-
-          const characteristic: Characteristic = {
-              id: row.characteristicId || "",
-              name: row.characteristicName || "",
-              unit: { id: row.unitId || "", name: row.unitName || "" },
-              qty: row.qty ?? 0
-          };
-
-          if (row.characteristicId === newSIZE) {
-              newProducts.push({
-                  product: { id: row.productId || "", name: row.productName || "" },
-                  characteristic: { id: nullID, name: row.characteristicName || "" },
-                  qty: row.qty ?? 0
-              });
-          } else {
-              productsMap.get(productKey)?.characteristics.push(characteristic);
-          }
+      if (!productsMap.has(productKey)) {
+        productsMap.set(productKey, {
+          product: { id: row.productId || "", name: row.productName || "" },
+          characteristics: []
+        });
       }
 
-      return {
-          id: nullID,
-          date: moment(docResult.date).format("YYYY-DD-MM HH-mm-ss"),
-          number: docResult.id.toString() || "0",
-          comment: docResult.comment || "",
-          storage: {
-              id: docResult.storage_id || "",
-              name: docResult.storage_name || ""
-          },
-          products: Array.from(productsMap.values()),
-          newproducts: newProducts
+      const characteristic: Characteristic = {
+        id: row.characteristicId || "",
+        name: row.characteristicName || "",
+        unit: { id: row.unitId || "", name: row.unitName || "" },
+        qty: row.qty ?? 0
       };
 
+      if (row.characteristicId === newSIZE) {
+        newProducts.push({
+          product: { id: row.productId || "", name: row.productName || "" },
+          characteristic: { id: nullID, name: row.characteristicName || "" },
+          qty: row.qty ?? 0
+        });
+      } else {
+        productsMap.get(productKey)?.characteristics.push(characteristic);
+      }
+    }
+
+    return {
+      id: nullID,
+      date: moment(docResult.date).format("YYYY-DD-MM HH-mm-ss"),
+      number: docResult.id.toString() || "0",
+      comment: docResult.comment || "",
+      storage: {
+        id: docResult.storage_id || "",
+        name: docResult.storage_name || ""
+      },
+      products: Array.from(productsMap.values()),
+      newproducts: newProducts
+    };
+
   } catch (error) {
-      console.error("Помилка отримання документа:", error);
-      throw new Error("Не вдалося отримати дані з бази");
+    console.error("Помилка отримання документа:", error);
+    throw new Error("Не вдалося отримати дані з бази");
   }
 }
 
 
+
+
+const DB_NAME = 'app.db';
+const DB_PATH = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
+export const deleteDatabase = async () => {
+  const dbDirectory = FileSystem.documentDirectory + 'SQLite/';
+  try {
+    const dbInfo = await FileSystem.getInfoAsync(DB_PATH);
+    if (dbInfo.exists) {
+      await FileSystem.deleteAsync(dbDirectory + 'app.db', { idempotent: true });
+      await FileSystem.deleteAsync(dbDirectory + 'app.db-shm', { idempotent: true });
+      await FileSystem.deleteAsync(dbDirectory + 'app.db-wal', { idempotent: true });
+      console.log('База даних видалена успішно.');
+    } else {
+      console.log('База даних не знайдена.');
+    }
+  } catch (error) {
+    console.error('Помилка при видаленні бази даних:', error);
+  }
+};
+
+export const checkDatabaseSchema = async () => {
+  const db = await openDB();
+  try {
+    const resultSet: any = await db.getAllAsync("PRAGMA table_info(documents);");
+    console.log("resultSet____", resultSet);
+    const columns = resultSet.map((row: any) => row.name);
+    const requiredColumns = ["storage_id", "storage_name", "comment"];
+    const missingColumns = requiredColumns.filter(col => !columns.includes(col));
+
+    if (missingColumns.length > 0) {
+      //await deleteDatabase();
+      console.log(`Базу даних потрібно було перезапустити. Відсутні колонки: ${missingColumns.join(", ")}`);
+    } else {
+      console.log("Усі необхідні колонки присутні.");
+    }
+  } catch (error) {
+    console.error("Помилка перевірки схеми:", error);
+  }
+};
+
+export const listDatabases = async () => {
+  const dbDir = FileSystem.documentDirectory + 'SQLite/';
+  console.log('Databases dbDir:', dbDir);
+  const files = await FileSystem.readDirectoryAsync(dbDir);
+  console.log('Databases:', files);
+};
 
 
 

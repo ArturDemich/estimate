@@ -11,7 +11,8 @@
     "test": "jest --watchAll",
     "lint": "expo lint",
     "preBuildA": "npx expo prebuild --platform android",
-    "nativeStart": "npx expo run:android"
+    "nativeStart": "npx expo run:android",
+    "postinstall": "patch-package"
   },
   "jest": {
     "preset": "jest-expo"

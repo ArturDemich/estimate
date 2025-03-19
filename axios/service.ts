@@ -8,6 +8,7 @@ const password = '';
 const tok = `${username}:${password}`;
 const encodedToken = Buffer.from(tok).toString('base64');
 
+
 const API = 'http://194.42.195.241:41001/UTP/hs/api';
 const TOKEN_URL = `${API}/getToken`;
 const getStorages_URL = `${API}/getStorages`;
@@ -65,7 +66,7 @@ export class DataService {
         .then((response) => response.data)
     } catch (error: any) {
       myToast({ type: 'customError', text1: 'Список рослин не отримано!', text2: error.response.data })
-
+      
       console.log("Error in service getPlants:", error);
       let errorMessage = "Failed to fetch Plants from server";
       if (error.response?.data) {

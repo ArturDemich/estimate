@@ -35,7 +35,7 @@ export default function Plant() {
   });
 
   return (
-    <View style={{position: 'relative', height: '100%', display: 'flex', }}>
+    <View style={{position: 'relative', height: '100%', }}>
       <Stack.Screen options={{
         headerBackVisible: false,
         headerLeft: () => (
@@ -44,7 +44,7 @@ export default function Plant() {
           </TouchableVibrate>
         ),
       }} />
-      <View style={{paddingLeft: 15,   paddingVertical: 5, height: 40 }}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
+      <View style={{paddingLeft: 15, paddingVertical: 5, height: 40}}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
       <PlantSizeItem plantName={namePlant} />
       <AddDetailsModal 
         plantDBid={params.plantId && params.plantId.toString()} 
