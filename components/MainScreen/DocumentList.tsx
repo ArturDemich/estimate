@@ -5,6 +5,8 @@ import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "
 import moment from "moment";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
+import { formatDate } from "@/components/helpers";
+import { Ionicons } from "@expo/vector-icons";
 
 
 interface DocumentList {
@@ -24,28 +26,24 @@ export default function DocumentList() {
   };
 
   const handleDelete = (e: GestureResponderEvent, item: DocumentList) => {
-      e.preventDefault()
-      Alert.alert(
-        'Увага!',
-        'Бажаєте видалити документ і всі його записи?',
-        [
-          {
-            text: 'Скасувати',
-            style: 'cancel'
+    e.preventDefault()
+    Alert.alert(
+      'Увага!',
+      'Бажаєте видалити документ і всі його записи?',
+      [
+        {
+          text: 'Скасувати',
+          style: 'cancel'
+        },
+        {
+          text: 'Видалити',
+          onPress: async () => {
+            await deleteDocument(item.id)
+            loadDocuments();
           },
-          {
-            text: 'Видалити',
-            onPress: async () => {
-              await deleteDocument(item.id)
-              loadDocuments();
-            },
-          }
-        ]
-      )
-    }
-
-  function formatDate(timestamp: string): string { 
-    return moment(timestamp).format("DD.MM.YYYY - HH:mm");
+        }
+      ]
+    )
   }
 
   useFocusEffect(
@@ -55,31 +53,34 @@ export default function DocumentList() {
   );
   console.log('DocumentList', Boolean(documents))
   return (
-      <FlatList
-        data={documents}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableVibrate
-            style={styles.documentItem}
-            onLongPress={async (e) => handleDelete(e, item)}
-            onPress={() => {
-              router.push({
-                pathname: "/document",
-                params: { docName: item.storage_name, docId: item.id },
-              });
-            }}
-          >
-            <View style={styles.itemRow}>
-              <Text>{item.storage_name}</Text>
-              <Text>{formatDate(item.created_at)}</Text>
+    <FlatList
+      data={documents}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => (
+        <TouchableVibrate
+          style={styles.documentItem}
+          onLongPress={async (e) => handleDelete(e, item)}
+          onPress={() => {
+            router.push({
+              pathname: "/document",
+              params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at },
+            });
+          }}
+        >
+          <View style={styles.itemRow}>
+            <View style={{flexDirection: 'row', gap: 4, alignItems: 'center'}}>
+              <Ionicons name="document-text-outline" size={20} color="rgb(77, 77, 77)" />
+              <Text style={{ fontWeight: 500, fontSize: 16 }}>{item.storage_name}</Text>
             </View>
-          </TouchableVibrate>
-        )}
-        style={{ width: "100%", height: '100%', paddingBottom: 40}}
-        ListEmptyComponent={<EmptyList text="Немає створених документів" />}
-        ListFooterComponent={<View></View>}
-        ListFooterComponentStyle={{height: 50}}
-      />
+            <Text style={{fontSize: 12, fontWeight: 700, color: "rgb(77, 77, 77)",}}>{formatDate(item.created_at)}</Text>
+          </View>
+        </TouchableVibrate>
+      )}
+      style={{ width: "100%", height: '100%', paddingBottom: 40 }}
+      ListEmptyComponent={<EmptyList text="Немає створених документів" />}
+      ListFooterComponent={<View></View>}
+      ListFooterComponentStyle={{ height: 50 }}
+    />
   );
 }
 
@@ -104,5 +105,6 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: 'center',
   },
 });

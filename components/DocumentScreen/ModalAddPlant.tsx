@@ -32,8 +32,8 @@ export default function ModalAddPlant() {
     <>
       <View style={styles.containerNBTN}>
         <TouchableVibrate style={styles.buttonStep} onPress={() => setShow(true)}>
-          <Feather name="plus" size={20} color="green" />
-          <Entypo name="tree" size={22} color="green" />
+          <Feather name="plus" size={20} color='rgba(106, 159, 53, 0.95)' />
+          <Entypo name="tree" size={22} color='rgba(106, 159, 53, 0.95)' />
         </TouchableVibrate>
       </View>
 

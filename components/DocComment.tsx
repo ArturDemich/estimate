@@ -68,7 +68,7 @@ const DocComment = () => {
     return (
         <>
             <TouchableVibrate onPressOut={showModal} style={[styles.buttonStep, styles.containerNBTN,]}>
-                <MaterialCommunityIcons name="message-draw" size={28} color="rgba(7, 3, 71, 0.85)" />
+                <MaterialCommunityIcons name="message-draw" size={28} color='rgba(106, 159, 53, 0.95)' />
                 <View style={styles.arrow} />
             </TouchableVibrate>
 
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         margin: 1,
-        backgroundColor: "rgba(254, 246, 216, 0.95)",
+        backgroundColor: 'rgba(243, 255, 231, 0.9)',//"rgba(254, 246, 216, 0.95)",
         borderTopLeftRadius: 5,
         borderTopRightRadius: 5,
         paddingLeft: 10,
@@ -184,17 +184,18 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     modalTitle: {
-        fontSize: 14,
-        fontWeight: 500,
+        fontSize: 13,
+        fontWeight: 600,
         marginBottom: 10,
+        color: "rgb(142, 141, 141)",
     },
     saveBtn: {
         elevation: 0,
         borderWidth: 1,
-        borderColor: "rgba(254, 246, 216, 0.9)",
+        borderColor: 'rgba(243, 255, 231, 0.95)',
         borderRadius: 5,
         shadowColor: "none",
-        backgroundColor: "rgba(254, 246, 216, 0.9)",
+        backgroundColor: 'rgba(243, 255, 231, 0.9)',
         opacity: 0.2
     },
     saveBtnActive: {
@@ -205,7 +206,8 @@ const styles = StyleSheet.create({
     },
     comment: {
         fontSize: 14,
-        color: "rgb(74, 74, 74)",
+        color: "rgb(82, 82, 82)",
+        fontWeight: 500,
     },
     inputContainer: {
         position: "relative",

@@ -6,6 +6,7 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { loginThunk } from "@/redux/thunks";
 import { ActivityIndicator } from "react-native-paper";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
+import AppVersion from "@/components/AppVersion";
 
 export default function LoginScreen() {
   const dispatch = useDispatch<AppDispatch>();
@@ -63,6 +64,7 @@ export default function LoginScreen() {
           )}
 
           {status === "failed" && <Text style={styles.errorText}>Помилка входу. Спробуйте ще раз.</Text>}
+          <AppVersion />
         </View>
       </View>
     </ImageBackground>
@@ -85,7 +87,8 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: "100%",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 15,
     backgroundColor: "rgba(255, 255, 255, 0.85)",
     shadowColor: "rgba(255, 255, 255, 0.1)",
