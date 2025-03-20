@@ -186,7 +186,7 @@ const BluetoothPrintImg = () => {
 
     return (
         <>
-            <TouchableVibrate onPressOut={handleOpenModal}>
+            <TouchableVibrate style={styles.openBtn} onPressOut={handleOpenModal}>
                 {(!connectedPrinter && !autoPrint) && <MaterialCommunityIcons name="printer-settings" size={24} color="black" />}
                 {(!connectedPrinter && autoPrint || connectedPrinter && autoPrint) && <MaterialCommunityIcons name="printer-eye" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />}
                 {(connectedPrinter && !autoPrint) && <MaterialCommunityIcons name="printer-wireless" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />}
@@ -410,5 +410,14 @@ const styles = StyleSheet.create({
         borderWidth: 0,
         shadowColor: 'unset',
         backgroundColor: "rgba(255, 255, 255, 0.39)",
+    },
+    openBtn: {
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.06)",
+        borderRadius: 5,
+        shadowColor: 'rgba(143, 143, 143, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 5
     },
 })

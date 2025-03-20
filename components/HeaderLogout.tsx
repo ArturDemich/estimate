@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useRouter, useSegments } from "expo-router";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -41,9 +41,21 @@ export default function HeaderLogout() {
                     <Foundation name="trees" size={12} color="black" style={{ lineHeight: 10, marginTop: -3, }} />
                 </TouchableVibrate>} */}
 
-            <TouchableVibrate onPressOut={handleLogout} >
+            <TouchableVibrate style={styles.openBtn} onPressOut={handleLogout} >
                 <MaterialCommunityIcons name="logout" size={24} color="black" />
             </TouchableVibrate>
         </View>
     );
-}
+};
+
+const styles = StyleSheet.create({
+    openBtn: {
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.06)",
+        borderRadius: 5,
+        shadowColor: 'rgba(143, 143, 143, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 5
+    },
+})
