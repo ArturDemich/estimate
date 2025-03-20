@@ -1,7 +1,7 @@
 import { DataService } from "@/axios/service";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Alert, Platform } from "react-native";
-import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, PlantDetails, Storages, PlantDetailsResponse } from "./stateServiceTypes";
+import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, PlantDetails, Storages, PlantDetailsResponse, NewVersionRes } from "./stateServiceTypes";
 import { RootState } from "./store";
 import { fetchCharacteristics, fetchPlants, updateDocComment } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
@@ -70,6 +70,33 @@ export const getStoragesThunk = createAsyncThunk<Storages[], void, { rejectValue
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch storages");
+    }
+  }
+);
+
+export const getNewVersionThunk = createAsyncThunk<NewVersionRes, void, { rejectValue: string }>(
+  'data/getNewVersionThunk',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await DataService.getNewVersion();
+      if(!response) {
+        myToast({
+          type: "customError",
+          text1: "Помилка перевірки нової версії",
+          text2: "Дані не отримано з API!",
+          visibilityTime: 5000,
+        });
+        return null
+      }
+      return response;
+    } catch (error: any) {
+      myToast({
+        type: "customError",
+        text1: "Помилка перевірки нової версії",
+        text2: error?.message || "Помилка сервера",
+        visibilityTime: 5000,
+      });
+      return rejectWithValue(error.message || "Failed to fetch new version app");
     }
   }
 );

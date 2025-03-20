@@ -63,6 +63,11 @@ export interface Label {
     qtyPrint: number;
 };
 
+export interface NewVersionRes {
+    version: string;
+    url: string;
+};
+
 export interface DataSlice {
     digStorages: Storages[];
     searchPlantName: PlantItemRespons[];
@@ -74,6 +79,7 @@ export interface DataSlice {
     connectedPrinter: IBLEPrinter | null;
     docComment: string;
     autoPrint: boolean;
+    newVersion: NewVersionRes | null;
 };
 
 export interface PalntNameInput {

@@ -59,7 +59,7 @@ const LabelImgShot = () => {
                 Toast.show({
                     type: "customError", 
                     text1: "Принтер не підключено!",
-                    text2: "Підключи принтер в меню.",
+                    text2: "Підключи принтер в меню 🖨️",
                     position: "bottom",
                     bottomOffset: 150,
                     visibilityTime: 4000,

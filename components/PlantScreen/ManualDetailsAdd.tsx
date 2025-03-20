@@ -1,4 +1,3 @@
-import { getUkrainianPart } from "@/components/helpers";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
 import { useState } from "react";
@@ -14,19 +13,17 @@ export default function ManualDetailsAdd({add}: ManualDetailsAddProps) {
 
     return (
         <View style={styles.manualDetails}>
+            <Text style={styles.textStr}>Ручний запис характеристики:</Text>
             <View style={styles.inputContainer}>
-                <Text style={styles.textStr}>Ручний запис характеристики:</Text>
                 <TextInput
                     style={styles.input}
                     onChangeText={(text) => {
                         setInput(text);
                     }}
-                    value={getUkrainianPart(input)}
+                    value={input}
                     placeholder={input ? "" : "Впишіть розмір"}
                     placeholderTextColor="#A0A0AB"
                 />
-
-
                 {input ? (
                     <TouchableVibrate
                         onPress={() => {
@@ -48,7 +45,6 @@ export default function ManualDetailsAdd({add}: ManualDetailsAddProps) {
                 <Text style={styles.buttonAddText}>Додати</Text>
             </TouchableVibrate>
         </View>
-
     )
 };
 

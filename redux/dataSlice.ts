@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
+import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
 import { DataSlice, Label, PlantDetails } from './stateServiceTypes';
 import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 
@@ -15,6 +15,7 @@ const initialState: DataSlice = {
   connectedPrinter: null,
   docComment: '',
   autoPrint: false,
+  newVersion: null,
 };
 
 
@@ -64,6 +65,7 @@ const dataSlice = createSlice({
       state.connectedPrinter = null;
       state.docComment = '';
       state.autoPrint = false;
+      state.newVersion = null;
       console.log('dataSlice __ logOut')
     },
   },
@@ -87,6 +89,11 @@ const dataSlice = createSlice({
       .addCase(getPlantsDetailsDB.fulfilled, (state, action) => {
         state.dBPlantDetails = action.payload;
         console.log('dataSlice getPlantsNameDB',)
+      })
+
+      .addCase(getNewVersionThunk.fulfilled, (state, action) => {
+        state.newVersion = action.payload;
+        console.log('dataSlice getNewVersionThunk', state.newVersion)
       })
   },
 });

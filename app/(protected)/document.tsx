@@ -43,7 +43,7 @@ export default function Document() {
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>
         ),
-        headerTitle: () => <Title title={params.docName?.toString() || "Document"} adTitle={formatDate(params.docTimeCr.toString()) || undefined} />,
+        headerTitle: () => <Title title={params.docName?.toString() || "Document"} adTitle={`від: ${formatDate(params.docTimeCr?.toString())}` || undefined} />,
       }} />
 
       <PlantListItem />

@@ -40,11 +40,14 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const isManual = item.characteristic_id === newSIZE;
     console.log('__RenderPlantDetail___ #ff6f61',)
 
-    const handleUpdateQtyOne = async (currentQty: number) => {
+    const handleUpdateQtyOne = async (currentQty: number, print: boolean) => {
+        if (currentQty < 0) {
+            return
+        }
         const success = await updateCharacteristic(item.id, currentQty);
         if (success) {
             dispatch(updateLocalCharacteristic({ id: item.id, currentQty: currentQty }));
-            autoPrint && handlePrint()
+            print && handlePrint()
         } else {
             console.error("Failed to update characteristic in DB.");
         }
@@ -129,40 +132,39 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                 </View>
 
                 <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
-                    <View style={{ flexDirection: "column", flex: 1, paddingRight: 0 }}>
-                        <View style={{ flexDirection: "row", justifyContent: 'space-between', }}>
-                            <View style={{ gap: 4, flexDirection: "row", }}>
-                                <View style={styles.btnRes}>
-                                    <Text>склад:</Text>
-                                </View>
-                                <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
-                            </View>
-
-                            {isEditing ? (
-                                <TextInput
-                                    ref={inputRef}
-                                    style={styles.inputQty}
-                                    value={item.currentQty.toString()}
-                                    onChangeText={handleChangeQty}
-                                    keyboardType="numeric"
-                                    selectTextOnFocus={item.currentQty === 0}
-                                    onBlur={() => handleUpdateQtyOne(item.currentQty).then(() => setIsEditing(false))}
-                                />
-                            ) : (
-                                <PressableVibrate
-                                    style={styles.editableQty}
-                                    onPress={() => setIsEditing(true)}
-                                >
-                                    <MaterialCommunityIcons name="pen-lock" size={16} color="black" />
-                                    <Text style={styles.itemQty}>{item.currentQty}{item.unit_name}</Text>
-                                </PressableVibrate>
-                            )}
+                    <View style={{ gap: 4, flexDirection: "row", }}>
+                        <View style={styles.btnRes}>
+                            <Text>склад:</Text>
                         </View>
+                        <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
                     </View>
-
+                    <View style={{flexDirection: 'row', gap: 8,}}>
+                        <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdateQtyOne(item.currentQty - 1, false)}>
+                            <Text style={styles.btnPlusText}>-1</Text>
+                        </TouchableVibrate>
+                        {isEditing ? (
+                            <TextInput
+                                ref={inputRef}
+                                style={styles.inputQty}
+                                value={item.currentQty.toString()}
+                                onChangeText={handleChangeQty}
+                                keyboardType="numeric"
+                                selectTextOnFocus={item.currentQty === 0}
+                                onBlur={() => handleUpdateQtyOne(item.currentQty, false).then(() => setIsEditing(false))}
+                            />
+                        ) : (
+                            <PressableVibrate
+                                style={styles.editableQty}
+                                onPress={() => setIsEditing(true)}
+                            >
+                                <MaterialCommunityIcons name="pen-lock" size={16} color="black" />
+                                <Text style={styles.itemQty}>{item.currentQty}{item.unit_name}</Text>
+                            </PressableVibrate>
+                        )}
+                    </View>
                 </View>
             </View>
-            <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdateQtyOne(item.currentQty + 1)} onLongPress={() => handleUpdateQtyOne(item.currentQty - 1)}>
+            <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdateQtyOne(item.currentQty + 1, autoPrint)}>
                 <Text style={styles.btnPlusText}>+1</Text>
             </TouchableVibrate>
 
@@ -236,13 +238,24 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         shadowRadius: 7,
         flexDirection: 'row',
-        gap: 4,
+        gap: 8,
     },
     btnPlus: {
         backgroundColor: 'rgb(106, 159, 53)',
         shadowColor: "rgba(0, 0, 0, 0.7)",
         width: 40,
         height: 40,
+        borderRadius: 5,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 5,
+        alignSelf: 'flex-end',
+    },
+    btnMinus: {
+        backgroundColor: 'rgba(175, 175, 175, 0.95)', //'rgba(218, 65, 27, 0.95)'
+        shadowColor: 'rgba(175, 175, 175, 0.95)',
+        width: 40,
+        height: 30,
         borderRadius: 5,
         alignItems: "center",
         justifyContent: "center",

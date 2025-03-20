@@ -186,7 +186,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                     }}
                     onFocus={showDropdown}
                     onBlur={() => setDropdownVisible(false)}
-                    value={getUkrainianPart(input)}
+                    value={input}
                     placeholder={input ? "" : "Оберіть назву рослини"}
                     placeholderTextColor="#A0A0AB"
                 />

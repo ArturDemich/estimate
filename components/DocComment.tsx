@@ -1,12 +1,15 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
     View,
     Text,
     StyleSheet,
     TextInput,
-    Animated,
     ScrollView,
+    Modal,
+    TouchableWithoutFeedback,
+    Pressable,
+    Keyboard,
 } from "react-native";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -14,7 +17,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { setDocComment } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
-import { Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { updateDocComment } from "@/db/db.native";
 import { useLocalSearchParams } from "expo-router";
@@ -29,88 +31,76 @@ const DocComment = () => {
     const docComment = useSelector<RootState, string>((state) => state.data.docComment);
     const [commentShow, setCommentShow] = useState(false);
     const [input, setInput] = useState(docComment);
-    const translateY = useRef(new Animated.Value(300)).current; // Start off-screen
-
-    const showModal = () => {
-        setCommentShow(true);
-        Animated.timing(translateY, {
-            toValue: 0, // Move modal to visible position
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
-    };
-
-    const hideModal = () => {
-        Animated.timing(translateY, {
-            toValue: 300, // Move modal down before hiding
-            duration: 300,
-            useNativeDriver: true,
-        }).start(() => setCommentShow(false)); // Hide modal after animation
-    };
+    const [isInputFocused, setIsInputFocused] = useState(false);
 
     const handleSaveComment = async () => {
         await updateDocComment(Number(docId), input)
-        .then(() => {
-            dispatch(setDocComment(input));
-            myToast({ type: "customToast", text1: 'Коментар збережено!', position: 'top' })
-        })
-        .catch((e) => {
-            console.log('Error save comment', e)
-            myToast({ type: "customError", text1: `Не вдалось зберегти коментар`, visibilityTime: 4000, position: 'top' })
-        })
+            .then(() => {
+                dispatch(setDocComment(input));
+                myToast({ type: "customToast", text1: 'Коментар збережено!', position: 'top' })
+            })
+            .catch((e) => {
+                console.log('Error save comment', e)
+                myToast({ type: "customError", text1: `Не вдалось зберегти коментар`, visibilityTime: 4000, position: 'top' })
+            })
     }
-
-
-
 
     console.log('DocComment', docComment)
 
     return (
         <>
-            <TouchableVibrate onPressOut={showModal} style={[styles.buttonStep, styles.containerNBTN,]}>
+            <TouchableVibrate onPress={() => setCommentShow(true)} style={[styles.buttonStep, styles.containerNBTN,]}>
                 <MaterialCommunityIcons name="message-draw" size={28} color='rgba(106, 159, 53, 0.95)' />
                 <View style={styles.arrow} />
             </TouchableVibrate>
-
-            <Portal>
-                <Modal visible={commentShow} onDismiss={hideModal} style={styles.centeredView}>
-                    <Animated.View style={[styles.modalView, { transform: [{ translateY }] }]}>
-                        <View style={styles.titleBlock}>
-                            <Text style={styles.modalTitle}>Коментар до документа:</Text>
-                            <TouchableVibrate 
-                                style={[styles.saveBtn, input != docComment && styles.saveBtnActive]} 
-                                onPress={handleSaveComment}
-                                disabled={input === docComment}
-                            >
-                                <MaterialCommunityIcons name="content-save-edit-outline" size={28} color="black" />
-                            </TouchableVibrate>
-                        </View>
-
-                        <ScrollView style={{ maxHeight: 150, }}>
-                            <Text style={styles.comment}>{docComment}</Text>
-                        </ScrollView>
-
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                style={styles.input}
-                                onChangeText={setInput}
-                                value={input}
-                                multiline
-                                numberOfLines={5}
-                                placeholder={"введіть текст"}
-                                placeholderTextColor="#A0A0AB"
-                            />
-                            {input ? (
-                                <TouchableVibrate onPress={() => setInput("")} style={styles.clearButton}>
-                                    <EvilIcons name="close-o" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
+            <Modal visible={commentShow} animationType="slide" onRequestClose={() => setCommentShow(false)} style={styles.centeredView} transparent>
+                <TouchableWithoutFeedback onPress={() => {
+                    Keyboard.dismiss();
+                    isInputFocused && setIsInputFocused(false)
+                    setCommentShow(false)
+                    }}>
+                    <View style={styles.centeredView}>
+                        <Pressable style={[styles.modalView,]} onPress={() => {
+                            Keyboard.dismiss();
+                            isInputFocused && setIsInputFocused(false)
+                            }}>
+                            <View style={styles.titleBlock}>
+                                <Text style={styles.modalTitle}>Коментар до документа:</Text>
+                                <TouchableVibrate
+                                    style={[styles.saveBtn, input != docComment && styles.saveBtnActive]}
+                                    onPress={handleSaveComment}
+                                    disabled={input === docComment}
+                                >
+                                    <MaterialCommunityIcons name="content-save-edit-outline" size={28} color="black" />
                                 </TouchableVibrate>
-                            ) : null}
+                            </View>
 
-                        </View>
+                            <ScrollView style={{ maxHeight: 150, }}>
+                                <Text style={styles.comment}>{docComment}</Text>
+                            </ScrollView>
 
-                    </Animated.View>
-                </Modal>
-            </Portal>
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    onChangeText={(text) => setInput(text)}
+                                    value={isInputFocused ? input : ''}
+                                    multiline
+                                    numberOfLines={5}
+                                    placeholder={"введіть текст"}
+                                    placeholderTextColor="#A0A0AB"
+                                    onFocus={() => setIsInputFocused(true)}
+                                    onBlur={() => setIsInputFocused(false)}
+                                />
+                                {input ? (
+                                    <TouchableVibrate onPress={() => setInput("")} style={styles.clearButton}>
+                                        <EvilIcons name="close-o" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
+                                    </TouchableVibrate>
+                                ) : null}
+                            </View>
+                        </Pressable>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
         </>
     );
 };
@@ -159,11 +149,10 @@ const styles = StyleSheet.create({
     centeredView: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.2)',
+        backgroundColor: 'rgba(0,0,0,0.05)',
     },
     modalView: {
-        margin: 1,
-        backgroundColor: 'rgba(243, 255, 231, 0.9)',//"rgba(254, 246, 216, 0.95)",
+        backgroundColor: 'rgba(243, 255, 231, 0.95)',
         borderTopLeftRadius: 5,
         borderTopRightRadius: 5,
         paddingLeft: 10,
@@ -212,6 +201,8 @@ const styles = StyleSheet.create({
     inputContainer: {
         position: "relative",
         width: "100%",
+        marginTop: 10,
+        marginBottom: 5,
     },
     input: {
         borderWidth: 1,

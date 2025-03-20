@@ -12,7 +12,7 @@ const Title = ({ title, adTitle }: TitleProps) => {
             <Text style={styles.title}>{title}</Text>
             {adTitle &&
             <View style={styles.adTitleBlock}>
-                <Text style={styles.adTitle}>від: {adTitle}</Text>
+                <Text style={styles.adTitle}>{adTitle}</Text>
             </View>}
         </View>
     )

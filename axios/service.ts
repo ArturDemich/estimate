@@ -8,7 +8,7 @@ const password = '';
 const tok = `${username}:${password}`;
 const encodedToken = Buffer.from(tok).toString('base64');
 
-
+const NEW_V_URL = 'https://digger-3000-default-rtdb.europe-west1.firebasedatabase.app/newVersionStock.json?print=pretty';
 const API = 'http://194.42.195.241:41001/UTP/hs/api';
 const TOKEN_URL = `${API}/getToken`;
 const getStorages_URL = `${API}/getStorages`;
@@ -16,6 +16,25 @@ const getPlants_URL = `${API}/getProductInfo`;
 const sendData_URL = `${API}/CreateStorageDoc`;
 
 export class DataService {
+  static async getNewVersion() {
+    try {
+      return await axios.get( NEW_V_URL )
+        .then((response) => response.data);
+    } catch (error: any) {
+      console.log("Error in service getNewVersion:", error);
+      let errorMessage = "Failed to fetch New Version App from api";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
   static async getStorages(token: string) {
     try {
       return await axios.post(
@@ -66,7 +85,7 @@ export class DataService {
         .then((response) => response.data)
     } catch (error: any) {
       myToast({ type: 'customError', text1: 'Список рослин не отримано!', text2: error.response.data })
-      
+
       console.log("Error in service getPlants:", error);
       let errorMessage = "Failed to fetch Plants from server";
       if (error.response?.data) {

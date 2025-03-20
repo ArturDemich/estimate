@@ -10,6 +10,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import Foundation from '@expo/vector-icons/Foundation';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
+import { clearDataState } from "@/redux/dataSlice";
 
 
 export default function HeaderLogout() {
@@ -19,6 +20,7 @@ export default function HeaderLogout() {
     
     const handleLogout = async () => {
         await dispatch(logout());
+        await dispatch(clearDataState())
         if (Platform.OS === 'web') {
             await localStorage.removeItem('token')
         } else {

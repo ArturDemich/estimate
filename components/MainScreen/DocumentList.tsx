@@ -2,20 +2,24 @@ import { deleteDocument, fetchDocuments } from "@/db/db.native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
-import moment from "moment";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { formatDate } from "@/components/helpers";
 import { Ionicons } from "@expo/vector-icons";
+import { setDocComment } from "@/redux/dataSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 
 
 interface DocumentList {
   id: number;
   storage_name: string;
-  created_at: string
+  created_at: string;
+  comment: string;
 };
 
 export default function DocumentList() {
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const [documents, setDocuments] = useState<DocumentList[]>([]);
 
@@ -23,6 +27,14 @@ export default function DocumentList() {
     const data = await fetchDocuments();
     setDocuments(data)
     console.log('loadDocuments', data)
+  };
+
+  const toPlantListName = async (item: DocumentList) => {
+    await dispatch(setDocComment(item.comment))
+    router.push({
+      pathname: "/document",
+      params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at },
+    });
   };
 
   const handleDelete = (e: GestureResponderEvent, item: DocumentList) => {
@@ -60,12 +72,7 @@ export default function DocumentList() {
         <TouchableVibrate
           style={styles.documentItem}
           onLongPress={async (e) => handleDelete(e, item)}
-          onPress={() => {
-            router.push({
-              pathname: "/document",
-              params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at },
-            });
-          }}
+          onPress={() => toPlantListName(item)}
         >
           <View style={styles.itemRow}>
             <View style={{flexDirection: 'row', gap: 4, alignItems: 'center'}}>

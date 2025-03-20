@@ -3,6 +3,7 @@ import { getUkrainianPart } from "@/components/helpers";
 import AddDetailsModal from "@/components/PlantScreen/AddDetailsModal";
 import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
 import LabelImgShot from "@/components/Printer/LabelImgShot";
+import Title from "@/components/TitleScreen";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { Ionicons } from "@expo/vector-icons";
 import { useBackHandler } from "@react-native-community/hooks";
@@ -43,6 +44,7 @@ export default function Plant() {
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>
         ),
+        headerTitle: () => <Title title={"Рослина"} adTitle={`в ${params.docName?.toString()}` || undefined} />,
       }} />
       <View style={{paddingLeft: 15, paddingVertical: 5, height: 40}}><Text style={{fontSize: 16, fontWeight: "600",}}>{namePlant}</Text></View>
       <PlantSizeItem plantName={namePlant} />

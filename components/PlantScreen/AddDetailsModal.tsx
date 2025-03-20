@@ -18,7 +18,6 @@ import { setExistPlantProps } from "@/redux/dataSlice";
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
-import { getUkrainianPart } from "@/components/helpers";
 import EmptyList from "@/components/ui/EmptyList";
 import ManualDetailsAdd from "@/components/PlantScreen/ManualDetailsAdd";
 import { newSIZE, nullID, unitPC } from "@/types/typesScreen";
@@ -160,10 +159,8 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                 <View style={styles.inputContainer}>
                                     <TextInput
                                         style={styles.input}
-                                        onChangeText={(text) => {
-                                            setInput(text);
-                                        }}
-                                        value={getUkrainianPart(input)}
+                                        onChangeText={(text) => setInput(text)}
+                                        value={input}
                                         placeholder={input ? "" : "Введіть текст для пошуку"}
                                         placeholderTextColor="#A0A0AB"
                                     />
@@ -193,7 +190,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                     )}
                                     style={{ width: '100%' }}
                                     keyboardShouldPersistTaps="handled"
-                                    ListEmptyComponent={<EmptyList text="Розміри не завантажено" />}
+                                    ListEmptyComponent={<EmptyList text="Співпадінь не знайдено" />}
                                 />
                             </>
                         }

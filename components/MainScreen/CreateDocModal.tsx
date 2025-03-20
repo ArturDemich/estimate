@@ -1,4 +1,4 @@
-import { RootState } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useState } from "react";
 import {
   FlatList,
@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
 import { addDocument, deleteDatabase, listDatabases } from "@/db/db.native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -16,6 +16,7 @@ import Feather from '@expo/vector-icons/Feather';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
 import EmptyList from "@/components/ui/EmptyList";
+import { setDocComment } from "@/redux/dataSlice";
 
 type StorageItem = {
   id: string;
@@ -26,6 +27,7 @@ type StorageItem = {
 
 
 export default function CreateDocModal() {
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const storages: StorageItem[] = useSelector((state: RootState) => state.data.digStorages);
   console.log('CreateDocModal', storages)
@@ -63,6 +65,7 @@ export default function CreateDocModal() {
 
   const navigateToDocument = async (storeName: string, storeId: string) => {
     setShow(false);
+    await dispatch(setDocComment(''))
     const docId = await addDocument(storeName, storeId)
     router.push({
       pathname: "/document",
