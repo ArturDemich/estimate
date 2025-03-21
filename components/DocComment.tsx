@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
     View,
@@ -40,12 +39,10 @@ const DocComment = () => {
                 myToast({ type: "customToast", text1: 'Коментар збережено!', position: 'top' })
             })
             .catch((e) => {
-                console.log('Error save comment', e)
+                console.error('Error save comment', e)
                 myToast({ type: "customError", text1: `Не вдалось зберегти коментар`, visibilityTime: 4000, position: 'top' })
             })
-    }
-
-    console.log('DocComment', docComment)
+    };
 
     return (
         <>

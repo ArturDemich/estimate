@@ -18,10 +18,11 @@ const sendData_URL = `${API}/CreateStorageDoc`;
 export class DataService {
   static async getNewVersion() {
     try {
+      console.log('SEVICE getNewVersion')
       return await axios.get( NEW_V_URL )
         .then((response) => response.data);
     } catch (error: any) {
-      console.log("Error in service getNewVersion:", error);
+      console.error("Error in service getNewVersion:", error);
       let errorMessage = "Failed to fetch New Version App from api";
       if (error.response?.data) {
         errorMessage =
@@ -37,6 +38,7 @@ export class DataService {
 
   static async getStorages(token: string) {
     try {
+      console.log('SEVICE getStorages')
       return await axios.post(
         getStorages_URL,
         { token, allstorages: true },
@@ -44,7 +46,7 @@ export class DataService {
       )
         .then((response) => response.data);
     } catch (error: any) {
-      console.log("Error in service getStorages:", error);
+      console.error("Error in service getStorages:", error);
       let errorMessage = "Failed to fetch Storages from server";
       if (error.response?.data) {
         errorMessage =
@@ -59,12 +61,13 @@ export class DataService {
   }
 
   static async getToken(log: string, pass: string) {
+    console.log('SEVICE getToken')
     return await axios.post(TOKEN_URL, { login: log, password: pass }, {
       headers: { 'Authorization': 'Basic ' + encodedToken }
     })
       .then((response) => response.data)
       .catch((error) => {
-        console.log("Login request error:", error);
+        console.error("Login request error:", error);
         let errorMessage = "Login request failed!";
         if (error.response?.data) {
           errorMessage = typeof error.response.data === "string"
@@ -78,6 +81,7 @@ export class DataService {
 
   static async getPlants(token: string, name: string, barcode: string) {
     try {
+      console.log('SEVICE getPlants')
       return await axios.post(
         getPlants_URL,
         { token, findbystring: name, barcodes: [barcode] },
@@ -86,7 +90,7 @@ export class DataService {
     } catch (error: any) {
       myToast({ type: 'customError', text1: 'Список рослин не отримано!', text2: error.response.data })
 
-      console.log("Error in service getPlants:", error);
+      console.error("Error in service getPlants:", error);
       let errorMessage = "Failed to fetch Plants from server";
       if (error.response?.data) {
         errorMessage =
@@ -109,7 +113,7 @@ export class DataService {
       )
         .then((response) => response.data);
     } catch (error: any) {
-      console.log("Error in service sendDataToServer:", error);
+      console.error("Error in service sendDataToServer:", error);
       let errorMessage = "Failed to send Data to server";
       if (error.response?.data) {
         errorMessage =

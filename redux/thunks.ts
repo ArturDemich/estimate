@@ -1,9 +1,9 @@
 import { DataService } from "@/axios/service";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { Alert, Platform } from "react-native";
-import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, PlantDetails, Storages, PlantDetailsResponse, NewVersionRes } from "./stateServiceTypes";
+import { Platform } from "react-native";
+import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes } from "./stateServiceTypes";
 import { RootState } from "./store";
-import { fetchCharacteristics, fetchPlants, updateDocComment } from "@/db/db.native";
+import { fetchCharacteristics, fetchPlants } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
 import { myToast } from "@/utils/toastConfig";
 
@@ -22,7 +22,6 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
       } else {
         token = await SecureStore.getItemAsync("token");
       };
-      console.log('loginThunk___ localStor', token)
       if (token) {
         return JSON.parse(token);
       } else {
@@ -31,7 +30,6 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
     } else {
       try {
         const response = await DataService.getToken(loginData.login, loginData.pass);
-        console.log('loginThunk__ server', response)
         if (!response.success) {
           myToast({ type: 'customError', text1: 'Не авторизовано! Сервер відповідає: ', text2: response.errors[0], visibilityTime: 5000 });
           return {}
@@ -45,7 +43,7 @@ export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined,
         return token;
 
       } catch (error: any) {
-        console.log("API Error in thunk login:", error);
+        console.error("API Error in thunk login:", error);
         return rejectWithValue("Failed to login");
       }
     }
@@ -65,8 +63,7 @@ export const getStoragesThunk = createAsyncThunk<Storages[], void, { rejectValue
       if (!response.success) {
         return rejectWithValue(response.errors?.[0] || "Unknown error");
       }
-
-      console.log("getStoragesThunk successful");
+      
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch storages");
@@ -113,7 +110,6 @@ export const getPlantsNameThunk = createAsyncThunk<PlantItemRespons[], PalntName
         if (!response.success) {
           return rejectWithValue(response.errors?.[0] || "Unknown error");
         }
-        console.log('getPlantsNameThunk___',)
         return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch Plants");

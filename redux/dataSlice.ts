@@ -16,6 +16,7 @@ const initialState: DataSlice = {
   docComment: '',
   autoPrint: false,
   newVersion: null,
+  docSent: 0,
 };
 
 
@@ -54,6 +55,10 @@ const dataSlice = createSlice({
       state.autoPrint = action.payload;
       console.log('dataSlice __ setAutoPrint', state.autoPrint)
     },
+    setDocSent(state, action: PayloadAction<number>) {
+      state.docSent = action.payload;
+      console.log('dataSlice __ setDocSent', state.docSent)
+    },
     clearDataState(state) {
       state.digStorages = [];
       state.searchPlantName = [];
@@ -66,6 +71,7 @@ const dataSlice = createSlice({
       state.docComment = '';
       state.autoPrint = false;
       state.newVersion = null;
+      state.docSent = 0;
       console.log('dataSlice __ logOut')
     },
   },
@@ -98,5 +104,6 @@ const dataSlice = createSlice({
   },
 });
 
-export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, connectPrinter, setDocComment, setAutoPrint, clearDataState } = dataSlice.actions;
+export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
+  connectPrinter, setDocComment, setAutoPrint, clearDataState, setDocSent } = dataSlice.actions;
 export default dataSlice.reducer;

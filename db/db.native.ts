@@ -34,10 +34,11 @@ export async function initializeDB(): Promise<void> {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL DEFAULT '',
+        number TEXT NOT NULL DEFAULT '',
         storage_id TEXT NOT NULL DEFAULT '',
         storage_name TEXT NOT NULL DEFAULT '',
         comment TEXT NOT NULL DEFAULT '',
+        is_sent INTEGER DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
@@ -99,7 +100,7 @@ export async function addDocument(nameStore: string, storeId: string): Promise<n
   const createdAt = new Date().toISOString();
   try {
     const result = await db.runAsync(
-      "INSERT INTO documents (storage_name, storage_id, comment, created_at) VALUES (?, ?, ?, ?)",
+      "INSERT INTO documents (storage_name, storage_id, comment, is_sent, created_at) VALUES (?, ?, ?, 0, ?)",
       [nameStore, storeId, '', createdAt]
     );
     return result.lastInsertRowId;
@@ -271,6 +272,20 @@ export async function updateDocComment(DbDocumentId: number, newComment: string)
     return false;
   }
 }
+
+export const markDocumentAsSent = async (docId: number) => {
+  const db = await openDB();
+  try {
+    const result = await db.runAsync(
+      "UPDATE documents SET is_sent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [docId]
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error updating currentQty:", error);
+    return false;
+  }
+};
 
 interface StorageInfo {
   id: string;

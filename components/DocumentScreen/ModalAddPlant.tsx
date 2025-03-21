@@ -22,7 +22,6 @@ export default function ModalAddPlant() {
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const [show, setShow] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  console.log('ModalAddPlant', params)
 
   const handleSetScanning = (val: boolean) => {
     setIsScanning(val)

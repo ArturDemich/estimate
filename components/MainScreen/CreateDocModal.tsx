@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { addDocument, deleteDatabase, listDatabases } from "@/db/db.native";
+import { addDocument } from "@/db/db.native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
@@ -30,7 +30,6 @@ export default function CreateDocModal() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const storages: StorageItem[] = useSelector((state: RootState) => state.data.digStorages);
-  console.log('CreateDocModal', storages)
   const [show, setShow] = useState(false);
 
   const [expandedItems, setExpandedItems] = useState<number[]>([]);
@@ -69,7 +68,7 @@ export default function CreateDocModal() {
     const docId = await addDocument(storeName, storeId)
     router.push({
       pathname: "/document",
-      params: { docName: storeName, docId },
+      params: { docName: storeName, docId, docSent: 0 },
     });
   };
 

@@ -6,23 +6,18 @@ import { getNewVersionThunk, loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import NewVersionModal from "@/components/NewVersionModal";
-import { myToast } from "@/utils/toastConfig";
 
 
 export default function ProtectedLayout() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [checkingToken, setCheckingToken] = useState(true);
-  console.log('ProtectedLayout')
 
   useEffect(() => {
-    console.log('ProtectedLayout___useEffect')
     const checkToken = async () => {
       const token = await dispatch(loginThunk())
-      console.log('ProtectedLayout__ checkToken',)
 
       if (!token.payload || Object.keys(token.payload).length === 0) {
-        console.log('ProtectedLayout__ checkToken_ replace', Boolean(token.payload))
         router.replace("/login");
       } else {
         setCheckingToken(false);

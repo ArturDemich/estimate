@@ -5,8 +5,8 @@ import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { formatDate } from "@/components/helpers";
-import { Ionicons } from "@expo/vector-icons";
-import { setDocComment } from "@/redux/dataSlice";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { setDocComment, setDocSent } from "@/redux/dataSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 
@@ -16,6 +16,7 @@ interface DocumentList {
   storage_name: string;
   created_at: string;
   comment: string;
+  is_sent: number;
 };
 
 export default function DocumentList() {
@@ -26,14 +27,14 @@ export default function DocumentList() {
   const loadDocuments = async () => {
     const data = await fetchDocuments();
     setDocuments(data)
-    console.log('loadDocuments', data)
   };
 
   const toPlantListName = async (item: DocumentList) => {
     await dispatch(setDocComment(item.comment))
+    await dispatch(setDocSent(item.is_sent))
     router.push({
       pathname: "/document",
-      params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at },
+      params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at, docSent: item.is_sent },
     });
   };
 
@@ -42,8 +43,7 @@ export default function DocumentList() {
     Alert.alert(
       'Увага!',
       'Бажаєте видалити документ і всі його записи?',
-      [
-        {
+      [{
           text: 'Скасувати',
           style: 'cancel'
         },
@@ -53,31 +53,30 @@ export default function DocumentList() {
             await deleteDocument(item.id)
             loadDocuments();
           },
-        }
-      ]
-    )
-  }
+        }])
+  };
 
   useFocusEffect(
     useCallback(() => {
       loadDocuments();
     }, [])
   );
-  console.log('DocumentList', Boolean(documents))
+  
   return (
     <FlatList
       data={documents}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <TouchableVibrate
-          style={styles.documentItem}
+          style={[styles.documentItem, item.is_sent === 1 && {opacity: 0.8}]}
           onLongPress={async (e) => handleDelete(e, item)}
           onPress={() => toPlantListName(item)}
         >
           <View style={styles.itemRow}>
             <View style={{flexDirection: 'row', gap: 4, alignItems: 'center'}}>
               <Ionicons name="document-text-outline" size={20} color="rgb(77, 77, 77)" />
-              <Text style={{ fontWeight: 500, fontSize: 16 }}>{item.storage_name}</Text>
+              <Text style={{ fontWeight: 500, fontSize: 16, width: 150 }}>{item.storage_name}</Text>
+             {item.is_sent === 1 && <MaterialIcons name="cloud-done" size={24} color="rgb(77, 77, 77)" />}
             </View>
             <Text style={{fontSize: 12, fontWeight: 700, color: "rgb(77, 77, 77)",}}>{formatDate(item.created_at)}</Text>
           </View>
@@ -92,7 +91,6 @@ export default function DocumentList() {
 }
 
 const styles = StyleSheet.create({
-  container: {},
   documentItem: {
     backgroundColor: "#fff",
     borderBottomColor: "black",

@@ -14,16 +14,14 @@ import { myToast } from "@/utils/toastConfig";
 
 export default function PlantListItem() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
   const params = useLocalSearchParams();
   const docId = params.docId;
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
+  const docSent = Array.isArray(params.docSent) ? params.docSent[0] : params.docSent;
   const palnts = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
-  console.log('ModalAddPlant', params)
 
   const loadDBPlants = async () => {
-    const data = await dispatch(getPlantsNameDB({ docId: Number(docId) }))
-    console.log('PlantListItem___',)
+    await dispatch(getPlantsNameDB({ docId: Number(docId) }))
   };
 
   useFocusEffect(
@@ -31,12 +29,12 @@ export default function PlantListItem() {
       loadDBPlants()
     }, [])
   );
-
+  
   return (
       <FlatList
         data={palnts}
         keyExtractor={(item, index) => item.id.toString() + index}
-        renderItem={({ item, index }) => <PlantNameItem docName={docName} item={item} loadDB={() => loadDBPlants()} docId={Number(docId)} numRow={palnts.length - index} />}
+        renderItem={({ item, index }) => <PlantNameItem docName={docName} docSent={Number(docSent)} item={item} loadDB={() => loadDBPlants()} docId={Number(docId)} numRow={palnts.length - index} />}
         style={{ width: "100%", height: '100%', paddingBottom: 40 }}
         ListEmptyComponent={<EmptyList text="Немає доданих рослин" />}
         ListFooterComponent={<View></View>}
@@ -51,9 +49,10 @@ interface PlantNameItemProps {
   docId: number;
   numRow: number;
   docName: string;
+  docSent: number;
 };
 
-const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemProps) => {
+const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantNameItemProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const [isLoding, setLoding] = useState(false);
@@ -80,18 +79,20 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemPr
   }
 
   const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {
-    setLoding(true)
+    if (docSent === 0) {
     try {
+      setLoding(true)
       await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' })).unwrap().then(() => setLoding(false));
     } catch (error: any) {
-      console.log("Failed to fetch plant details:", error);
+      console.error("Failed to fetch plant details:", error);
       myToast({
         type: "customError",
         text1: "Не вдалося отримати деталі рослини!",
         text2: error?.message || "Помилка сервера",
         visibilityTime: 5000,
       });
-    }
+      setLoding(false)
+    } }
     router.push({
       pathname: "/plant", params: { plantName: product_name, plantId: plantDBid, docId: docId, productId: productId, docName: docName || "" },
     });

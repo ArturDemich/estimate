@@ -1,4 +1,4 @@
-import { BackHandler, ToastAndroid, View } from "react-native";
+import { BackHandler, View } from "react-native";
 import DocumentList from "@/components/MainScreen/DocumentList";
 import CreateDocModal from "@/components/MainScreen/CreateDocModal";
 import { useDispatch } from "react-redux";
@@ -11,16 +11,14 @@ import { myToast } from "@/utils/toastConfig";
 export default function HomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const [backPressedOnce, setBackPressedOnce] = useState(false);
-  console.log('HomeScreen__',);
   
   const getData = async () => {
     let toastShown = false;
   
     try {
       await dispatch(getStoragesThunk()).unwrap();
-      console.log("DocumentList Fetched data:");
     } catch (error: any) {
-      console.log("Error fetching Storage:", error);
+      console.error("Error fetching Storage:", error);
   
       if (!toastShown) {
         myToast({
@@ -40,7 +38,7 @@ export default function HomeScreen() {
         return true;
     }
     setBackPressedOnce(true);
-    ToastAndroid.show('Натисніть ще раз "Назад" щоб вийти', ToastAndroid.SHORT);
+    myToast({type: 'customToast', text1: 'Натисніть ще раз "Назад" щоб вийти', visibilityTime: 2000})
     setTimeout(() => setBackPressedOnce(false), 2000); 
     return true; 
 });
@@ -48,7 +46,6 @@ export default function HomeScreen() {
 
   useEffect(() => {
     getData()
-    console.log('HomeScreen__useEffect',);
   }, [])
 
   return (

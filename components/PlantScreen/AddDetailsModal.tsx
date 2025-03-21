@@ -1,6 +1,7 @@
 import { AppDispatch, RootState } from "@/redux/store";
 import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Modal,
     StyleSheet,
@@ -13,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocalSearchParams } from "expo-router";
 import { addCharacteristic } from "@/db/db.native";
 import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
-import { getPlantsDetailsDB } from "@/redux/thunks";
+import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { setExistPlantProps } from "@/redux/dataSlice";
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
@@ -35,7 +36,6 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
     const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
     const dataPlant = plants?.length > 0 ? plants.filter((item) => item.product.id === productId) : [];
-    console.log('AddDetailsModal', params?.barcode,)
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
     const [manual, setManual] = useState(false);
@@ -203,6 +203,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                             >
                                 <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                             </TouchableVibrate>
+                            {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0].product.name} /> }
                             <View style={styles.switchBlock}>
                                 <Switch
                                     trackColor={{ false: '#767577', true: '"rgba(255, 111, 97, 1)"' }}
@@ -219,8 +220,30 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                 </View>
             </Modal>
         </>
-    );
-}
+    )
+};
+
+interface ReloadBtnProps {
+    dispatch: AppDispatch;
+    name: string;
+};
+
+const ReloadBtn = ({dispatch, name}: ReloadBtnProps) => {
+    const [isLoding, setLoding] = useState(false);
+
+    const handleReload = async () => {
+        setLoding(true)
+        await dispatch(getPlantsNameThunk({ name: name, barcode: '' })).unwrap().then(() => setLoding(false))
+    };
+
+    return (
+        <TouchableVibrate style={styles.reloadBtn} onPress={() => handleReload()}>
+            {isLoding ?
+                <ActivityIndicator size={30} color="rgba(255, 111, 97, 1)" /> :
+                <MaterialCommunityIcons name="reload" size={30} color="rgb(98, 98, 98)" />}
+        </TouchableVibrate>
+    )
+};
 
 const styles = StyleSheet.create({
     listItem: {
@@ -356,5 +379,16 @@ const styles = StyleSheet.create({
     switchBlock: {
         flexDirection: 'row',
         padding: 5,
+    },
+    reloadBtn: {
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.06)",
+        borderRadius: 50,
+        shadowColor: 'rgba(143, 143, 143, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 2,
+        alignSelf: 'center',
+        marginLeft: 25,
     },
 });

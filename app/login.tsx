@@ -21,10 +21,9 @@ export default function LoginScreen() {
       .then(() => {
         router.replace("/");
       })
-      .catch((error) => console.log("Login error:"));
+      .catch((error) => console.error("Login error: ", error));
   };
 
-  console.log('LoginScreen')
   return (
     <ImageBackground
       source={require("../assets/globoza.jpg")}
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     shadowColor: "rgba(255, 255, 255, 0.1)",
     shadowOpacity: 0.15,
     //shadowOffset: { width: 0, height: 4 },
@@ -100,7 +99,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "600",
-    color: "#333",
+    color: "rgb(112, 112, 112)",
     textAlign: "center",
     marginBottom: 25,
   },

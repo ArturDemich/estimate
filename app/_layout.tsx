@@ -13,7 +13,6 @@ import { toastConfig } from "@/utils/toastConfig";
 
 
 export default function RootLayout() {
-  console.log('RootLayout__',);
   useEffect(() => {
     const prepare = async () => {
       try {

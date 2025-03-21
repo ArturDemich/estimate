@@ -22,9 +22,10 @@ interface RenderPlantDetailProps {
     plantName: string;
     docName: string;
     autoPrint: boolean;
+    docSent: number;
 };
 
-const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint, docSent }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
@@ -38,7 +39,6 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const [printQty, setPrintQty] = useState<string | number>(1);
 
     const isManual = item.characteristic_id === newSIZE;
-    console.log('__RenderPlantDetail___ #ff6f61',)
 
     const handleUpdateQtyOne = async (currentQty: number, print: boolean) => {
         if (currentQty < 0) {
@@ -108,7 +108,6 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             qtyPrint: Number(printQty)
         }
         dispatch(setLabelPrint(label))
-        console.log("Print action for", item.characteristic_name, menuPosition, screenHeight);
     };
 
     useEffect(() => {
@@ -139,10 +138,11 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                         <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
                     </View>
                     <View style={{flexDirection: 'row', gap: 8,}}>
+                        {docSent === 0 &&
                         <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdateQtyOne(item.currentQty - 1, false)}>
                             <Text style={styles.btnPlusText}>-1</Text>
-                        </TouchableVibrate>
-                        {isEditing ? (
+                        </TouchableVibrate>}
+                        {isEditing && docSent === 0 ? (
                             <TextInput
                                 ref={inputRef}
                                 style={styles.inputQty}
@@ -164,9 +164,10 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                     </View>
                 </View>
             </View>
+            {docSent === 0 &&
             <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdateQtyOne(item.currentQty + 1, autoPrint)}>
                 <Text style={styles.btnPlusText}>+1</Text>
-            </TouchableVibrate>
+            </TouchableVibrate>}
 
             {showMenu && (
                 <Modal transparent animationType="fade">
@@ -176,10 +177,11 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                     >
                         <View style={[styles.menuContainer, { top: menuPosition.y, left: menuPosition.x, width: menuSize.width, height: menuSize.height }]}>
                             <View style={{ alignSelf: 'flex-end' }}>
+                                {docSent === 0 &&
                                 <TouchableVibrate style={styles.menuItem} onPress={handleDelete}>
                                     <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
                                     <Text style={[styles.menuText, { color: '#EF4444' }]}>Видалити</Text>
-                                </TouchableVibrate>
+                                </TouchableVibrate>}
                             </View>
 
                             <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
@@ -212,13 +214,12 @@ const mapStateToProps = (state: RootState) => ({
 })
 
 export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
-    console.log('__RenderPlantDetail___ MEMO_', prevProps.item.currentQty, nextProps.item.currentQty, prevProps.existPlantProps?.characteristic_id, nextProps.existPlantProps?.characteristic_id);
-
     return (
         prevProps.item.currentQty === nextProps.item.currentQty &&
         prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
         prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
-        prevProps.autoPrint === nextProps.autoPrint
+        prevProps.autoPrint === nextProps.autoPrint &&
+        prevProps.docSent === nextProps.docSent
     );
 }));
 

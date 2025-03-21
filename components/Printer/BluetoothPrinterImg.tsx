@@ -153,7 +153,6 @@ const BluetoothPrintImg = () => {
 
     /** Initializes Bluetooth Printer */
     const initBluetooth = () => {
-        console.log('initBluetooth', pairedDevices)
         BLEPrinter.init()
             .then(() => BLEPrinter.getDeviceList().then((data) => dispatch(setDevices(data))))
             .catch((error) => console.error("Bluetooth init failed:", error));
@@ -172,7 +171,7 @@ const BluetoothPrintImg = () => {
                     myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
                 })
                 .catch((error) => {
-                    console.log(error)
+                    console.error(error)
                     myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
                 });
 
@@ -181,9 +180,7 @@ const BluetoothPrintImg = () => {
             Alert.alert("Error", "Failed to connect to the printer.");
         }
     };
-    console.log('BluetoothPrintImg', screenHeight)
-
-
+    
     return (
         <>
             <TouchableVibrate style={styles.openBtn} onPressOut={handleOpenModal}>

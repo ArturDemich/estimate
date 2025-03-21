@@ -13,16 +13,15 @@ import EmptyList from "@/components/ui/EmptyList";
  const PlantSizeItem = memo(({existPlantProps, plantName}: {existPlantProps: PlantDetails | null, plantName: string}) => {
   const dispatch = useDispatch<AppDispatch>();
   const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
+  const docSent = useSelector<RootState, number>((state) => state.data.docSent);
   const params = useLocalSearchParams();
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const flatListRef = useRef<FlatList>(null);
-  console.log('PlantSizeItem ____P', params)
   
   const loadDBDetails = async () => {
     const plantId = params.plantId;
     const docId = params.docId
     const data = await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId: Number(docId) }))
-    console.log('PlantSizeItem___',  )
   };
 
   const handleFocus = (index: number) => {
@@ -38,7 +37,6 @@ import EmptyList from "@/components/ui/EmptyList";
 
   useEffect(() => {
     if (existPlantProps?.characteristic_id && flatListRef.current) {
-      console.log('PlantSizeItem___ existPlantProps?',  existPlantProps?.characteristic_id)
       const index = palntDetails.findIndex(item => item.characteristic_id === existPlantProps?.characteristic_id);
       if (index !== -1) {
         flatListRef.current.scrollToIndex({ index, animated: true });
@@ -48,7 +46,6 @@ import EmptyList from "@/components/ui/EmptyList";
 
   useFocusEffect(
     useCallback(() => {
-      console.log('params barcode', params)
       loadDBDetails()
     }, [])
   );
@@ -61,7 +58,7 @@ import EmptyList from "@/components/ui/EmptyList";
         data={palntDetails}
         onTouchStart={() => existPlantProps && dispatch(setExistPlantProps(null))}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} plantName={plantName} docName={docName} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
+        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} docSent={docSent} plantName={plantName} docName={docName} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
         style={{ width: "100%", paddingBottom: 40, flex: 1 }}
         ListEmptyComponent={<EmptyList text="Немає доданих х-ка" />}
         ListFooterComponent={<View></View>}
@@ -82,7 +79,6 @@ import EmptyList from "@/components/ui/EmptyList";
       
   );
 }, (prevProps, nextProps) => {
-  console.log('__ PlantSizeItem ___ MEMO_ ', prevProps.existPlantProps?.characteristic_id, nextProps.existPlantProps?.characteristic_id)
 return prevProps == nextProps
 })
 

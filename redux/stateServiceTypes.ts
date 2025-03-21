@@ -80,6 +80,7 @@ export interface DataSlice {
     docComment: string;
     autoPrint: boolean;
     newVersion: NewVersionRes | null;
+    docSent: number;
 };
 
 export interface PalntNameInput {

@@ -72,16 +72,11 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         return plant ? { existId: plant.id, productId: plant.product_id } : null
     };
     const handleCreatePlant = async (name: string, productId: string) => {
-        console.log('handleCreatePlant()__START',)
         const existingPlant = await checkIfPlantExists(productId);
-        console.log('handleCreatePlant()__exist',)
-
         if (existingPlant) {
-            console.log('handleCreatePlant()__navigateToPlantScreen',)
             navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
         } else {
             const addingId = await addPlant(Number(docId), { id: productId, name });
-            console.log('handleCreatePlant() addPlant', addingId)
             navigateToPlantScreen(name, addingId, productId);
         }
         close();
@@ -92,7 +87,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         try {
             return await dispatch(getPlantsNameThunk({ name: name ? name : '', barcode: barcode ? barcode : '' })).unwrap();
         } catch (error: any) {
-            console.log("Search Error:", error);
+            console.error("Search Error:", error);
             myToast({
                 type: "customError",
                 text1: "Список рослин не отримано!",
@@ -130,11 +125,9 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
 
     useEffect(() => {
         if (typingTimeout.current) {
-            console.log('InputDropDown222')
             clearTimeout(typingTimeout.current);
         }
         if (input.trim() !== "" && input.length > 3 && dropdownVisible) {
-            console.log('InputDropDown333')
             typingTimeout.current = setTimeout(() => { handleSetSearch(input) }, 1000);
         }
         return () => {
@@ -149,7 +142,6 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
             try {
                 if (isNumericBarcode(barcode)) {
                     const data = await handleSetSearch('', barcode);
-                    console.log("Barcode response:", data?.length);
                     if (data?.length === 1) {
                         handleCreatePlant(data[0].product.name, data[0].product.id);
                     }
@@ -158,7 +150,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                 }
             } catch (error: any) {
                 const errorMessage = error?.message || "Unknown error occurred";
-                console.log("Barcode search error:", error);
+                console.error("Barcode search error:", error);
                 myToast({
                     type: "customError",
                     text1: "Помилка пошук по баркоду!",

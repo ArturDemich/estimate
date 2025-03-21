@@ -1,45 +1,87 @@
 import { DataService } from '@/axios/service';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
-import { getDocumentWithDetails } from '@/db/db.native';
+import { getDocumentWithDetails, markDocumentAsSent } from '@/db/db.native';
+import { setDocSent } from '@/redux/dataSlice';
 import { TokenResponse } from '@/redux/stateServiceTypes';
-import { RootState } from '@/redux/store';
+import { AppDispatch, RootState } from '@/redux/store';
+import { getPlantsNameDB } from '@/redux/thunks';
+import { myToast } from '@/utils/toastConfig';
+import { MaterialIcons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert, StyleSheet, View } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const UpLoadBtn = () => {
-  const token = useSelector<RootState, TokenResponse | {}>((state) => state.login.token)
+  const dispatch = useDispatch<AppDispatch>();
+  const token = useSelector<RootState, TokenResponse | {}>((state) => state.login.token);
   const params = useLocalSearchParams();
   const docId = params.docId;
 
   const loadSendData = async () => {
     const data = await getDocumentWithDetails(Number(docId))
     console.log("UpLoadBtn data", JSON.stringify(data, null, 2));
-    if (data && "token" in token && typeof token.token === "string") {
-      //const res = await DataService.sendDataToServer(token.token, data)
-      Alert.alert(
-        'Вивантаження документа',
-        'Бажаєте відправит документ в 1С?',
-        [
-          {
-            text: 'Скасувати',
-            style: 'cancel'
-          },
-          {
-            text: 'Відправити',
-            onPress: async () => {
-              console.log('UpLoadBtn res',)
-            },
+    if (data) {
+      try {
+        if ("token" in token && typeof token.token === "string") {
+          const res = await DataService.sendDataToServer(token.token, data)
+          if (res) {
+            await markDocumentAsSent(Number(docId));
+            await dispatch(getPlantsNameDB({ docId: Number(docId) }))
           }
-        ]
-      )
+        } else {
+          console.log("Cant load token. Resign",);
+          myToast({
+            type: "customError",
+            text1: "Токен не вірний. Аторизуйтесь заново!",
+            visibilityTime: 5000,
+          });
+        }
+
+      } catch (error: any) {
+        console.error("Cant upload doc", error);
+        myToast({
+          type: "customError",
+          text1: "Відправка документа невдала!",
+          text2: error?.message || "Помилка сервера",
+          visibilityTime: 5000,
+        });
+      }
+    } else {
+      console.log("Cant load document from  DB",);
+      myToast({
+        type: "customError",
+        text1: "Не вдалося отримати документ з БД!",
+        visibilityTime: 5000,
+      });
     }
+  };
+
+  const upload = async () => {
+    Alert.alert(
+      'Вивантаження документа',
+      'Бажаєте відправит документ в 1С?',
+      [{
+        text: 'Скасувати',
+        style: 'cancel'
+      },
+      {
+        text: 'Відправити',
+        onPress: async () => {
+          console.log('UpLoadBtn res',)
+          await markDocumentAsSent(Number(docId));
+          await dispatch(setDocSent(1))
+          //await dispatch(getPlantsNameDB({ docId: Number(docId) }))
+          //loadSendData()
+        },
+      }]
+    )
   }
   return (
     <View style={styles.containerNBTN}>
-      <TouchableVibrate style={styles.buttonStep} onPress={loadSendData}>
-        <FontAwesome name="upload" size={24} color='rgba(106, 159, 53, 0.95)' />
+      <TouchableVibrate style={styles.buttonStep} onPress={upload}>
+        {/* <FontAwesome name="upload" size={24} color='rgba(106, 159, 53, 0.95)' /> */}
+        <MaterialIcons name="cloud-upload" size={30} color='rgba(106, 159, 53, 0.95)' />
       </TouchableVibrate>
     </View>
   )
@@ -55,7 +97,7 @@ const styles = StyleSheet.create({
   },
   buttonStep: {
     borderRadius: 8,
-    paddingVertical: 8,
+    paddingVertical: 3,
     paddingHorizontal: 5,
     opacity: 0.95,
     elevation: 5,
