@@ -1,4 +1,4 @@
-package com.anonymous.estimate
+package com.dartur.plantstock
 
 import android.app.Application
 import android.content.res.Configuration

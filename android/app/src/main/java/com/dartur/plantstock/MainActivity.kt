@@ -1,4 +1,4 @@
-package com.anonymous.estimate
+package com.dartur.plantstock
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

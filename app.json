@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "plantstock",
-    "slug": "plantstock",
+    "name": "PlantStock",
+    "slug": "plant-stock",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon_l.png",
-    "scheme": "myapp",
+    "scheme": "plantstock",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/logo-splash.png",
@@ -13,6 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.dartur.plantstock",
       "supportsTablet": true
     },
     "android": {
@@ -35,7 +36,7 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE"
       ],
-      "package": "com.anonymous.estimate"
+      "package": "com.dartur.plantstock"
     },
     "web": {
       "bundler": "metro",
