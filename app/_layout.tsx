@@ -20,7 +20,7 @@ export default function RootLayout() {
 
         setTimeout(async () => {
           await SplashScreen.hideAsync();
-        }, 3000);
+        }, 2000);
       } catch (error) {
         console.error("Failed to hide splash screen:", error);
       }

@@ -4,10 +4,8 @@ import { getDocumentWithDetails, markDocumentAsSent } from '@/db/db.native';
 import { setDocSent } from '@/redux/dataSlice';
 import { TokenResponse } from '@/redux/stateServiceTypes';
 import { AppDispatch, RootState } from '@/redux/store';
-import { getPlantsNameDB } from '@/redux/thunks';
 import { myToast } from '@/utils/toastConfig';
 import { MaterialIcons } from '@expo/vector-icons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,12 +23,14 @@ const UpLoadBtn = () => {
       try {
         if ("token" in token && typeof token.token === "string") {
           const res = await DataService.sendDataToServer(token.token, data)
-          if (res) {
+          if (res && res.success) {
+           // console.log(" load res.", res);
             await markDocumentAsSent(Number(docId));
-            await dispatch(getPlantsNameDB({ docId: Number(docId) }))
+            await dispatch(setDocSent(1));
+            //await dispatch(getPlantsNameDB({ docId: Number(docId) }))
           }
         } else {
-          console.log("Cant load token. Resign",);
+          console.error("Cant load token. ReSign",);
           myToast({
             type: "customError",
             text1: "Токен не вірний. Аторизуйтесь заново!",
@@ -69,10 +69,10 @@ const UpLoadBtn = () => {
         text: 'Відправити',
         onPress: async () => {
           console.log('UpLoadBtn res',)
-          await markDocumentAsSent(Number(docId));
-          await dispatch(setDocSent(1))
+          //await markDocumentAsSent(Number(docId));
+          //await dispatch(setDocSent(1))
           //await dispatch(getPlantsNameDB({ docId: Number(docId) }))
-          //loadSendData()
+          loadSendData()
         },
       }]
     )
@@ -80,7 +80,6 @@ const UpLoadBtn = () => {
   return (
     <View style={styles.containerNBTN}>
       <TouchableVibrate style={styles.buttonStep} onPress={upload}>
-        {/* <FontAwesome name="upload" size={24} color='rgba(106, 159, 53, 0.95)' /> */}
         <MaterialIcons name="cloud-upload" size={30} color='rgba(106, 159, 53, 0.95)' />
       </TouchableVibrate>
     </View>
