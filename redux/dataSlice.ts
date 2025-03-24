@@ -99,7 +99,7 @@ const dataSlice = createSlice({
 
       .addCase(getNewVersionThunk.fulfilled, (state, action) => {
         state.newVersion = action.payload;
-        console.log('dataSlice getNewVersionThunk', state.newVersion)
+        console.log('dataSlice getNewVersionThunk', state.newVersion, '1.0.3'<'1.0.4')
       })
   },
 });

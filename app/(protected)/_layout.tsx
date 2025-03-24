@@ -5,7 +5,6 @@ import { ActivityIndicator, ImageBackground, View } from "react-native";
 import { getNewVersionThunk, loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import NewVersionModal from "@/components/NewVersionModal";
 
 
 export default function ProtectedLayout() {
@@ -61,7 +60,6 @@ export default function ProtectedLayout() {
         <Stack.Screen name="document" options={{ title: "Документ #", headerRight: () => <HeaderLogout />, }} />
         <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => <HeaderLogout />, }} />
       </Stack>
-      <NewVersionModal />
     </ImageBackground>
   );
 }

@@ -12,12 +12,12 @@ import Toast from "react-native-toast-message";
 
 function NewVersionModal({ }) {
     const [show, setShow] = useState(false);
-    const version = useSelector<RootState, NewVersionRes | null>((state) => state.data.newVersion);
+    const newVersion = useSelector<RootState, NewVersionRes | null>((state) => state.data.newVersion);
     const ver = Constants.expoConfig?.version;
 
     const refreshApp = () => {
-        if (version?.url) {
-            Linking.openURL(version.url);
+        if (newVersion?.url) {
+            Linking.openURL(newVersion.url);
             setShow(!show)
         } else {
             setShow(!show)
@@ -32,14 +32,14 @@ function NewVersionModal({ }) {
     };
 
     const get = () => {
-        if (version && version.version?.length > 0 && String(ver) < String(version.version)) {
+        if (newVersion && newVersion.version?.length > 0 && String(ver) < String(newVersion.version)) {
             setShow(true)
         }
     }
 
     useEffect(() => {
         get()
-    }, [version])
+    }, [newVersion])
 
     return (
         <View>
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
         width: 300,
         flexDirection: 'column',
         margin: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: 10,
         paddingLeft: 5,
         paddingRight: 5,
