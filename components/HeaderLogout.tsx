@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, Vibration, View } from "react-native";
 import { useRouter, useSegments } from "expo-router";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -19,14 +19,17 @@ export default function HeaderLogout() {
     const segments = useSegments();
     
     const handleLogout = async () => {
+        Vibration.vibrate(5);
+        router.replace("/login");
+        await dispatch(clearDataState());
         await dispatch(logout());
-        await dispatch(clearDataState())
+        
         if (Platform.OS === 'web') {
             await localStorage.removeItem('token')
         } else {
             await SecureStore.deleteItemAsync("token");
         }
-        router.replace("/login");
+        
     };
 
     const isProtectedIndex = segments[0] === "(protected)" && segments.length === 1;

@@ -7,7 +7,6 @@ import {
   Platform,
 } from "react-native";
 import InputDropDown from "./InputDropDown";
-import { Modal, Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { useLocalSearchParams } from "expo-router";
 import Feather from '@expo/vector-icons/Feather';
@@ -26,42 +25,41 @@ export default function ModalAddPlant() {
   const handleSetScanning = (val: boolean) => {
     setIsScanning(val)
   };
+  console.log('ModalAddPlant', show)
 
   return (
     <>
       <View style={styles.containerNBTN}>
-        <TouchableVibrate style={styles.buttonStep} onPress={() => setShow(true)}>
+        <TouchableVibrate style={styles.buttonStep} onPress={() => {
+          console.log('ModalAddPlant show', show)
+          setShow(true)
+        }}>
           <Feather name="plus" size={20} color='rgba(106, 159, 53, 0.95)' />
           <Entypo name="tree" size={22} color='rgba(106, 159, 53, 0.95)' />
         </TouchableVibrate>
       </View>
 
-      <Portal>
-        <Modal
-          visible={show}
-          onDismiss={() => setShow(false)}
-          contentContainerStyle={{ flex: 1, }}
+      {show &&
+      <View style={styles.modal}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.centeredView}
         >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.centeredView}
-          >
-            <View style={styles.modalView}>
-              <View style={styles.btnBlock}>
+          <View style={styles.modalView}>
+            <View style={styles.btnBlock}>
               <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
-                  <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
-                </TouchableVibrate>
-                <Text style={styles.textStr}>Пошук</Text>
-                <TouchableVibrate onPress={() => handleSetScanning(true)}>
-                  <MaterialCommunityIcons name="barcode-scan" size={28} color="black" />
-                </TouchableVibrate>
-              </View>
-              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
-              
+                <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
+              </TouchableVibrate>
+              <Text style={styles.textStr}>Пошук</Text>
+              <TouchableVibrate style={styles.barcodeBtn} onPress={() => handleSetScanning(true)}>
+                <MaterialCommunityIcons name="barcode-scan" size={28} color="black" />
+              </TouchableVibrate>
             </View>
-          </KeyboardAvoidingView>
-        </Modal>
-      </Portal>
+            <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
+
+          </View>
+        </KeyboardAvoidingView>
+      </View>}
     </>
   );
 }
@@ -91,10 +89,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
 
   },
+  modal: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+  },
   centeredView: {
     flex: 1,
     alignItems: "center",
-    top: 60
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+
   },
   modalView: {
     width: "93%",
@@ -102,24 +107,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     alignItems: "center",
+    top: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    height: 'auto',
+    minHeight: 50,
+    maxHeight: '100%',
     display: 'flex',
   },
   btnBlock: {
     flexDirection: "row",
     width: "100%",
-  },
-  buttonModal: {
-    borderRadius: 3,
-    textAlign: "center",
-    backgroundColor: "#45aa45",
-    width: 110,
-    height: 35,
-    justifyContent: "center",
   },
   buttonClose: {
     borderRadius: 8,
@@ -137,10 +136,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     textAlign: 'center'
   },
-  modalText: {
-    textAlign: "center",
-    color: "snow",
-    fontSize: 15,
-    fontWeight: "700",
-  },
+  barcodeBtn: {
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "rgba(31, 30, 30, 0.06)",
+    borderRadius: 5,
+    shadowColor: 'rgba(143, 143, 143, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 3,
+    alignSelf: 'center',
+},
 });

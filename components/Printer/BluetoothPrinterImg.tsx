@@ -13,6 +13,7 @@ import {
     Switch,
     TouchableWithoutFeedback,
     Pressable,
+    Vibration,
 } from "react-native";
 import { BLEPrinter, IBLEPrinter, } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
@@ -88,6 +89,7 @@ const BluetoothPrintImg = () => {
     const [selectedSizeLabel, setSelectedSizeLabel] = useState<SizeLabel | null>(null);
 
     const handleOpenModal = async () => {
+        Vibration.vibrate(5);
         const isBluetoothOn = await checkBluetoothEnabled();
         if (!isBluetoothOn) {
             myToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
@@ -117,6 +119,7 @@ const BluetoothPrintImg = () => {
     };
 
     const handleSwitch = () => {
+        Vibration.vibrate(5);
         dispatch(setAutoPrint(!autoPrint))
     };
 

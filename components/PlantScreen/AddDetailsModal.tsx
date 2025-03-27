@@ -8,6 +8,7 @@ import {
     Switch,
     Text,
     TextInput,
+    Vibration,
     View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,7 +16,7 @@ import { useLocalSearchParams } from "expo-router";
 import { addCharacteristic } from "@/db/db.native";
 import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
-import { setExistPlantProps } from "@/redux/dataSlice";
+import { setExistPlantProps, setNewDetailBarcode } from "@/redux/dataSlice";
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
@@ -34,6 +35,8 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     const dispatch = useDispatch<AppDispatch>();
     const params = useLocalSearchParams();
     const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
+    const existPlantProps = useSelector<RootState, PlantDetails | null>((state) => state.data.existPlantProps);
+    const newDetailBarcode = useSelector<RootState, string | null>((state) => state.data.newDetailBarcode);
     const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
     const dataPlant = plants?.length > 0 ? plants.filter((item) => item.product.id === productId) : [];
     const [show, setShow] = useState(false);
@@ -94,10 +97,11 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
         const addCharact = await addCharacteristic(Number(plantDBid), detail);
         if (addCharact != null) await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId: Number(docId) }));
 
-        setShow(false);
+        show && setShow(false);
     };
 
     const addDetails = async (plantNameDBId: number, plantItem: PlantItemRespons) => {
+        console.log('AddModalDetail addDetails', palntDetails, isCharacteristicAdded(plantItem.characteristic.id))
         if (isCharacteristicAdded(plantItem.characteristic.id)) {
             dispatch(setExistPlantProps({
                 plant_id: plantNameDBId,
@@ -108,29 +112,48 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                 barcode: plantItem.barcode,
                 quantity: plantItem.quantity ? plantItem.quantity : 0
             }))
-            setShow(false);
+            show && setShow(false);
+            dispatch(setNewDetailBarcode(null));
             return;
         }
         const addCharact = await addCharacteristic(plantNameDBId, plantItem);
-        if (addCharact != null) await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId: Number(docId) }));
+        if (addCharact != null) {
+            await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId: Number(docId) }));
+            dispatch(setExistPlantProps({
+                plant_id: plantNameDBId,
+                characteristic_id: plantItem.characteristic.id,
+                characteristic_name: plantItem.characteristic.name,
+                unit_id: plantItem.unit.id,
+                unit_name: plantItem.unit.name,
+                barcode: plantItem.barcode,
+                quantity: plantItem.quantity ? plantItem.quantity : 0
+            }))
+        }
 
-        setShow(false);
+        show && setShow(false);
+        dispatch(setNewDetailBarcode(null));
     };
 
     useEffect(() => {
-        if (params.barcode) {
+        console.log('AddModalDetail useEffect', palntDetails, newDetailBarcode)
+        if (newDetailBarcode && palntDetails.length > 0) {
             if (plants.length === 1 && plants.some((item) => item.barcode === params.barcode)) {
                 addDetails(Number(plantDBid), plants[0])
             }
         }
-    }, [])
+    }, [palntDetails])
+
+    console.log('AddModalDetail palntDetails', palntDetails, )
 
     return (
         <>
             <View style={styles.containerNBTN}>
                 <TouchableVibrate
                     style={styles.buttonStep}
-                    onPress={() => setShow(!show)}
+                    onPress={() => {
+                        existPlantProps && dispatch(setExistPlantProps(null));
+                        setShow(!show);
+                    }}
                 >
                     <Entypo name="add-to-list" size={24} color="#131316" />
                 </TouchableVibrate>
@@ -182,8 +205,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                     renderItem={({ item }) => (
                                         <TouchableVibrate
                                             style={styles.listItem}
-                                            onPress={() => addDetails(Number(plantDBid), item)}
-                                        >
+                                            onPress={() => addDetails( Number(plantDBid), item)}>
                                             <Text style={styles.listItemName}>{item.characteristic.name}</Text>
                                             <Text style={styles.listItemQty}>{item.quantity} 0 {item.unit.name}</Text>
                                         </TouchableVibrate>
@@ -203,13 +225,16 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                             >
                                 <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                             </TouchableVibrate>
-                            {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0].product.name} /> }
+                            {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0]?.product.name} /> }
                             <View style={styles.switchBlock}>
                                 <Switch
                                     trackColor={{ false: '#767577', true: '"rgba(255, 111, 97, 1)"' }}
                                     thumbColor={'#f4f3f4'}
                                     ios_backgroundColor="#3e3e3e"
-                                    onValueChange={() => setManual(!manual)}
+                                    onValueChange={() => {
+                                        Vibration.vibrate(5);
+                                        setManual(!manual)
+                                    }}
                                     value={manual}
                                 />
                                 <MaterialCommunityIcons name="draw-pen" size={24} color={manual ? "rgba(255, 111, 97, 1)" : "rgb(125, 125, 125)"} />

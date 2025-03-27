@@ -1,7 +1,7 @@
 import { Label, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
-import { Alert, Dimensions, Modal, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { connect, useDispatch } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { deleteCharacteristic, updateCharacteristic } from "@/db/db.native";
@@ -34,16 +34,15 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
     const itemRef = useRef<View>(null);
     const inputRef = useRef<TextInput>(null);
-    const screenHeight = Dimensions.get("window").height;
     const [isEditing, setIsEditing] = useState(false);
     const [printQty, setPrintQty] = useState<string | number>(1);
 
     const isManual = item.characteristic_id === newSIZE;
 
     const handleUpdateQtyOne = async (currentQty: number, print: boolean) => {
-        if (currentQty < 0) {
+        if (currentQty < 0 ) { 
             return
-        }
+        } 
         const success = await updateCharacteristic(item.id, currentQty);
         if (success) {
             dispatch(updateLocalCharacteristic({ id: item.id, currentQty: currentQty }));
@@ -60,7 +59,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             setIsEditing(false);
             return
         }
-        await dispatch(updateLocalCharacteristic({ id: item.id, currentQty: Number(currentQty) }));
+         dispatch(updateLocalCharacteristic({ id: item.id, currentQty: Number(currentQty) }));
     };
 
     const handleLongPress = () => {
@@ -85,6 +84,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                 {
                     text: 'Видалити',
                     onPress: async () => {
+                        console.log('handleDelete Alert', item.id)
                         await deleteCharacteristic(item.id);
                         await reloadList()
                     },
@@ -213,15 +213,16 @@ const mapStateToProps = (state: RootState) => ({
     autoPrint: state.data.autoPrint,
 })
 
-export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
+export default connect(mapStateToProps)(RenderPlantDetail)/* (memo(RenderPlantDetail, (prevProps, nextProps) => {
+    console.log('RenderPlantDetail MEMO', prevProps.item.id, nextProps.item.id)
     return (
-        prevProps.item.currentQty === nextProps.item.currentQty &&
-        prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
-        prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
-        prevProps.autoPrint === nextProps.autoPrint &&
-        prevProps.docSent === nextProps.docSent
+       // prevProps.item.currentQty === nextProps.item.currentQty &&
+        prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id //&&
+        //prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
+       // prevProps.autoPrint === nextProps.autoPrint &&
+       // prevProps.docSent === nextProps.docSent
     );
-}));
+})) */;
 
 
 const styles = StyleSheet.create({

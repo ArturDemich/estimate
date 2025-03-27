@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, } from "react-native";
 import { CameraView, Camera } from "expo-camera";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
@@ -28,6 +28,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       onScan(data);
     }
   };
+  
 
   if (hasPermission === null) {
     return <Text>Requesting camera permission...</Text>;
@@ -56,26 +57,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    bottom: height * 0.22,
+    bottom: height * 0.15,
     position: 'relative'
   },
   camera: {
     width: width * 0.94, // 90% of screen width
-    height: height * 0.3, // 70% of screen height
+    height: height * 0.2, // 70% of screen height
     borderRadius: 10,
     overflow: "hidden",
     zIndex: 2
-  },
-  btn: {
-    zIndex: 999,
-    flex: 1,
-
   },
   overlay: {
     position: "absolute", // Make buttons overlay the camera
     width: "100%",
     alignItems: "center",
-    zIndex: 2
+    zIndex: 2,
   },
   clearButton: {
     position: "absolute",
@@ -88,7 +84,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1
-},
+  },
 });
 
 

@@ -2,7 +2,6 @@ import { View, Text, Modal } from "react-native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import { useEffect, useRef, useState } from "react";
-import moment from "moment";
 import Entypo from '@expo/vector-icons/Entypo';
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
@@ -11,6 +10,7 @@ import { printLabel } from "@/components/Printer/BluetoothPrinterImg";
 import { setLabelPrint } from "@/redux/dataSlice";
 import Toast from "react-native-toast-message";
 import { IBLEPrinter } from "@conodene/react-native-thermal-receipt-printer-image-qr";
+import { format } from "date-fns/format";
 
 
 const LabelImgShot = () => {
@@ -19,7 +19,7 @@ const LabelImgShot = () => {
     const connectedPrinter = useSelector<RootState, IBLEPrinter | null>((state) => state.data.connectedPrinter);
     const [showView, setShowView] = useState(false); 
     const ref = useRef<ViewShot>(null);
-    const DateNow = moment().format('DD.MM.YY');
+    const DateNow = format(new Date(), 'dd.MM.y');
 
     const shot = async () => {
         try {

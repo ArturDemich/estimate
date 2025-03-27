@@ -81,6 +81,7 @@ export interface DataSlice {
     autoPrint: boolean;
     newVersion: NewVersionRes | null;
     docSent: number;
+    newDetailBarcode: string | null;
 };
 
 export interface PalntNameInput {

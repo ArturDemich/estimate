@@ -3,7 +3,7 @@ import * as SQLite from "expo-sqlite";
 import { Alert } from "react-native";
 import * as FileSystem from 'expo-file-system';
 import { newSIZE, nullID } from "@/types/typesScreen";
-import moment from "moment";
+import { format } from "date-fns/format";
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
@@ -235,8 +235,10 @@ export async function deletePlant(documentId: number, plantNameId: number): Prom
 
 export async function deleteCharacteristic(characteristicId: number): Promise<boolean> {
   const db = await openDB();
+  console.log('DB deleteCharacteristic', characteristicId)
   try {
     const result = await db.runAsync("DELETE FROM plant_characteristics WHERE id = ?", characteristicId);
+    console.log('DB deleteCharacteristic result', result)
     return result.changes > 0;
   } catch (error) {
     console.error("Error deleting characteristic:", error);
@@ -409,7 +411,7 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
 
     return {
       id: nullID,
-      date: moment(docResult.date).format("YYYY-DD-MM HH-mm-ss"),
+      date: docResult.date ? format(docResult.date, "yyyy-dd-MM HH-mm-ss") : '', //"YYYY-DD-MM HH-mm-ss"
       number: docResult.id.toString() || "0",
       comment: docResult.comment || "",
       storage: {

@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 5,
         opacity: 0.95,
         elevation: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        backgroundColor: 'rgba(255, 255, 255, 0.99)',
         borderColor: '#E4E4E7',
         shadowColor: "#131316",
         shadowOffset: { width: 0, height: 0 },
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 10,
         borderLeftColor: "transparent",
         borderRightColor: "transparent",
-        borderTopColor: 'rgba(255, 255, 255, 0.85)', // Match tooltip color
+        borderTopColor: 'rgba(255, 255, 255, 0.99)', // Match tooltip color
     },
     centeredView: {
         flex: 1,

@@ -68,7 +68,7 @@ export default function CreateDocModal() {
     const docId = await addDocument(storeName, storeId)
     router.push({
       pathname: "/document",
-      params: { docName: storeName, docId, docSent: 0 },
+      params: { docName: storeName, docId, docSent: 0, docTimeCr: new Date().toISOString() },
     });
   };
 

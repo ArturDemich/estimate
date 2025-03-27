@@ -5,12 +5,9 @@ import {
     Text,
     TextInput,
     View,
-    findNodeHandle,
-    UIManager,
     Keyboard,
     ActivityIndicator,
 } from "react-native";
-import { Portal } from "react-native-paper";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,6 +19,8 @@ import { useRouter } from "expo-router";
 import BarcodeScanner from "../BarcodeScanner";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { myToast } from "@/utils/toastConfig";
+import { setNewDetailBarcode } from "@/redux/dataSlice";
+import EmptyList from "@/components/ui/EmptyList";
 
 interface InputDropDownProps {
     docId: string;
@@ -39,27 +38,10 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const [input, setInput] = useState("");
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [keyboardOpen, setKeyboardOpen] = useState(false);
-    const [dropdownPosition, setDropdownPosition] = useState<{
-        top: number;
-        left: number;
-        width: number;
-    } | null>(null);
     const inputRef = useRef<TextInput>(null);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
-
     const [barcode, setBarcode] = useState("");
     const [isSendSearch, setSendSearch] = useState(false);
-
-    const showDropdown = () => {
-        if (inputRef.current) {
-            const handle = findNodeHandle(inputRef.current);
-            if (handle) {
-                UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
-                    setDropdownPosition({ top: pageY + height, left: pageX, width, });
-                });
-            }
-        }
-    };
 
     const navigateToPlantScreen = (name: string, id: number | null, productId?: string,) => {
         router.push({
@@ -67,25 +49,29 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
             params: { plantName: name, plantId: id, docId: docId, productId: productId, barcode, docName },
         });
     };
-    const checkIfPlantExists = async (productid: string) => {
-        const plant = docPlantsList.find(plant => plant.product_id === productid);
+    const checkIfPlantExists = (productid: string) => {
+        const plant = docPlantsList?.find(plant => plant.product_id === productid);
         return plant ? { existId: plant.id, productId: plant.product_id } : null
     };
     const handleCreatePlant = async (name: string, productId: string) => {
-        const existingPlant = await checkIfPlantExists(productId);
-        if (existingPlant) {
-            navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
-        } else {
-            const addingId = await addPlant(Number(docId), { id: productId, name });
-            navigateToPlantScreen(name, addingId, productId);
+        try {
+            const existingPlant = checkIfPlantExists(productId);
+            if (existingPlant) {
+                navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
+            } else {
+                const addingId = await addPlant(Number(docId), { id: productId, name });
+                navigateToPlantScreen(name, addingId, productId);
+            }
+            close();
+        } catch (error) {
+            console.error("Error in handleCreatePlant:", error);
         }
-        close();
     };
 
     const handleSetSearch = async (name?: string, barcode?: string) => {
         setSendSearch(true);
         try {
-            return await dispatch(getPlantsNameThunk({ name: name ? name : '', barcode: barcode ? barcode : '' })).unwrap();
+            return await dispatch(getPlantsNameThunk({ name: name || '', barcode: barcode || '' })).unwrap();
         } catch (error: any) {
             console.error("Search Error:", error);
             myToast({
@@ -99,15 +85,15 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         } finally {
             setSendSearch(false);
         }
-    }
+    };
+
+    function isNumericBarcode(barcode: string): boolean {
+        return /^\d+$/.test(barcode);
+    };
 
     const uniquePlants = Array.from(
         searchPlantsList ? new Map(searchPlantsList.map((item) => [item.product.name, item])).values() : []
     );
-
-    function isNumericBarcode(barcode: string): boolean {
-        return /^\d+$/.test(barcode);
-    }
 
     useLayoutEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
@@ -136,6 +122,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     }, [input, dispatch,]);
 
     useEffect(() => {
+        console.log("Barcode useEff:", barcode);
         if (!barcode) return;
 
         const fetchPlantByBarcode = async () => {
@@ -144,6 +131,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                     const data = await handleSetSearch('', barcode);
                     if (data?.length === 1) {
                         handleCreatePlant(data[0].product.name, data[0].product.id);
+                        setBarcode('');
                     }
                 } else {
                     await dispatch(getPlantsNameThunk({ name: barcode, barcode: '' })).unwrap();
@@ -159,6 +147,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                     position: 'bottom',
                     bottomOffset: 50
                 });
+                setBarcode('');
             }
         };
 
@@ -174,12 +163,10 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                     onChangeText={(text) => {
                         setInput(text);
                         setDropdownVisible(!!text);
-                        showDropdown();
                     }}
-                    onFocus={showDropdown}
                     onBlur={() => setDropdownVisible(false)}
                     value={input}
-                    placeholder={input ? "" : "Оберіть назву рослини"}
+                    placeholder={input ? "" : "Введіть назву рослини"}
                     placeholderTextColor="#A0A0AB"
                 />
 
@@ -187,6 +174,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                     <BarcodeScanner
                         onScan={(scannedData) => {
                             setBarcode(scannedData);
+                            dispatch(setNewDetailBarcode(scannedData))
                             setInput(scannedData)
                             handleSetScanning(false);
                         }}
@@ -206,47 +194,37 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                 ) : null}
             </View>
 
-            {dropdownVisible && dropdownPosition && (
-                <Portal>
-                    <View
-                        style={[
-                            styles.listContainer,
-                            {
-                                top: dropdownPosition.top,
-                                left: dropdownPosition.left,
-                                width: dropdownPosition.width,
-                                maxHeight: keyboardOpen ? 60 : 370,
-                            },
-                        ]}
-                    >
-                        {isSendSearch ?
-                            <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" />
-                            :
-                            <FlatList
-                                data={uniquePlants}
-                                keyExtractor={(item, index) => index.toString()}
-                                renderItem={({ item }) => (
-                                    <TouchableVibrate
-                                        style={styles.pressItemList}
-                                        onPress={async () => {
-                                            await handleCreatePlant(item.product.name, item.product.id)
-                                        }}
-                                    >
-                                        <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
-                                    </TouchableVibrate>
-                                )}
-                                ItemSeparatorComponent={() => (
-                                    <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
-                                )}
-                                ListFooterComponent={() => (
-                                    <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
-                                )}
-                                keyboardShouldPersistTaps="handled"
-                                contentContainerStyle={{ paddingBottom: 10 }}
-                            />
-                        }
-                    </View>
-                </Portal>
+            {dropdownVisible && (
+                <View style={[styles.listContainer, { maxHeight: keyboardOpen ? 170 : 380, }]}>
+                    {isSendSearch ?
+                        <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" />
+                        :
+                        <FlatList
+                            data={uniquePlants}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <TouchableVibrate
+                                    style={styles.pressItemList}
+                                    onPress={async () => {
+                                        await handleCreatePlant(item.product.name, item.product.id)
+                                    }}
+                                >
+                                    <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
+                                </TouchableVibrate>
+                            )}
+                            ItemSeparatorComponent={() => (
+                                <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
+                            )}
+                            ListFooterComponent={() => (
+                                <View style={{ borderBottomWidth: 1, borderColor: "#E4E4E7", }} />
+                            )}
+                            keyboardShouldPersistTaps="handled"
+                            contentContainerStyle={{ paddingRight: 5, backgroundColor: "rgba(255, 255, 255, 0.1)", }}
+                            style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", }}
+                            ListEmptyComponent={<EmptyList text="Поки нічого не знайдено" />}
+                        />
+                    }
+                </View>
             )
             }
         </View >
@@ -255,13 +233,13 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
 
 const styles = StyleSheet.create({
     inputWrapper: {
-        position: "relative",
+        position: 'relative',
         width: "100%",
         marginTop: 10,
-        marginBottom: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
     },
     inputContainer: {
-        position: "relative",
+        position: 'relative',
         width: "100%",
     },
     input: {
@@ -288,17 +266,10 @@ const styles = StyleSheet.create({
         zIndex: 1
     },
     listContainer: {
-        position: "absolute",
         backgroundColor: "#FFFFFF",
-        zIndex: 110,
-        elevation: 10,
         borderRadius: 3,
         maxHeight: 370,
-        minHeight: 170,
-        shadowColor: "#959595",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.9,
-        shadowRadius: 3,
+        minHeight: 40,
         padding: 5,
     },
     pressItemList: {

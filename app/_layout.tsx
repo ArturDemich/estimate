@@ -2,7 +2,6 @@ import { Slot, SplashScreen } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
-import { PaperProvider } from "react-native-paper";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { initializeDB } from "@/db/db.native";
@@ -35,14 +34,12 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <PaperProvider>
         <SafeAreaProvider>
           <StatusBar style="dark" />
           <Slot />
           <Toast config={toastConfig} />
           <NewVersionModal />
         </SafeAreaProvider>
-      </PaperProvider>
     </Provider>
   );
 }

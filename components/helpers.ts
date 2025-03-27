@@ -1,4 +1,4 @@
-import moment from "moment";
+import { format } from "date-fns/format";
 import { BluetoothStatus } from "react-native-bluetooth-status";
 
 export function getUkrainianPart(name: string): string {
@@ -12,5 +12,5 @@ export const checkBluetoothEnabled = async () => {
 };
 
 export const formatDate = (timestamp: string): string => { 
-    return moment(timestamp).format("DD.MM.YYYY - HH:mm");
+    return format(timestamp, 'dd.MM.y - HH:mm');
 }

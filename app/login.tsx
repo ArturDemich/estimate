@@ -1,10 +1,9 @@
-import { View, Text, TextInput, StyleSheet, ImageBackground } from "react-native";
+import { View, Text, TextInput, StyleSheet, ImageBackground, ActivityIndicator } from "react-native";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
 import { AppDispatch, RootState } from "@/redux/store";
 import { loginThunk } from "@/redux/thunks";
-import { ActivityIndicator } from "react-native-paper";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import AppVersion from "@/components/AppVersion";
 
