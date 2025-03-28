@@ -1,4 +1,4 @@
-add in AndroidManifest: <application ... android:supportsRtl="true"
+add in AndroidManifest: <application ... android:usesCleartextTraffic="true">
 
 replace getBitmapFromURL in: node_modules/@conodene/react-native-thermal-receipt-printer-image-qr/android/src/main/java/com/pinmi/react/printer/adapter/BLEPrinterAdapter.java
 
