@@ -12,7 +12,6 @@ import {
     View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocalSearchParams } from "expo-router";
 import { addCharacteristic } from "@/db/db.native";
 import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
@@ -33,12 +32,11 @@ interface AddDetailsProps {
 
 export default function AddDetailsModal({ plantDBid, docId, productId }: AddDetailsProps) {
     const dispatch = useDispatch<AppDispatch>();
-    const params = useLocalSearchParams();
     const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
     const existPlantProps = useSelector<RootState, PlantDetails | null>((state) => state.data.existPlantProps);
     const newDetailBarcode = useSelector<RootState, string | null>((state) => state.data.newDetailBarcode);
-    const plants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
-    const dataPlant = plants?.length > 0 ? plants.filter((item) => item.product.id === productId) : [];
+    const newAddPlants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
+    const dataPlant = newAddPlants?.length > 0 ? newAddPlants.filter((item) => item.product.id === productId) : [];
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
     const [manual, setManual] = useState(false);
@@ -136,9 +134,11 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
 
     useEffect(() => {
         console.log('AddModalDetail useEffect', palntDetails, newDetailBarcode)
-        if (newDetailBarcode && palntDetails.length > 0) {
-            if (plants.length === 1 && plants.some((item) => item.barcode === params.barcode)) {
-                addDetails(Number(plantDBid), plants[0])
+        if (newDetailBarcode ) {
+            console.log('AddModalDetail useEffect22', palntDetails, newDetailBarcode, palntDetails.some((item) => item.barcode === newDetailBarcode))
+            if (newAddPlants.length === 1 && newAddPlants.some((item) => item.barcode === newDetailBarcode)) {
+                console.log('AddModalDetail useEffect333', palntDetails, newDetailBarcode)
+                addDetails(Number(plantDBid), newAddPlants[0])
             }
         }
     }, [palntDetails])

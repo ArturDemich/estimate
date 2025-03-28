@@ -65,7 +65,8 @@ const styles = StyleSheet.create({
     height: height * 0.2, // 70% of screen height
     borderRadius: 10,
     overflow: "hidden",
-    zIndex: 2
+    zIndex: 2,
+    aspectRatio: 2.4
   },
   overlay: {
     position: "absolute", // Make buttons overlay the camera

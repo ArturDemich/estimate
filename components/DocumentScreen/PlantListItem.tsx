@@ -1,6 +1,6 @@
 import { deletePlant } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
+import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
@@ -93,6 +93,7 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantN
       });
       setLoding(false)
     } }
+     await dispatch(getPlantsDetailsDB({ palntId: plantDBid, docId: docId }))
     router.push({
       pathname: "/plant", params: { plantName: product_name, plantId: plantDBid, docId: docId, productId: productId, docName: docName || "" },
     });

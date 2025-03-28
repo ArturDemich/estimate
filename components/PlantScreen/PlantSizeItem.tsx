@@ -1,8 +1,8 @@
 import { PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsDetailsDB } from "@/redux/thunks";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { memo, useEffect, useRef } from "react";
 import { FlatList, View } from "react-native";
 import { connect, useDispatch, useSelector } from "react-redux";
 import RenderPlantDetail from "./RenderPlantDetail";
@@ -42,15 +42,8 @@ import EmptyList from "@/components/ui/EmptyList";
         flatListRef.current.scrollToIndex({ index, animated: true });
       }
     };
-
-    return () => console.log('return existPlantProps', existPlantProps)
   }, [existPlantProps]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadDBDetails()
-    }, [])
-  );
   console.log('PlantSizeItem...', palntDetails)
   return (
     <View style={{ flex: 1 }}>

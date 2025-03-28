@@ -39,6 +39,11 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
 
     const isManual = item.characteristic_id === newSIZE;
 
+    const handleShowMenu = (val: boolean) => {
+        showMenu && printQty !== 1 && setPrintQty(1)
+        setShowMenu(val)
+    };
+
     const handleUpdateQtyOne = async (currentQty: number, print: boolean) => {
         if (currentQty < 0 ) { 
             return
@@ -67,7 +72,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             itemRef.current.measureInWindow((x, y, width, height) => {
                 setMenuSize({ width, height });
                 setMenuPosition({ x, y });
-                setShowMenu(true);
+                handleShowMenu(true);
             });
         }
     };
@@ -91,7 +96,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                 }
             ]
         )
-        setShowMenu(false);
+        handleShowMenu(false);
     };
 
     const handlePrint = async () => {
@@ -173,7 +178,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                 <Modal transparent animationType="fade">
                     <PressableVibrate
                         style={styles.modalOverlay}
-                        onPress={() => setShowMenu(false)}
+                        onPress={() => handleShowMenu(false)}
                     >
                         <View style={[styles.menuContainer, { top: menuPosition.y, left: menuPosition.x, width: menuSize.width, height: menuSize.height }]}>
                             <View style={{ alignSelf: 'flex-end' }}>
@@ -213,16 +218,16 @@ const mapStateToProps = (state: RootState) => ({
     autoPrint: state.data.autoPrint,
 })
 
-export default connect(mapStateToProps)(RenderPlantDetail)/* (memo(RenderPlantDetail, (prevProps, nextProps) => {
+export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
     console.log('RenderPlantDetail MEMO', prevProps.item.id, nextProps.item.id)
     return (
-       // prevProps.item.currentQty === nextProps.item.currentQty &&
-        prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id //&&
-        //prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
-       // prevProps.autoPrint === nextProps.autoPrint &&
-       // prevProps.docSent === nextProps.docSent
+        prevProps.item.currentQty === nextProps.item.currentQty &&
+        prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
+        prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
+        prevProps.autoPrint === nextProps.autoPrint &&
+        prevProps.docSent === nextProps.docSent
     );
-})) */;
+}));
 
 
 const styles = StyleSheet.create({

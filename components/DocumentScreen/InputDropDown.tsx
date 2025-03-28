@@ -12,7 +12,7 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsNameThunk } from "@/redux/thunks";
+import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { addPlant } from "@/db/db.native";
 import { getUkrainianPart } from "../helpers";
 import { useRouter } from "expo-router";
@@ -43,10 +43,11 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const [barcode, setBarcode] = useState("");
     const [isSendSearch, setSendSearch] = useState(false);
 
-    const navigateToPlantScreen = (name: string, id: number | null, productId?: string,) => {
+    const navigateToPlantScreen = async (name: string, id: number | null, productId?: string,) => {
+       id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
         router.push({
             pathname: "/plant",
-            params: { plantName: name, plantId: id, docId: docId, productId: productId, barcode, docName },
+            params: { plantName: name, plantId: id, docId: docId, productId: productId, docName },
         });
     };
     const checkIfPlantExists = (productid: string) => {

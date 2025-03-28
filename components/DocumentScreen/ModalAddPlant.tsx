@@ -8,15 +8,17 @@ import {
 } from "react-native";
 import InputDropDown from "./InputDropDown";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Feather from '@expo/vector-icons/Feather';
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useBackHandler } from "@react-native-community/hooks";
 
 
 export default function ModalAddPlant() {
   const params = useLocalSearchParams();
+  const router = useRouter();
   const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const [show, setShow] = useState(false);
@@ -26,6 +28,19 @@ export default function ModalAddPlant() {
     setIsScanning(val)
   };
   console.log('ModalAddPlant', show)
+
+  const handleBackAction = async () => {
+      if (show) {
+        setShow(false)
+      } else {
+        router.back()
+      }
+    };
+  
+    useBackHandler(() => {
+      handleBackAction()
+      return true;
+    });
 
   return (
     <>
