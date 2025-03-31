@@ -2,7 +2,7 @@ import { PlantItemRespons } from "@/redux/stateServiceTypes";
 import * as SQLite from "expo-sqlite";
 import { Alert } from "react-native";
 import * as FileSystem from 'expo-file-system';
-import { newSIZE, nullID } from "@/types/typesScreen";
+import { newSIZE, nullID, UploadStatus } from "@/types/typesScreen";
 import { format } from "date-fns/format";
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -164,7 +164,7 @@ export async function fetchDocuments(): Promise<any[]> {
 
   try {
     const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
-    console.log('fetchDocuments__', rows)
+   // console.log('fetchDocuments__', rows)
     return rows;
   } catch (error) {
     console.error("Error fetching documents:", error);
@@ -275,12 +275,12 @@ export async function updateDocComment(DbDocumentId: number, newComment: string)
   }
 }
 
-export const markDocumentAsSent = async (docId: number) => {
+export const markDocumentAsSent = async (docId: number, status: UploadStatus) => {
   const db = await openDB();
   try {
     const result = await db.runAsync(
-      "UPDATE documents SET is_sent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [docId]
+      "UPDATE documents SET is_sent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [status, docId]
     );
     return result.changes > 0;
   } catch (error) {

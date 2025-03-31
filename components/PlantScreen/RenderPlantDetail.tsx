@@ -11,7 +11,7 @@ import { setLabelPrint, updateLocalCharacteristic } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { checkBluetoothEnabled } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
-import { newSIZE } from "@/types/typesScreen";
+import { newSIZE, UploadStatus } from "@/types/typesScreen";
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -143,11 +143,11 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                         <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
                     </View>
                     <View style={{flexDirection: 'row', gap: 8,}}>
-                        {docSent === 0 &&
+                        {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
                         <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdateQtyOne(item.currentQty - 1, false)}>
                             <Text style={styles.btnPlusText}>-1</Text>
                         </TouchableVibrate>}
-                        {isEditing && docSent === 0 ? (
+                        {isEditing && (docSent === UploadStatus.Start || docSent === UploadStatus.Excel) ? (
                             <TextInput
                                 ref={inputRef}
                                 style={styles.inputQty}
@@ -169,7 +169,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                     </View>
                 </View>
             </View>
-            {docSent === 0 &&
+            {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
             <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdateQtyOne(item.currentQty + 1, autoPrint)}>
                 <Text style={styles.btnPlusText}>+1</Text>
             </TouchableVibrate>}
@@ -182,7 +182,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                     >
                         <View style={[styles.menuContainer, { top: menuPosition.y, left: menuPosition.x, width: menuSize.width, height: menuSize.height }]}>
                             <View style={{ alignSelf: 'flex-end' }}>
-                                {docSent === 0 &&
+                                {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
                                 <TouchableVibrate style={styles.menuItem} onPress={handleDelete}>
                                     <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
                                     <Text style={[styles.menuText, { color: '#EF4444' }]}>Видалити</Text>

@@ -8,6 +8,7 @@ const password = '';
 const tok = `${username}:${password}`;
 const encodedToken = Buffer.from(tok).toString('base64');
 
+const TO_EXCEL_URL = 'https://generate-excel-git-main-arturdemichs-projects.vercel.app/api/jsonToExcel';
 const NEW_V_URL = 'https://digger-3000-default-rtdb.europe-west1.firebasedatabase.app/newVersionStock.json?print=pretty';
 const API = 'http://194.42.195.241:41001/UTP/hs/api';
 const TOKEN_URL = `${API}/getToken`;
@@ -19,7 +20,7 @@ export class DataService {
   static async getNewVersion() {
     try {
       console.log('SEVICE getNewVersion')
-      return await axios.get( NEW_V_URL )
+      return await axios.get(NEW_V_URL)
         .then((response) => response.data);
     } catch (error: any) {
       console.error("Error in service getNewVersion:", error);
@@ -126,4 +127,31 @@ export class DataService {
       throw new Error(errorMessage);
     }
   };
+
+  static async sendDataToExcel(document: DocumentResult) {
+    try {
+      const data = JSON.stringify(document);
+      const response = await axios.post(TO_EXCEL_URL, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Error in service sendDataToExcel:", error);
+      let errorMessage = "Failed to send data to excel";
+      
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
+    }
+  }
+
 };

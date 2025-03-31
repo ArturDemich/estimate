@@ -5,10 +5,11 @@ import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { formatDate } from "@/components/helpers";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { setDocComment, setDocSent } from "@/redux/dataSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
+import { UploadStatus } from "@/types/typesScreen";
 
 
 interface DocumentList {
@@ -57,7 +58,9 @@ export default function DocumentList() {
   };
 
   useFocusEffect(
+    
     useCallback(() => {
+      dispatch(setDocSent(UploadStatus.Start))
       loadDocuments();
     }, [])
   );
@@ -76,7 +79,8 @@ export default function DocumentList() {
             <View style={{flexDirection: 'row', gap: 4, alignItems: 'center'}}>
               <Ionicons name="document-text-outline" size={20} color="rgb(77, 77, 77)" />
               <Text style={{ fontWeight: 500, fontSize: 16, width: 150 }}>{item.storage_name}</Text>
-             {item.is_sent === 1 && <MaterialIcons name="cloud-done" size={24} color="rgb(77, 77, 77)" />}
+             {(item.is_sent === UploadStatus.OneC || item.is_sent === UploadStatus.All) && <MaterialIcons name="cloud-done" size={24} color="rgb(77, 77, 77)" />}
+             {(item.is_sent === UploadStatus.Excel || item.is_sent === UploadStatus.All) && <MaterialCommunityIcons name="microsoft-excel" size={24} color="rgb(77, 77, 77)" />}
             </View>
             <Text style={{fontSize: 12, fontWeight: 700, color: "rgb(77, 77, 77)",}}>{formatDate(item.created_at)}</Text>
           </View>

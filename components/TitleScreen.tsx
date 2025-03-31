@@ -1,4 +1,5 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import { UploadStatus } from "@/types/typesScreen";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
 
@@ -13,7 +14,8 @@ const Title = ({ title, adTitle, docSent }: TitleProps) => {
         <View>
             <View style={styles.titleBlock}>
                 <Text style={styles.title}>{title}</Text>
-                {docSent === 1 && <MaterialIcons name="cloud-done" size={16} color="rgb(77, 77, 77)" />}
+                {(docSent === UploadStatus.OneC || docSent === UploadStatus.All) && <MaterialIcons name="cloud-done" size={16} color="rgb(77, 77, 77)" />}
+                {(docSent === UploadStatus.Excel || docSent === UploadStatus.All) && <MaterialCommunityIcons name="microsoft-excel" size={18} color="rgb(77, 77, 77)" />}
             </View>
             {adTitle &&
                 <View style={styles.adTitleBlock}>

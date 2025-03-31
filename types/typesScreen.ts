@@ -14,3 +14,10 @@ export const unitPC = {
     id: "b3243323-c0df-11ea-8275-00c12700489e"
 };
 export const newSIZE = 'newSize';
+
+export enum UploadStatus {
+    Start = 0,
+    OneC = 1,
+    Excel = 2,
+    All = 3
+}

@@ -10,6 +10,7 @@ import { PlantNameDB } from "@/redux/stateServiceTypes";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { myToast } from "@/utils/toastConfig";
+import { UploadStatus } from "@/types/typesScreen";
 
 
 export default function PlantListItem() {
@@ -79,7 +80,7 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantN
   }
 
   const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {
-    if (docSent === 0) {
+    if ((docSent === UploadStatus.Start || docSent === UploadStatus.Excel)) {
     try {
       setLoding(true)
       await dispatch(getPlantsNameThunk({ name: product_name, barcode: '' })).unwrap().then(() => setLoding(false));
