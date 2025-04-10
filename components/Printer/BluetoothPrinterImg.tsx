@@ -30,6 +30,7 @@ import { Entypo } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 
 const KEYLableStorage = 'labelWeight';
+const KEYLableGap = 'labelGap';
 
 export const printLabel = async (img: string | null, label: Label | null) => {
     if (!img || !label) {
@@ -37,28 +38,51 @@ export const printLabel = async (img: string | null, label: Label | null) => {
         return;
     }
     const size = await SecureStore.getItemAsync(KEYLableStorage) || '40';
+    const gap = await SecureStore.getItemAsync(KEYLableGap) || LabelGap.Gap;
     const barcode = label.barcode !== '0' ? label.barcode : null;
     for (let i = 0; i < label.qtyPrint; i++) {
-        print(img, barcode, size)
+        print(img, barcode, size, gap)
     }
 };
 
-const print = (img: string, barcode: string | null, size: string) => {
+const print = (img: string, barcode: string | null, size: string, gap: string) => {
     const sizeWidth = Number(size) === 40 ? 300 : 380;
+    const dpi = 203;
+    const mmPerInch = 25.4;
+    const pxPerMm = dpi / mmPerInch; // ≈ 8
+    const labelHeightMm = 30;
+    const labelHeightPx = Math.round(pxPerMm * labelHeightMm); // ≈ 240
+
+    const imageHeight = 110; // height image
+
+    const barcodeHeight = 60; // можна змінити залежно від типу
+    const contentHeight = imageHeight + barcodeHeight;
+    const remainingPx = labelHeightPx - contentHeight;
+    const skipCommand = String.fromCharCode(0x1B, 0x4A, remainingPx);
+    console.log('skipCommand',)
     try {
         BLEPrinter.printImage(
             img,
             {
                 imageWidth: sizeWidth,  // 380 max for 50mm; 300 for 40mm
-                imageHeight: 120,  //200 max for 30mm
+                imageHeight: imageHeight,  //200 max for 30mm
             },
         );
-        BLEPrinter.printText(
-            "\x1B\x33\x00\n" +
-            "\x1B\x61\x01" +  // Center barcode
-            `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
-            barcode
-        );
+        {gap === LabelGap.noGap ?
+            BLEPrinter.printText(
+                "\x1B\x33\x20" +
+                "\x1B\x61\x01" +  // Center barcode
+                `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
+                `${barcode ? barcode : barcode + "\n\n"}` +
+                "\x1B\x64\x01"
+            ) :
+            BLEPrinter.printTextGap(
+                "\x1B\x33\x00" +
+                "\x1B\x61\x01" +  // Center barcode
+                `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
+                barcode
+            );
+        }
         Toast.show({
             type: "customToast",  // Can be 'success', 'error', 'info'
             text1: "Друк...",
@@ -76,6 +100,10 @@ enum SizeLabel {
     Fifty = 50,
     Forty = 40,
 };
+enum LabelGap {
+    Gap = 'gap',
+    noGap = 'noGap',
+};
 
 
 const BluetoothPrintImg = () => {
@@ -87,6 +115,7 @@ const BluetoothPrintImg = () => {
     const screenHeight = Dimensions.get("window").height;
     const modalPosition = screenHeight - screenHeight * 0.6;
     const [selectedSizeLabel, setSelectedSizeLabel] = useState<SizeLabel | null>(null);
+    const [labelGap, setLabelGap] = useState<LabelGap | null>(null);
 
     const handleOpenModal = async () => {
         Vibration.vibrate(5);
@@ -102,11 +131,15 @@ const BluetoothPrintImg = () => {
     const checkLabelSizeStor = async () => {
         if (Platform.OS !== 'web') {
             const size = await SecureStore.getItemAsync(KEYLableStorage);
-            if (size) {
+            const gap = await SecureStore.getItemAsync(KEYLableGap);
+            if (size && gap) {
                 !selectedSizeLabel && setSelectedSizeLabel(Number(size))
+                !labelGap && setLabelGap(gap as LabelGap)
             } else {
                 await SecureStore.setItemAsync(KEYLableStorage, '40');
-                setSelectedSizeLabel(40)
+                await SecureStore.setItemAsync(KEYLableGap, LabelGap.Gap);
+                setSelectedSizeLabel(SizeLabel.Forty)
+                setLabelGap(LabelGap.Gap)
             }
         }
     };
@@ -115,6 +148,18 @@ const BluetoothPrintImg = () => {
         if (Platform.OS !== 'web') {
             await SecureStore.setItemAsync(KEYLableStorage, size.toString());
             setSelectedSizeLabel(size)
+        }
+    };
+
+    const handleSetLabelGap = async () => {
+        if (Platform.OS !== 'web') {
+            if (labelGap === LabelGap.Gap) {
+                await SecureStore.setItemAsync(KEYLableGap, LabelGap.noGap);
+                setLabelGap(LabelGap.noGap)
+            } else {
+                await SecureStore.setItemAsync(KEYLableGap, LabelGap.Gap);
+                setLabelGap(LabelGap.Gap)
+            }
         }
     };
 
@@ -183,7 +228,7 @@ const BluetoothPrintImg = () => {
             Alert.alert("Error", "Failed to connect to the printer.");
         }
     };
-    
+
     return (
         <>
             <TouchableVibrate style={styles.openBtn} onPressOut={handleOpenModal}>
@@ -192,78 +237,90 @@ const BluetoothPrintImg = () => {
                 {(connectedPrinter && !autoPrint) && <MaterialCommunityIcons name="printer-wireless" size={24} color={connectedPrinter ? 'rgba(106, 159, 53, 0.95)' : "black"} />}
             </TouchableVibrate>
             <Modal visible={printerShow} animationType="slide" transparent onRequestClose={() => setPrinterShow(false)}>
-            <TouchableWithoutFeedback onPress={() => setPrinterShow(false)}>
-                <View style={[styles.centeredView,]}>
-                    <Pressable style={[styles.modalView, { top: modalPosition - 3 }]}>
-                        <Text style={styles.modalTitle}>Раніше підключені пристрої:</Text>
-                        <FlatList
-                            data={pairedDevices}
-                            keyExtractor={(item) => item.inner_mac_address.toString()}
-                            renderItem={({ item }) => (
-                                <Pressable style={styles.deviceItem}>
-                                    <Text style={styles.deviceName}>{item.device_name}</Text>
-                                    {connectedPrinter?.inner_mac_address === item.inner_mac_address ?
-                                        <TouchableVibrate style={styles.deviceBtnDisc} onPress={() => BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))}>
-                                            <Text style={styles.deviceBtnText}>Відключити</Text>
-                                        </TouchableVibrate>
-                                        :
-                                        <ConnectBtn connectToPrinter={() => connectToPrinter(item)} />
-                                    }
-                                </Pressable>
+                <TouchableWithoutFeedback onPress={() => setPrinterShow(false)}>
+                    <View style={[styles.centeredView,]}>
+                        <Pressable style={[styles.modalView, { top: modalPosition - 3 }]}>
+                            <Text style={styles.modalTitle}>Раніше підключені пристрої:</Text>
+                            <FlatList
+                                data={pairedDevices}
+                                keyExtractor={(item) => item.inner_mac_address.toString()}
+                                renderItem={({ item }) => (
+                                    <Pressable style={styles.deviceItem}>
+                                        <Text style={styles.deviceName}>{item.device_name}</Text>
+                                        {connectedPrinter?.inner_mac_address === item.inner_mac_address ?
+                                            <TouchableVibrate style={styles.deviceBtnDisc} onPress={() => BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))}>
+                                                <Text style={styles.deviceBtnText}>Відключити</Text>
+                                            </TouchableVibrate>
+                                            :
+                                            <ConnectBtn connectToPrinter={() => connectToPrinter(item)} />
+                                        }
+                                    </Pressable>
+                                )}
+                                style={{ width: "100%", maxHeight: 220, paddingRight: 5, paddingBottom: 40 }}
+                                contentContainerStyle={{ gap: 8 }}
+                                ListEmptyComponent={<EmptyList text="Немає раніше підключених пристроїв" />}
+                            />
+
+                            {connectedPrinter && (
+                                <View style={{ marginTop: 10, flexDirection: 'row', alignSelf: 'flex-start' }}>
+                                    <Text style={{ fontWeight: 500, color: 'grey' }}>підключено до: </Text>
+                                    <Text style={styles.connectedTitle}> {connectedPrinter.device_name}</Text>
+                                </View>
                             )}
-                            style={{ width: "100%", maxHeight: 220, paddingRight: 5, paddingBottom: 40 }}
-                            contentContainerStyle={{ gap: 8 }}
-                            ListEmptyComponent={<EmptyList text="Немає раніше підключених пристроїв" />}
-                        />
 
-                        {connectedPrinter && (
-                            <View style={{ marginTop: 10, flexDirection: 'row', alignSelf: 'flex-start' }}>
-                                <Text style={{ fontWeight: 500, color: 'grey' }}>підключено до: </Text>
-                                <Text style={styles.connectedTitle}> {connectedPrinter.device_name}</Text>
-                            </View>
-                        )}
-
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 5 }}>
-                            <View style={styles.labeleSizeBlock}>
-                                <Text style={{ fontWeight: 500, color: 'grey' }}>Обери розмір етикетки:</Text>
-                                <TouchableVibrate
-                                    style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Fifty && styles.labeleSizeLock]}
-                                    onPress={() => handleSetSizeLabel(SizeLabel.Fifty)}
-                                    disabled={selectedSizeLabel === SizeLabel.Fifty}
-                                >
-                                    <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
-                                    <Text style={styles.labeleSizeText}>50x30mm</Text>
-                                    {selectedSizeLabel === SizeLabel.Fifty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
-                                </TouchableVibrate>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 5 }}>
+                                <View style={styles.labeleSizeBlock}>
+                                    <Text style={{ fontWeight: 500, color: 'grey' }}>Обери розмір етикетки:</Text>
+                                    <TouchableVibrate
+                                        style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Fifty && styles.labeleSizeLock]}
+                                        onPress={() => handleSetSizeLabel(SizeLabel.Fifty)}
+                                        disabled={selectedSizeLabel === SizeLabel.Fifty}
+                                    >
+                                        <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
+                                        <Text style={styles.labeleSizeText}>50x30mm</Text>
+                                        {selectedSizeLabel === SizeLabel.Fifty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
+                                    </TouchableVibrate>
 
 
-                                <TouchableVibrate
-                                    style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Forty && styles.labeleSizeLock]}
-                                    onPress={() => handleSetSizeLabel(SizeLabel.Forty)}
-                                    disabled={selectedSizeLabel === SizeLabel.Forty}
-                                >
-                                    <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
-                                    <Text style={styles.labeleSizeText}>40x30mm</Text>
-                                    {selectedSizeLabel === SizeLabel.Forty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
-                                </TouchableVibrate>
-                            </View>
+                                    <TouchableVibrate
+                                        style={[styles.labeleSizeItem, selectedSizeLabel === SizeLabel.Forty && styles.labeleSizeLock]}
+                                        onPress={() => handleSetSizeLabel(SizeLabel.Forty)}
+                                        disabled={selectedSizeLabel === SizeLabel.Forty}
+                                    >
+                                        <MaterialCommunityIcons name="sticker-text-outline" size={24} color="rgb(83, 83, 83)" />
+                                        <Text style={styles.labeleSizeText}>40x30mm</Text>
+                                        {selectedSizeLabel === SizeLabel.Forty && <Entypo name="check" size={24} color='rgba(106, 159, 53, 0.95)' />}
+                                    </TouchableVibrate>
+                                </View>
 
-                            <View style={{ alignItems: 'flex-start', }}>
-                                <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Вімкнути автодрук:</Text>
-                                <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
-                                    <MaterialCommunityIcons name="printer-eye" size={28} color={autoPrint ? 'rgba(106, 159, 53, 0.95)' : "black"} />
-                                    <Switch
-                                        trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
-                                        thumbColor={'#f4f3f4'}
-                                        ios_backgroundColor="#3e3e3e"
-                                        onValueChange={handleSwitch}
-                                        value={autoPrint}
-                                    />
+                                <View style={{ alignItems: 'flex-start', }}>
+                                    <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Вімкнути автодрук:</Text>
+                                    <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
+                                        <MaterialCommunityIcons name="printer-eye" size={26} color={autoPrint ? 'rgba(106, 159, 53, 0.95)' : "black"} />
+                                        <Switch
+                                            trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
+                                            thumbColor={'#f4f3f4'}
+                                            ios_backgroundColor="#3e3e3e"
+                                            onValueChange={handleSwitch}
+                                            value={autoPrint}
+                                        />
+                                    </View>
+
+                                    <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Режим етикетки:</Text>
+                                    <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
+                                        <MaterialCommunityIcons name="receipt" size={26} color={labelGap === LabelGap.Gap ? 'rgba(106, 159, 53, 0.95)' : "black"} />
+                                        <Switch
+                                            trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
+                                            thumbColor={'#f4f3f4'}
+                                            ios_backgroundColor="#3e3e3e"
+                                            onValueChange={handleSetLabelGap}
+                                            value={labelGap === LabelGap.Gap}
+                                        />
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                    </Pressable>
-                </View>
+                        </Pressable>
+                    </View>
                 </TouchableWithoutFeedback>
             </Modal>
         </>
