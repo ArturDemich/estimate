@@ -47,19 +47,7 @@ export const printLabel = async (img: string | null, label: Label | null) => {
 
 const print = (img: string, barcode: string | null, size: string, gap: string) => {
     const sizeWidth = Number(size) === 40 ? 300 : 380;
-    const dpi = 203;
-    const mmPerInch = 25.4;
-    const pxPerMm = dpi / mmPerInch; // ≈ 8
-    const labelHeightMm = 30;
-    const labelHeightPx = Math.round(pxPerMm * labelHeightMm); // ≈ 240
-
     const imageHeight = 110; // height image
-
-    const barcodeHeight = 60; // можна змінити залежно від типу
-    const contentHeight = imageHeight + barcodeHeight;
-    const remainingPx = labelHeightPx - contentHeight;
-    const skipCommand = String.fromCharCode(0x1B, 0x4A, remainingPx);
-    console.log('skipCommand',)
     try {
         BLEPrinter.printImage(
             img,

@@ -6,7 +6,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { formatDate } from "@/components/helpers";
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { setDocComment, setDocSent } from "@/redux/dataSlice";
+import { setCurrentStoage, setDocComment, setDocSent } from "@/redux/dataSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { UploadStatus } from "@/types/typesScreen";
@@ -15,9 +15,11 @@ import { UploadStatus } from "@/types/typesScreen";
 interface DocumentList {
   id: number;
   storage_name: string;
+  storage_id: string;
   created_at: string;
   comment: string;
   is_sent: number;
+  number: string;
 };
 
 export default function DocumentList() {
@@ -27,12 +29,14 @@ export default function DocumentList() {
 
   const loadDocuments = async () => {
     const data = await fetchDocuments();
+    
     setDocuments(data)
   };
 
   const toPlantListName = async (item: DocumentList) => {
     await dispatch(setDocComment(item.comment))
     await dispatch(setDocSent(item.is_sent))
+    await dispatch(setCurrentStoage({id: item.storage_id, name: item.storage_name}))
     router.push({
       pathname: "/document",
       params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at, docSent: item.is_sent },

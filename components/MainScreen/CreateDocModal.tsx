@@ -16,12 +16,12 @@ import Feather from '@expo/vector-icons/Feather';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
 import EmptyList from "@/components/ui/EmptyList";
-import { setDocComment } from "@/redux/dataSlice";
+import { setCurrentStoage, setDocComment } from "@/redux/dataSlice";
 
 type StorageItem = {
   id: string;
-  id_parent: string;
-  is_group: boolean;
+  id_parent?: string;
+  is_group?: boolean;
   name: string;
 };
 
@@ -66,6 +66,7 @@ export default function CreateDocModal() {
     setShow(false);
     await dispatch(setDocComment(''))
     const docId = await addDocument(storeName, storeId)
+     await dispatch(setCurrentStoage({id: storeId, name: storeName}))
     router.push({
       pathname: "/document",
       params: { docName: storeName, docId, docSent: 0, docTimeCr: new Date().toISOString() },

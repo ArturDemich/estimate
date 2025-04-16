@@ -106,7 +106,13 @@ export const getPlantsNameThunk = createAsyncThunk<PlantItemRespons[], PalntName
       if (!isTokenResponse(tokenState)) {
         return rejectWithValue("No valid token available");
       }
-      const response = await DataService.getPlants(tokenState.token, inputData.name, inputData.barcode);
+      const response = await DataService.getPlants({
+        token: tokenState.token, 
+        name: inputData.name, 
+        barcode: inputData.barcode, 
+        storageId: inputData.storageId,
+        inStockOnly: inputData.inStockOnly
+      });
         if (!response.success) {
           return rejectWithValue(response.errors?.[0] || "Unknown error");
         }

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { addCharacteristic } from "@/db/db.native";
-import { PlantDetails, PlantItemRespons } from "@/redux/stateServiceTypes";
+import { PlantDetails, PlantItemRespons, Storages } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { setExistPlantProps, setNewDetailBarcode } from "@/redux/dataSlice";
 import Entypo from '@expo/vector-icons/Entypo';
@@ -36,7 +36,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     const existPlantProps = useSelector<RootState, PlantDetails | null>((state) => state.data.existPlantProps);
     const newDetailBarcode = useSelector<RootState, string | null>((state) => state.data.newDetailBarcode);
     const newAddPlants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
-    const dataPlant = newAddPlants?.length > 0 ? newAddPlants.filter((item) => item.product.id === productId) : [];
+    const dataPlant = newAddPlants?.length > 0 ? newAddPlants.filter((item) => item.product.id === productId).sort((a, b) => (b.qty > 0 ? 1 : 0) - (a.qty > 0 ? 1 : 0)) : [];
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
     const [manual, setManual] = useState(false);
@@ -77,7 +77,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                 id: nullID
             },
             barcode: '0',
-            quantity: 0,
+            qty: 0,
         }
         if (isCharacteristicAdded('', plantDetail)) {
             dispatch(setExistPlantProps({
@@ -99,7 +99,6 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     };
 
     const addDetails = async (plantNameDBId: number, plantItem: PlantItemRespons) => {
-        console.log('AddModalDetail addDetails', palntDetails, isCharacteristicAdded(plantItem.characteristic.id))
         if (isCharacteristicAdded(plantItem.characteristic.id)) {
             dispatch(setExistPlantProps({
                 plant_id: plantNameDBId,
@@ -108,7 +107,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                 unit_id: plantItem.unit.id,
                 unit_name: plantItem.unit.name,
                 barcode: plantItem.barcode,
-                quantity: plantItem.quantity ? plantItem.quantity : 0
+                quantity: plantItem.qty ? plantItem.qty : 0
             }))
             show && setShow(false);
             dispatch(setNewDetailBarcode(null));
@@ -124,7 +123,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                 unit_id: plantItem.unit.id,
                 unit_name: plantItem.unit.name,
                 barcode: plantItem.barcode,
-                quantity: plantItem.quantity ? plantItem.quantity : 0
+                quantity: plantItem.qty ? plantItem.qty : 0
             }))
         }
 
@@ -133,17 +132,12 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     };
 
     useEffect(() => {
-        console.log('AddModalDetail useEffect', palntDetails, newDetailBarcode)
         if (newDetailBarcode ) {
-            console.log('AddModalDetail useEffect22', palntDetails, newDetailBarcode, palntDetails.some((item) => item.barcode === newDetailBarcode))
             if (newAddPlants.length === 1 && newAddPlants.some((item) => item.barcode === newDetailBarcode)) {
-                console.log('AddModalDetail useEffect333', palntDetails, newDetailBarcode)
                 addDetails(Number(plantDBid), newAddPlants[0])
             }
         }
     }, [palntDetails])
-
-    console.log('AddModalDetail palntDetails', palntDetails, )
 
     return (
         <>
@@ -201,13 +195,13 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
 
                                 <FlatList
                                     data={input !== '' ? serachDetail(dataPlant) : dataPlant}
-                                    keyExtractor={(item) => item.characteristic.id}
+                                    keyExtractor={(item, index) => item.characteristic.id + index}
                                     renderItem={({ item }) => (
                                         <TouchableVibrate
                                             style={styles.listItem}
                                             onPress={() => addDetails( Number(plantDBid), item)}>
                                             <Text style={styles.listItemName}>{item.characteristic.name}</Text>
-                                            <Text style={styles.listItemQty}>{item.quantity} 0 {item.unit.name}</Text>
+                                            <Text style={styles.listItemQty}>{item.qty} {item.unit.name}</Text>
                                         </TouchableVibrate>
                                     )}
                                     style={{ width: '100%' }}
@@ -254,11 +248,12 @@ interface ReloadBtnProps {
 };
 
 const ReloadBtn = ({dispatch, name}: ReloadBtnProps) => {
+    const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
     const [isLoding, setLoding] = useState(false);
 
     const handleReload = async () => {
         setLoding(true)
-        await dispatch(getPlantsNameThunk({ name: name, barcode: '' })).unwrap().then(() => setLoding(false))
+        await dispatch(getPlantsNameThunk({ name: name, barcode: '', storageId: currentStorage?.id || '' })).unwrap().then(() => setLoding(false))
     };
 
     return (

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
-import { DataSlice, Label, PlantDetails } from './stateServiceTypes';
+import { DataSlice, Label, PlantDetails, Storages } from './stateServiceTypes';
 import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 
 
@@ -18,6 +18,7 @@ const initialState: DataSlice = {
   newVersion: null,
   docSent: 0,
   newDetailBarcode: null,
+  currentStorage: null,
 };
 
 
@@ -27,42 +28,46 @@ const dataSlice = createSlice({
   reducers: {
     setExistPlantProps(state, action: PayloadAction<PlantDetails | null>) {
       state.existPlantProps = action.payload;
-      console.log('dataSlice __ setExistPlantProps', )
+      //console.log('dataSlice __ setExistPlantProps', )
+    },
+    setCurrentStoage(state, action: PayloadAction<Storages | null>) {
+      state.currentStorage = action.payload;
+      //console.log('dataSlice __ setCurrentStoage', )
     },
     updateLocalCharacteristic: (state, action: PayloadAction<{ id: number, currentQty: number }>) => {
       const index = state.dBPlantDetails.findIndex((char) => char.id === action.payload.id);
       if (index !== -1) {
         state.dBPlantDetails[index].currentQty = action.payload.currentQty;
       }
-      console.log('dataSlice __ updateLocalCharacteristic', state.dBPlantDetails[index].currentQty)
+      //console.log('dataSlice __ updateLocalCharacteristic', state.dBPlantDetails[index].currentQty)
     },
     setLabelPrint(state, action: PayloadAction<Label | null>) {
       state.labelData = action.payload;
-      console.log('dataSlice __ setLabelPrint', state.labelData)
+     // console.log('dataSlice __ setLabelPrint', state.labelData)
     },
     setDevices(state, action: PayloadAction<IBLEPrinter[]>) {
       state.pairedDevices = action.payload;
-      console.log('dataSlice __ setDevices', state.pairedDevices)
+     // console.log('dataSlice __ setDevices', state.pairedDevices)
     },
     connectPrinter(state, action: PayloadAction<IBLEPrinter | null>) {
       state.connectedPrinter = action.payload;
-      console.log('dataSlice __ connectPrinter', state.connectedPrinter)
+     // console.log('dataSlice __ connectPrinter', state.connectedPrinter)
     },
     setDocComment(state, action: PayloadAction<string>) {
       state.docComment = action.payload;
-      console.log('dataSlice __ setDocComment', state.docComment)
+     // console.log('dataSlice __ setDocComment', state.docComment)
     },
     setAutoPrint(state, action: PayloadAction<boolean>) {
       state.autoPrint = action.payload;
-      console.log('dataSlice __ setAutoPrint', state.autoPrint)
+     // console.log('dataSlice __ setAutoPrint', state.autoPrint)
     },
     setDocSent(state, action: PayloadAction<number>) {
       state.docSent = action.payload;
-      console.log('dataSlice __ setDocSent', state.docSent)
+     // console.log('dataSlice __ setDocSent', state.docSent)
     },
     setNewDetailBarcode(state, action: PayloadAction<string | null>) {
       state.newDetailBarcode = action.payload;
-      console.log('dataSlice __ newDetailBarcode', state.newDetailBarcode)
+     // console.log('dataSlice __ newDetailBarcode', state.newDetailBarcode)
     },
     clearDataState(state) {
       state.digStorages = [];
@@ -78,38 +83,39 @@ const dataSlice = createSlice({
       state.newVersion = null;
       state.docSent = 0;
       state.newDetailBarcode = null;
-      console.log('dataSlice __ logOut')
+      state.currentStorage = null;
+     // console.log('dataSlice __ logOut')
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(getStoragesThunk.fulfilled, (state, action) => {
         state.digStorages = action.payload;
-        console.log('dataSlice __ getStoragesThunk',)
+       // console.log('dataSlice __ getStoragesThunk',)
       })
 
       .addCase(getPlantsNameThunk.fulfilled, (state, action) => {
         state.searchPlantName = action.payload;
-        console.log('dataSlice __getPlantsNameThunk',)
+       // console.log('dataSlice __getPlantsNameThunk',)
       })
 
       .addCase(getPlantsNameDB.fulfilled, (state, action) => {
         state.dBPlantsName = action.payload;
-        console.log('dataSlice getPlantsNameDB',)
+       // console.log('dataSlice getPlantsNameDB',)
       })
 
       .addCase(getPlantsDetailsDB.fulfilled, (state, action) => {
         state.dBPlantDetails = action.payload;
-        console.log('dataSlice getPlantsNameDB',)
+       // console.log('dataSlice getPlantsNameDB',)
       })
 
       .addCase(getNewVersionThunk.fulfilled, (state, action) => {
         state.newVersion = action.payload;
-        console.log('dataSlice getNewVersionThunk', state.newVersion, '1.0.3'<'1.0.4')
+       // console.log('dataSlice getNewVersionThunk', state.newVersion, '1.0.3'<'1.0.4')
       })
   },
 });
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
-  connectPrinter, setDocComment, setAutoPrint, clearDataState, setDocSent, setNewDetailBarcode } = dataSlice.actions;
+  connectPrinter, setDocComment, setAutoPrint, clearDataState, setDocSent, setNewDetailBarcode, setCurrentStoage } = dataSlice.actions;
 export default dataSlice.reducer;

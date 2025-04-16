@@ -9,7 +9,7 @@ import {
     ActivityIndicator,
 } from "react-native";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
-import { PlantItemRespons, PlantNameDB } from "@/redux/stateServiceTypes";
+import { PlantItemRespons, PlantNameDB, Storages } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
@@ -21,6 +21,19 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { myToast } from "@/utils/toastConfig";
 import { setNewDetailBarcode } from "@/redux/dataSlice";
 import EmptyList from "@/components/ui/EmptyList";
+
+
+interface GroupedPlant {
+    product: { id: string; name: string };
+    characteristics: Array<{
+        id: string;
+        name: string;
+        unit: { id: string; name: string };
+        qty: number;
+        barcode: string;
+    }>;
+    sumQty: number;
+};
 
 interface InputDropDownProps {
     docId: string;
@@ -35,6 +48,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const dispatch = useDispatch<AppDispatch>();
     const searchPlantsList = useSelector<RootState, PlantItemRespons[]>((state) => state.data.searchPlantName);
     const docPlantsList = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
+    const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
     const [input, setInput] = useState("");
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -44,7 +58,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const [isSendSearch, setSendSearch] = useState(false);
 
     const navigateToPlantScreen = async (name: string, id: number | null, productId?: string,) => {
-       id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
+        id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
         router.push({
             pathname: "/plant",
             params: { plantName: name, plantId: id, docId: docId, productId: productId, docName },
@@ -72,7 +86,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const handleSetSearch = async (name?: string, barcode?: string) => {
         setSendSearch(true);
         try {
-            return await dispatch(getPlantsNameThunk({ name: name || '', barcode: barcode || '' })).unwrap();
+            return await dispatch(getPlantsNameThunk({ name: name || '', barcode: barcode || '', storageId: currentStorage?.id || '' })).unwrap();
         } catch (error: any) {
             console.error("Search Error:", error);
             myToast({
@@ -95,6 +109,34 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const uniquePlants = Array.from(
         searchPlantsList ? new Map(searchPlantsList.map((item) => [item.product.name, item])).values() : []
     );
+
+    function groupPlantsByProduct(data: any[]): GroupedPlant[] {
+        const plantMap = new Map<string, Omit<GroupedPlant, "sumQty">>();
+
+        for (const item of data) {
+            const productId = item.product.id;
+            if (!plantMap.has(productId)) {
+                plantMap.set(productId, {
+                    product: item.product,
+                    characteristics: [],
+                });
+            }
+            plantMap.get(productId)?.characteristics.push({
+                id: item.characteristic.id,
+                name: item.characteristic.name,
+                unit: item.unit,
+                qty: item.qty,
+                barcode: item.barcode,
+            });
+        }
+        const groupedPlants: GroupedPlant[] = Array.from(plantMap.values()).map((plant) => ({
+            ...plant,
+            sumQty: plant.characteristics.reduce((total, char) => total + (char.qty ?? 0), 0),
+        }));
+        groupedPlants.sort((a, b) => b.sumQty - a.sumQty);
+
+        return groupedPlants;
+    };
 
     useLayoutEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
@@ -123,7 +165,6 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     }, [input, dispatch,]);
 
     useEffect(() => {
-        console.log("Barcode useEff:", barcode);
         if (!barcode) return;
 
         const fetchPlantByBarcode = async () => {
@@ -135,7 +176,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                         setBarcode('');
                     }
                 } else {
-                    await dispatch(getPlantsNameThunk({ name: barcode, barcode: '' })).unwrap();
+                    await dispatch(getPlantsNameThunk({ name: barcode, barcode: '', storageId: currentStorage?.id || '' })).unwrap();
                 }
             } catch (error: any) {
                 const errorMessage = error?.message || "Unknown error occurred";
@@ -201,7 +242,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                         <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" />
                         :
                         <FlatList
-                            data={uniquePlants}
+                            data={groupPlantsByProduct(searchPlantsList)}
                             keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
                                 <TouchableVibrate
@@ -210,7 +251,8 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                                         await handleCreatePlant(item.product.name, item.product.id)
                                     }}
                                 >
-                                    <Text style={{ fontSize: 15, }}>{getUkrainianPart(item.product.name)}</Text>
+                                    <Text style={styles.pressItemName}>{getUkrainianPart(item.product.name)}</Text>
+                                    <Text style={styles.pressItemCount}>{item.sumQty} шт</Text>
                                 </TouchableVibrate>
                             )}
                             ItemSeparatorComponent={() => (
@@ -277,5 +319,23 @@ const styles = StyleSheet.create({
         paddingBottom: 8,
         paddingTop: 8,
         paddingLeft: 8,
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
+    pressItemName: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: "rgba(97, 97, 97, 1)",
+        marginRight: 5,
+        maxWidth: '84%',
+        alignSelf: 'center'
+    },
+    pressItemCount: {
+        fontSize: 15,
+        fontWeight: 600,
+        color: "rgba(97, 97, 97, 0.9)",
+        marginRight: 5,
+        maxWidth: 100,
+        textAlign: 'right'
     }
 });

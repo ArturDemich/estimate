@@ -146,7 +146,7 @@ export async function addCharacteristic(
         plantItem.unit.id ? plantItem.unit.id : 'null',
         plantItem.unit.name ? plantItem.unit.name : 'null',
         plantItem.barcode ? plantItem.barcode : 0,
-        plantItem.quantity ? plantItem.quantity : 0,
+        plantItem.qty ? plantItem.qty : 0,
       ]
     );
 
@@ -164,7 +164,6 @@ export async function fetchDocuments(): Promise<any[]> {
 
   try {
     const rows = await db.getAllAsync("SELECT * FROM documents ORDER BY created_at DESC");
-   // console.log('fetchDocuments__', rows)
     return rows;
   } catch (error) {
     console.error("Error fetching documents:", error);
@@ -177,7 +176,17 @@ export async function fetchPlants(documentId: number): Promise<any[]> {
   console.log('fetchPlants__', documentId)
   try {
     const rows = await db.getAllAsync(
-      "SELECT * FROM plants WHERE document_id = ? ORDER BY created_at DESC",
+      `
+      SELECT 
+        p.*,
+        COUNT(pc.id) AS count_items,
+        SUM(COALESCE(pc.currentQty, 0)) AS total_qty
+      FROM plants p
+      LEFT JOIN plant_characteristics pc ON p.id = pc.plant_id
+      WHERE p.document_id = ?
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      `,
       documentId
     );
     return rows;
@@ -208,7 +217,7 @@ export async function fetchCharacteristics(plantId: number, docId: number): Prom
 export async function deleteDocument(documentId: number): Promise<boolean> {
   console.log("1Database WAS NOT opened successfully", dbInstance);
   const db = await openDB();
-  console.log('deleteDocument', documentId, db)
+  console.log('deleteDocument', documentId,)
   try {
     const result = await db.runAsync("DELETE FROM documents WHERE id = ?", documentId);
     return result.changes > 0;
@@ -294,24 +303,9 @@ interface StorageInfo {
   name: string;
 }
 
-interface Characteristic {
-  id: string;
-  name: string;
-  unit: {
-    id: string;
-    name: string;
-  };
-  qty: number;
-}
-
 interface Product {
   id: string;
   name: string;
-}
-
-interface ProductWithCharacteristics {
-  product: Product;
-  characteristics: Characteristic[];
 }
 
 interface NewProduct {
@@ -329,7 +323,7 @@ export interface DocumentResult {
   number: string;
   comment: string;
   storage: StorageInfo;
-  products: ProductWithCharacteristics[];
+  products: ProductItem[];
   newproducts: NewProduct[];
 }
 
@@ -343,6 +337,21 @@ interface PlantResult {
   qty: number | null;
 }
 
+interface ProductItem{
+  product: {
+    id: string;
+    name: string;
+  };
+  characteristic: {
+    id: string;
+    name: string;
+  };
+  unit: {
+    id: string;
+    name: string;
+  };
+  qty: number;
+};
 
 
 export async function getDocumentWithDetails(docId: number): Promise<DocumentResult | null> {
@@ -355,8 +364,9 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
       storage_name: string | null;
       comment: string | null;
       date: string | null;
+      number: string | null;
     }>(
-      `SELECT id, storage_id, storage_name, comment, created_at AS date 
+      `SELECT id, storage_id, storage_name, comment, number, created_at AS date 
          FROM documents WHERE id = ?`,
       [docId]
     );
@@ -378,48 +388,52 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
       [docId]
     );
 
-    const productsMap = new Map<string, ProductWithCharacteristics>();
-    const newProducts: NewProduct[] = [];
+    const products: ProductItem[] = [];
+    const newproducts: NewProduct[] = [];
 
     for (const row of plantResults) {
-      const productKey = row.productId || "";
-
-      if (!productsMap.has(productKey)) {
-        productsMap.set(productKey, {
-          product: { id: row.productId || "", name: row.productName || "" },
-          characteristics: []
-        });
-      }
-
-      const characteristic: Characteristic = {
-        id: row.characteristicId || "",
-        name: row.characteristicName || "",
-        unit: { id: row.unitId || "", name: row.unitName || "" },
-        qty: row.qty ?? 0
-      };
-
       if (row.characteristicId === newSIZE) {
-        newProducts.push({
-          product: { id: row.productId || "", name: row.productName || "" },
-          characteristic: { id: nullID, name: row.characteristicName || "" },
+        newproducts.push({
+          product: {
+            id: row.productId || "",
+            name: row.productName || ""
+          },
+          characteristic: {
+            id: nullID,
+            name: row.characteristicName || ""
+          },
           qty: row.qty ?? 0
         });
       } else {
-        productsMap.get(productKey)?.characteristics.push(characteristic);
+        products.push({
+          product: {
+            id: row.productId || "",
+            name: row.productName || ""
+          },
+          characteristic: {
+            id: row.characteristicId || "",
+            name: row.characteristicName || ""
+          },
+          unit: {
+            id: row.unitId || "",
+            name: row.unitName || ""
+          },
+          qty: row.qty ?? 0
+        });
       }
     }
 
     return {
       id: nullID,
       date: docResult.date ? format(docResult.date, "yyyy-dd-MM HH-mm-ss") : '', //"YYYY-DD-MM HH-mm-ss"
-      number: docResult.id.toString() || "0",
+      number: format(new Date(), "MddHHmmss"),
       comment: docResult.comment || "",
       storage: {
         id: docResult.storage_id || "",
         name: docResult.storage_name || ""
       },
-      products: Array.from(productsMap.values()),
-      newproducts: newProducts
+      products: products,
+      newproducts: newproducts
     };
 
   } catch (error) {

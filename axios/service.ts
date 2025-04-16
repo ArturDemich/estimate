@@ -14,12 +14,18 @@ const API = 'http://194.42.195.241:41001/UTP/hs/api';
 const TOKEN_URL = `${API}/getToken`;
 const getStorages_URL = `${API}/getStorages`;
 const getPlants_URL = `${API}/getProductInfo`;
-const sendData_URL = `${API}/CreateStorageDoc`;
+const sendData_URL = `${API}/createStorageDoc`;
 
+interface GetPlantsProps {
+  token: string,
+  name: string,
+  barcode: string,
+  storageId?: string,
+  inStockOnly?: boolean
+};
 export class DataService {
   static async getNewVersion() {
     try {
-      console.log('SEVICE getNewVersion')
       return await axios.get(NEW_V_URL)
         .then((response) => response.data);
     } catch (error: any) {
@@ -39,7 +45,6 @@ export class DataService {
 
   static async getStorages(token: string) {
     try {
-      console.log('SEVICE getStorages')
       return await axios.post(
         getStorages_URL,
         { token, allstorages: true },
@@ -62,7 +67,6 @@ export class DataService {
   }
 
   static async getToken(log: string, pass: string) {
-    console.log('SEVICE getToken')
     return await axios.post(TOKEN_URL, { login: log, password: pass }, {
       headers: { 'Authorization': 'Basic ' + encodedToken }
     })
@@ -80,12 +84,11 @@ export class DataService {
       })
   };
 
-  static async getPlants(token: string, name: string, barcode: string) {
+  static async getPlants({ token, name, barcode, storageId, inStockOnly }: GetPlantsProps) {
     try {
-      console.log('SEVICE getPlants')
       return await axios.post(
         getPlants_URL,
-        { token, findbystring: name, barcodes: [barcode] },
+        { token, findbystring: name, barcodes: [barcode], storageId, inStockOnly },
         { headers: { 'Authorization': 'Basic ' + encodedToken } })
         .then((response) => response.data)
     } catch (error: any) {
@@ -109,10 +112,15 @@ export class DataService {
     try {
       return await axios.post(
         sendData_URL,
-        { token, document },
+        { token, ...document },
         { headers: { Authorization: "Basic " + encodedToken } }
       )
-        .then((response) => response.data);
+        .then((response) => {
+          if (!response.data.success) {
+            throw new Error(response.data?.errors || 'Помилка в обʼєкті документа')
+          }
+          return response.data
+        });
     } catch (error: any) {
       console.error("Error in service sendDataToServer:", error);
       let errorMessage = "Failed to send Data to server";
@@ -140,7 +148,7 @@ export class DataService {
     } catch (error: any) {
       console.error("Error in service sendDataToExcel:", error);
       let errorMessage = "Failed to send data to excel";
-      
+
       if (error.response?.data) {
         errorMessage =
           typeof error.response.data === "string"
@@ -149,7 +157,7 @@ export class DataService {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       throw new Error(errorMessage);
     }
   }

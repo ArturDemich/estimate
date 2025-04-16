@@ -24,17 +24,19 @@ export enum LoadingStatus {
 export interface Storages {
     id: string;
     name: string;
-    is_group: boolean;
-    id_parent: string;
+    is_group?: boolean;
+    id_parent?: string;
 };
 export interface PlantItemRespons {
     product: { id: string; name: string; };
     characteristic: { id: string; name: string; };
     unit: { id: string; name: string; };
     barcode: string;
-    quantity?: number;
+    qty: number;
 };
 export interface PlantNameDB {
+    count_items: number;
+    total_qty: number;
     product_id: string;
     product_name: string;
     document_id: number;
@@ -82,9 +84,12 @@ export interface DataSlice {
     newVersion: NewVersionRes | null;
     docSent: number;
     newDetailBarcode: string | null;
+    currentStorage: Storages | null;
 };
 
 export interface PalntNameInput {
     name: string;
     barcode: string;
+    storageId?: string;
+    inStockOnly?: boolean;
 };

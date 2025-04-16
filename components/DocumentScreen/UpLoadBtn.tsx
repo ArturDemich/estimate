@@ -62,13 +62,12 @@ const UpLoadBtn = () => {
 
   const loadSendData = async () => {
     const data = await getDocumentWithDetails(Number(docId))
-   // console.log("UpLoadBtn data", JSON.stringify(data, null, 2));
+    //console.log("UpLoadBtn data", JSON.stringify(data, null, 2));
     if (data) {
       try {
         if ("token" in token && typeof token.token === "string") {
           const res = await DataService.sendDataToServer(token.token, data)
           if (res && res.success) {
-            //await dispatch(getPlantsNameDB({ docId: Number(docId) }))
             if (docSent === UploadStatus.Start) {
               await markDocumentAsSent(Number(docId), UploadStatus.OneC);
               await dispatch(setDocSent(UploadStatus.OneC));
