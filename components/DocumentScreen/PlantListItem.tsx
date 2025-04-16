@@ -118,8 +118,8 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantN
             <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
           </View>
           <View style={[styles.rowItem, {alignItems: 'center'}]}>
-            {item.count_items === 0 ? <Text style={styles.itemEmpty}>{'(пусто)'}</Text> : <Text style={styles.itemNum}>всього:</Text>}
-            {item.count_items > 0 && <Text style={[styles.itemNum, {width: 35, fontSize: 14, fontWeight: 700, textAlign: 'center'}]}>{item.total_qty}</Text>}
+            {item.count_items === 0 && <Text style={styles.itemEmpty}>{'(пусто)'}</Text> }
+            {item.count_items > 0 && <Text style={[styles.itemNum, {maxWidth: 90, fontSize: 14, fontWeight: 700, textAlign: 'center'}]}>{item.total_qty} шт</Text>}
           </View>
 
         </View>
@@ -147,6 +147,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: 'space-between',
+    alignItems: 'center'
   },
   rowItem: {
     display: "flex",
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     padding: 5,
     overflow: 'hidden',
-    maxWidth: 280
+    maxWidth: 280,
   },
   itemNum: {
     alignSelf: "center",
