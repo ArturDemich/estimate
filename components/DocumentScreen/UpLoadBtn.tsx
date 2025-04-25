@@ -22,6 +22,7 @@ const UpLoadBtn = () => {
 
   const sendToExcel = async () => {
     const data = await getDocumentWithDetails(Number(docId));
+    //console.log("UpLoadBtn data", JSON.stringify(data, null, 2));
     if (data) {
       try {
         const res = await DataService.sendDataToExcel(data)
@@ -130,7 +131,7 @@ const UpLoadBtn = () => {
             <View style={styles.btnBlock}>
               <LoadBtn key={'closeLoad'} press={() => setShowModal(false)} title={'❌'} />
               <LoadBtn key={'excelLoad'} press={() => sendToExcel()} title={'📗 Excel в 🅖'} />
-              <LoadBtn key={'oneCLoad'} docSent={docSent} press={() => loadSendData()} title={'📤 в 1С'} />
+              <LoadBtn key={'oneCLoad'} press={() => loadSendData()} title={'📤 в 1С'} />
             </View>
           </View>
         </View>
@@ -143,9 +144,8 @@ export default UpLoadBtn;
 interface LoadBtnProps {
   press: () => void;
   title: string;
-  docSent?: UploadStatus;
 };
-const LoadBtn = ({ docSent, press, title }: LoadBtnProps) => {
+const LoadBtn = ({ press, title }: LoadBtnProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const upload = async () => {
@@ -155,7 +155,7 @@ const LoadBtn = ({ docSent, press, title }: LoadBtnProps) => {
   };
 
   return (
-    <TouchableVibrate onPress={() => upload()} disabled={docSent ? docSent === UploadStatus.OneC : false} style={[styles.uploadBtn, { opacity: docSent && docSent === UploadStatus.OneC ? 0.3 : 1 }]}>
+    <TouchableVibrate onPress={() => upload()} style={[styles.uploadBtn]}>
       {isLoading ? <ActivityIndicator size="small" color="#ff6f61" /> : <Text>{title}</Text>}
     </TouchableVibrate>
   )
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.2)",
   },
   modalContent: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     padding: 10,
     borderRadius: 10,
     alignItems: "center",

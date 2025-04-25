@@ -68,6 +68,8 @@ export default function DocumentList() {
       loadDocuments();
     }, [])
   );
+
+  console.log('DocumentList', documents)
   
   return (
     <FlatList

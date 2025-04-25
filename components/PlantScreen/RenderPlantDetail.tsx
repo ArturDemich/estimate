@@ -4,14 +4,16 @@ import { memo, useEffect, useRef, useState, } from "react";
 import { Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { connect, useDispatch } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { deleteCharacteristic, updateCharacteristic } from "@/db/db.native";
+import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db.native";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import PressableVibrate from "@/components/ui/PressableVibrate";
-import { setLabelPrint, updateLocalCharacteristic } from "@/redux/dataSlice";
+import { setLabelPrint, updateLocalCharacteristic, updateLocalComment, updateLocalFreeQty } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { checkBluetoothEnabled } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
-import { newSIZE, UploadStatus } from "@/types/typesScreen";
+import { newSIZE } from "@/types/typesScreen";
+import * as Clipboard from 'expo-clipboard';
+import { FontAwesome6 } from "@expo/vector-icons";
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -22,10 +24,9 @@ interface RenderPlantDetailProps {
     plantName: string;
     docName: string;
     autoPrint: boolean;
-    docSent: number;
 };
 
-const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint, docSent }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
@@ -34,8 +35,13 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
     const itemRef = useRef<View>(null);
     const inputRef = useRef<TextInput>(null);
+    const inputCommentRef = useRef<TextInput>(null);
+    const inputFreeRef = useRef<TextInput>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isEditingFree, setIsEditingFree] = useState(false);
     const [printQty, setPrintQty] = useState<string | number>(1);
+    const [isCommentEdit, setCommentEdit] = useState(false);
+
 
     const isManual = item.characteristic_id === newSIZE;
 
@@ -44,13 +50,25 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
         setShowMenu(val)
     };
 
-    const handleUpdateQtyOne = async (currentQty: number, print: boolean) => {
-        if (currentQty < 0 ) { 
+    const handleUpdCurrentQty = async (currentQty: number) => {
+        if (currentQty < 0) {
             return
-        } 
+        }
         const success = await updateCharacteristic(item.id, currentQty);
         if (success) {
             dispatch(updateLocalCharacteristic({ id: item.id, currentQty: currentQty }));
+        } else {
+            console.error("Failed to update characteristic in DB.");
+        }
+    };
+
+    const handleUpdFreeQty = async (freeQty: number, print: boolean) => {
+        if (freeQty < 0) {
+            return
+        }
+        const success = await updateDBFreeQty(item.id, freeQty);
+        if (success) {
+            dispatch(updateLocalFreeQty({ id: item.id, freeQty: freeQty }));
             print && handlePrint()
         } else {
             console.error("Failed to update characteristic in DB.");
@@ -60,11 +78,38 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const handleChangeQty = async (currentQty: string) => {
         const parsedQty = Number(currentQty);
         if ((item.currentQty === 0 && parsedQty < item.currentQty) || Number.isNaN(parsedQty)) {
-            Alert.alert(`Значення не можк бути відємним ${currentQty}`);
+            Alert.alert(`Значення не може бути відємним ${currentQty}`);
             setIsEditing(false);
             return
         }
-         dispatch(updateLocalCharacteristic({ id: item.id, currentQty: Number(currentQty) }));
+        dispatch(updateLocalCharacteristic({ id: item.id, currentQty: Number(currentQty) }));
+    };
+
+    const handleChangeFreeQty = async (freeQty: string) => {
+        const parsedQty = Number(freeQty);
+        if ((item.freeQty === 0 && parsedQty < item.freeQty) || Number.isNaN(parsedQty)) {
+            Alert.alert(`Значення не може бути відємним ${freeQty}`);
+            setIsEditing(false);
+            return
+        }
+        dispatch(updateLocalFreeQty({ id: item.id, freeQty: parsedQty }));
+    };
+
+    const handleStateComment = async (value: string) => {
+        dispatch(updateLocalComment({ id: item.id, value }));
+    };
+
+    const handleUpdDBComment = async (value: string) => {
+        await updateDBPlantComment(item.id, value);
+    };
+
+    const copyToClipboard = async () => {
+        await Clipboard.setStringAsync(plantName + ', ' + item.characteristic_name);
+        myToast({
+            type: "customToast",
+            text1: "Назву скопійовано!",
+            visibilityTime: 5000,
+        });
     };
 
     const handleLongPress = () => {
@@ -121,72 +166,147 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             setTimeout(() => {
                 inputRef.current?.focus();
             }, 100);
+        } else if (isEditingFree) {
+            flatListRef && flatListRef()
+            setTimeout(() => {
+                inputFreeRef.current?.focus();
+            }, 100);
+        } else if (isCommentEdit) {
+            flatListRef && flatListRef()
+            setTimeout(() => {
+                inputCommentRef.current?.focus();
+            }, 100);
         }
-    }, [isEditing]);
+    }, [isEditing, isEditingFree, isCommentEdit]);
 
     return (
         <PressableVibrate ref={itemRef} style={[styles.documentItem, selected && styles.selectedItem]} onLongPress={handleLongPress} >
             {selected && <View style={styles.shadowOverlay} />}
             <View style={{ flex: 1, }}>
-                <View style={{ display: "flex", flexDirection: "row", maxWidth: '100%' }}>
-                    <Text style={styles.itemNum}>{numRow}.</Text>
-                    <Text style={[styles.itemSize, isManual && styles.manualSize]}>{
-                        item.characteristic_name === '' || null ? 'Немає характеристики' : item.characteristic_name
-                    }</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <View style={{ display: "flex", flexDirection: "row", maxWidth: 340, }}>
+                        <Text style={styles.itemNum}>{numRow}.</Text>
+                        <Text style={[styles.itemSize, isManual && styles.manualSize]}>{
+                            item.characteristic_name === '' || null ? 'Немає характеристики' : item.characteristic_name
+                        }</Text>
+                    </View>
+                    <TouchableVibrate style={styles.comment} onPress={() => setCommentEdit(true)}>
+                        <MaterialCommunityIcons name="comment-edit" size={24} color='rgb(70, 70, 70)' />
+                    </TouchableVibrate>
                 </View>
 
                 <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
-                    <View style={{ gap: 4, flexDirection: "row", }}>
-                        <View style={styles.btnRes}>
-                            <Text>склад:</Text>
+                    <View>
+                        <View style={{ gap: 4, flexDirection: "row", }}>
+                            <View style={styles.btnRes}>
+                                <Text style={styles.titleQty}>склад:</Text>
+                            </View>
+                            <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
                         </View>
-                        <Text style={[styles.itemQty, { color: "#70707B" }]}>{item.quantity}{item.unit_name}</Text>
+                        <View style={{ gap: 4, flexDirection: "row", alignItems: 'center' }}>
+                            <View style={styles.btnRes}>
+                                <Text style={styles.titleQty}>факт:</Text>
+                            </View>
+
+                            {isEditing ? (
+                                <View style={{ gap: 4, flexDirection: "row", }}>
+                                    <TextInput
+                                        ref={inputRef}
+                                        style={styles.inputQty}
+                                        value={item.currentQty.toString()}
+                                        onChangeText={handleChangeQty}
+                                        keyboardType="numeric"
+                                        selectTextOnFocus={item.currentQty === 0}
+                                        onBlur={() => handleUpdCurrentQty(item.currentQty).then(() => setIsEditing(false))}
+                                    />
+                                </View>
+                            ) : (
+                                <View style={{ alignSelf: 'flex-end' }}>
+                                    <PressableVibrate
+                                        style={[styles.editableQty, { flexDirection: 'row' }]}
+                                        onPress={() => setIsEditing(true)}
+                                        onLongPress={() => handleUpdCurrentQty(item.freeQty)}
+                                    >
+                                        <MaterialCommunityIcons name="pen-lock" size={16} color={item.currentQty === item.freeQty ? 'rgb(106, 159, 53)' : 'rgb(87, 87, 87)'} />
+                                        <Text style={[styles.itemQty, { color: item.currentQty === item.freeQty ? 'rgb(106, 159, 53)' : 'rgb(70, 70, 70)' }]}>{item.currentQty}{item.unit_name}</Text>
+                                    </PressableVibrate>
+
+                                </View>
+                            )}
+                        </View>
                     </View>
-                    <View style={{flexDirection: 'row', gap: 8,}}>
-                        {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
-                        <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdateQtyOne(item.currentQty - 1, false)}>
+
+
+
+                    <View style={{ flexDirection: 'row', gap: 8, }}>
+                        <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdFreeQty(item.freeQty - 1, false)}>
                             <Text style={styles.btnPlusText}>-1</Text>
-                        </TouchableVibrate>}
-                        {isEditing && (docSent === UploadStatus.Start || docSent === UploadStatus.Excel) ? (
+                        </TouchableVibrate>
+                        {isEditingFree ? (
                             <TextInput
-                                ref={inputRef}
-                                style={styles.inputQty}
-                                value={item.currentQty.toString()}
-                                onChangeText={handleChangeQty}
+                                ref={inputFreeRef}
+                                style={[styles.inputQty, { height: 20, alignSelf: 'flex-end', minWidth: 48 }]}
+                                value={item?.freeQty?.toString() || '0'}
+                                onChangeText={handleChangeFreeQty}
                                 keyboardType="numeric"
-                                selectTextOnFocus={item.currentQty === 0}
-                                onBlur={() => handleUpdateQtyOne(item.currentQty, false).then(() => setIsEditing(false))}
+                                selectTextOnFocus={item.freeQty === 0}
+                                onBlur={() => handleUpdFreeQty(item.freeQty, false).then(() => setIsEditingFree(false))}
                             />
                         ) : (
-                            <PressableVibrate
-                                style={styles.editableQty}
-                                onPress={() => setIsEditing(true)}
-                            >
-                                <MaterialCommunityIcons name="pen-lock" size={16} color="black" />
-                                <Text style={styles.itemQty}>{item.currentQty}{item.unit_name}</Text>
-                            </PressableVibrate>
+                            <View style={{ alignSelf: 'flex-end', minWidth: 47 }}>
+                                <PressableVibrate
+                                    style={styles.editableQty}
+                                    onPress={() => setIsEditingFree(true)}
+                                >
+                                    <View style={{ flexDirection: 'row', gap: 3, alignItems: 'center' }}>
+                                        <MaterialCommunityIcons name="pen-lock" size={14} color="black" />
+                                        <Text style={styles.itemQty}>{item.freeQty}{item.unit_name}</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 9, lineHeight: 9, fontWeight: 600, color: 'rgb(180, 180, 180)', alignSelf: 'center', }}>на продаж:</Text>
+                                </PressableVibrate>
+
+                            </View>
                         )}
+                        <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdFreeQty(item.freeQty + 1, autoPrint)}>
+                            <Text style={styles.btnPlusText}>+1</Text>
+                        </TouchableVibrate>
                     </View>
+
                 </View>
+
+                {isCommentEdit ?
+                    <TextInput
+                        ref={inputCommentRef}
+                        style={styles.inputComment}
+                        onChangeText={handleStateComment}
+                        value={item?.plantComment}
+                        multiline
+                        numberOfLines={3}
+                        onBlur={() => handleUpdDBComment(item.plantComment).then(() => setCommentEdit(false))}
+                    /> :
+                    item?.plantComment === '' ? null :
+                        <View style={{ flexDirection: 'row', gap: 4, paddingLeft: 3, marginTop: 3, maxWidth: 355 }}>
+                            <MaterialCommunityIcons name="comment-text-outline" size={16} color='rgb(66, 66, 66)' />
+                            <Text style={styles.commentText}>{item.plantComment}</Text>
+                        </View>
+                }
             </View>
-            {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
-            <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdateQtyOne(item.currentQty + 1, autoPrint)}>
-                <Text style={styles.btnPlusText}>+1</Text>
-            </TouchableVibrate>}
 
             {showMenu && (
                 <Modal transparent animationType="fade">
-                    <PressableVibrate
-                        style={styles.modalOverlay}
-                        onPress={() => handleShowMenu(false)}
-                    >
+                    <PressableVibrate style={styles.modalOverlay} onPress={() => handleShowMenu(false)}>
                         <View style={[styles.menuContainer, { top: menuPosition.y, left: menuPosition.x, width: menuSize.width, height: menuSize.height }]}>
-                            <View style={{ alignSelf: 'flex-end' }}>
-                                {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
-                                <TouchableVibrate style={styles.menuItem} onPress={handleDelete}>
-                                    <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
-                                    <Text style={[styles.menuText, { color: '#EF4444' }]}>Видалити</Text>
-                                </TouchableVibrate>}
+                            <View style={{ justifyContent: 'space-between' }}>
+                                <TouchableVibrate style={styles.copyBtn} onPress={copyToClipboard}>
+                                    <FontAwesome6 name="copy" size={26} color='rgb(66, 66, 66)' />
+                                </TouchableVibrate>
+
+                                <View style={{ alignSelf: 'flex-end' }}>
+                                    <TouchableVibrate style={styles.menuItem} onPress={handleDelete}>
+                                        <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
+                                        <Text style={[styles.menuText, { color: '#EF4444' }]}>Видалити</Text>
+                                    </TouchableVibrate>
+                                </View>
                             </View>
 
                             <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
@@ -219,13 +339,14 @@ const mapStateToProps = (state: RootState) => ({
 })
 
 export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
-    console.log('RenderPlantDetail MEMO', prevProps.item.id, nextProps.item.id)
+   // console.log('RenderPlantDetail MEMO', prevProps.item.id, nextProps.item.id)
     return (
         prevProps.item.currentQty === nextProps.item.currentQty &&
+        prevProps.item.freeQty === nextProps.item.freeQty &&
+        prevProps.item.plantComment === nextProps.item.plantComment &&
         prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
         prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
-        prevProps.autoPrint === nextProps.autoPrint &&
-        prevProps.docSent === nextProps.docSent
+        prevProps.autoPrint === nextProps.autoPrint
     );
 }));
 
@@ -267,7 +388,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         elevation: 5,
-        alignSelf: 'center'
+        alignSelf: 'flex-end'
     },
     btnPlusText: {
         color: 'rgba(255, 255, 255, 1)',
@@ -275,10 +396,12 @@ const styles = StyleSheet.create({
         fontWeight: 600,
     },
     btnRes: {
-        padding: 4,
-        borderRadius: 3,
-        alignItems: "center",
-        justifyContent: "center",
+        paddingHorizontal: 4,
+        paddingBottom: 4,
+    },
+    titleQty: {
+        fontWeight: 500,
+        color: "rgb(112, 112, 112)",
     },
     itemQty: {
         alignSelf: "center",
@@ -292,10 +415,8 @@ const styles = StyleSheet.create({
         color: "rgb(41, 41, 41)",
     },
     itemNum: {
-        alignSelf: "center",
         fontSize: 13,
         color: "grey",
-        marginTop: -3,
     },
     selectedItem: {
         shadowColor: "rgba(0,0,0,0.8)",
@@ -338,9 +459,6 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         height: 38,
         shadowColor: "rgba(0, 0, 0, 0.9)",
-        //shadowOpacity: 0.3,
-        //shadowOffset: { width: 0, height: 2 },
-        //shadowRadius: 4,
         elevation: 5,
     },
     menuText: {
@@ -359,6 +477,18 @@ const styles = StyleSheet.create({
         textAlign: "center",
         backgroundColor: "#fff",
     },
+    inputComment: {
+        marginTop: 5,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 5,
+        paddingHorizontal: 8,
+        fontSize: 14,
+        minHeight: 30,
+        width: '100%',
+        paddingVertical: 0,
+        backgroundColor: "#fff",
+    },
     inputPrint: {
         borderWidth: 1,
         borderColor: "#ccc",
@@ -373,7 +503,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
     },
     editableQty: {
-        flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
         minHeight: 30,
@@ -381,4 +510,48 @@ const styles = StyleSheet.create({
     manualSize: {
         color: "rgba(255, 111, 97, 1)"
     },
+    comment: {
+        paddingHorizontal: 3,
+        paddingTop: 1,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.06)",
+        borderRadius: 5,
+        shadowColor: 'rgba(143, 143, 143, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    },
+    commentText: {
+        fontSize: 13,
+        lineHeight: 16,
+        fontWeight: 600,
+        color: 'rgb(66, 66, 66)'
+    },
+    inputContainer: {
+        position: "relative",
+        width: "100%",
+        marginTop: 10,
+        marginBottom: 5,
+    },
+    clearButton: {
+        position: "absolute",
+        right: 5,
+        top: 10,
+        backgroundColor: "#A0A0AB",
+        borderRadius: 8,
+        width: 25,
+        height: 25,
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1
+    },
+    copyBtn: {
+        padding: 3,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.11)",
+        borderRadius: 5,
+        shadowColor: 'rgba(0, 0, 0, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        width: 35,
+    }
 });

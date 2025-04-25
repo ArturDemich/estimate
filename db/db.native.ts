@@ -24,7 +24,7 @@ export async function openDB(): Promise<SQLite.SQLiteDatabase> {
 /**
  * Initializes the database by setting the journal mode and creating the tables.
  */
-export async function initializeDB(): Promise<void> {
+/* export async function initializeDB(): Promise<void> {
   //checkDatabaseSchema()
   const db = await openDB();
   try {
@@ -92,7 +92,7 @@ export async function initializeDB(): Promise<void> {
     console.log("Error initializing database:", error);
     Alert.alert("Error initializing database: ", error)
   }
-}
+} */
 
 
 export async function addDocument(nameStore: string, storeId: string): Promise<number | null> {
@@ -126,7 +126,116 @@ export async function addPlant(documentId: number, product: { id: string; name: 
     console.error("Error adding plant:", error);
     return null;
   }
-}
+} 
+
+
+  export async function initializeDB(): Promise<void> {
+    const db = await openDB();
+    try {
+      await db.execAsync("PRAGMA foreign_keys = ON;");
+      await db.execAsync("PRAGMA journal_mode = WAL;");
+      await db.execAsync("BEGIN TRANSACTION;");
+  
+      // Define expected schema
+      const requiredSchema: Record<string, { [column: string]: string }> = {
+        documents: {
+          id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+          number: "TEXT NOT NULL DEFAULT ''",
+          storage_id: "TEXT NOT NULL DEFAULT ''",
+          storage_name: "TEXT NOT NULL DEFAULT ''",
+          comment: "TEXT NOT NULL DEFAULT ''",
+          is_sent: "INTEGER DEFAULT 0",
+          created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+          updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        },
+        plants: {
+          id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+          document_id: 'INTEGER NOT NULL',
+          product_id: 'TEXT NOT NULL',
+          product_name: 'TEXT NOT NULL',
+          created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+          updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        },
+        plant_characteristics: {
+          id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+          plant_id: 'INTEGER NOT NULL',
+          characteristic_id: 'TEXT NOT NULL',
+          characteristic_name: 'TEXT NOT NULL',
+          unit_id: 'TEXT NOT NULL',
+          unit_name: 'TEXT NOT NULL',
+          barcode: 'TEXT NOT NULL',
+          quantity: 'INTEGER NOT NULL DEFAULT 0',
+          currentQty: 'INTEGER NOT NULL DEFAULT 0',
+          freeQty: 'INTEGER NOT NULL DEFAULT 0',
+          plantComment: "TEXT NOT NULL DEFAULT ''",
+          created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+          updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        }
+      };
+  
+      // Loop over each table in the schema
+      for (const [tableName, columns] of Object.entries(requiredSchema)) {
+        const tableExists = await db.getAllAsync(`
+          SELECT name FROM sqlite_master WHERE type='table' AND name=?;
+        `, tableName);
+  
+        if (!tableExists) {
+          // Create full table
+          const columnsSQL = Object.entries(columns)
+            .map(([colName, colType]) => `${colName} ${colType}`)
+            .join(',\n  ');
+          const foreignKeys =
+            tableName === 'plants'
+              ? ',\n  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE'
+              : tableName === 'plant_characteristics'
+                ? ',\n  FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE'
+                : '';
+          const createTableSQL = `CREATE TABLE ${tableName} (\n  ${columnsSQL}${foreignKeys}\n);`;
+          await db.execAsync(createTableSQL);
+          console.log(`Created table: ${tableName}`);
+        } else {
+          // Check and add missing columns
+          const existingCols = await db.getAllAsync(`PRAGMA table_info(${tableName});`);
+          const existingColNames = existingCols.map((col: any) => col.name);
+  
+          for (const [colName, colType] of Object.entries(columns)) {
+            if (!existingColNames.includes(colName)) {
+              const alterSQL = `ALTER TABLE ${tableName} ADD COLUMN ${colName} ${colType};`;
+              await db.execAsync(alterSQL);
+              console.log(`Added column '${colName}' to table '${tableName}'`);
+            }
+          }
+        }
+      }
+  
+      // Triggers
+      await db.execAsync(`
+        CREATE TRIGGER IF NOT EXISTS update_plants_timestamp
+        AFTER UPDATE ON plant_characteristics
+        FOR EACH ROW
+        BEGIN
+          UPDATE plants SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.plant_id;
+        END;
+      `);
+  
+      await db.execAsync(`
+        CREATE TRIGGER IF NOT EXISTS update_documents_timestamp
+        AFTER UPDATE ON plants
+        FOR EACH ROW
+        BEGIN
+          UPDATE documents SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.document_id;
+        END;
+      `);
+  
+      await db.execAsync("COMMIT;");
+      console.log("Database initialized and schema verified.");
+    } catch (error: any) {
+      await db.execAsync("ROLLBACK;");
+      console.error("Error initializing database:", error);
+      Alert.alert("Error initializing database", error.message);
+    }
+  }
+  
 
 export async function addCharacteristic(
   plantDBId: number,
@@ -180,7 +289,8 @@ export async function fetchPlants(documentId: number): Promise<any[]> {
       SELECT 
         p.*,
         COUNT(pc.id) AS count_items,
-        SUM(COALESCE(pc.currentQty, 0)) AS total_qty
+        SUM(COALESCE(pc.currentQty, 0)) AS total_qty,
+        SUM(COALESCE(pc.freeQty, 0)) AS sale_qty
       FROM plants p
       LEFT JOIN plant_characteristics pc ON p.id = pc.plant_id
       WHERE p.document_id = ?
@@ -270,6 +380,34 @@ export async function updateCharacteristic(DbCharacteristicId: number, currentQt
   }
 }
 
+export async function updateDBFreeQty(DbCharacteristicId: number, freeQty: number): Promise<boolean> {
+  const db = await openDB();
+  try {
+    const result = await db.runAsync(
+      "UPDATE plant_characteristics SET freeQty = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [freeQty, DbCharacteristicId]
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error updating currentQty:", error);
+    return false;
+  }
+}
+
+export async function updateDBPlantComment(DbCharacteristicId: number, value: string): Promise<boolean> {
+  const db = await openDB();
+  try {
+    const result = await db.runAsync(
+      "UPDATE plant_characteristics SET plantComment = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [value, DbCharacteristicId]
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error("Error updating currentQty:", error);
+    return false;
+  }
+}
+
 export async function updateDocComment(DbDocumentId: number, newComment: string): Promise<boolean> {
   const db = await openDB();
   try {
@@ -315,6 +453,8 @@ interface NewProduct {
     name: string;
   };
   qty: number;
+  saleQty: number;
+  plantComment: string;
 }
 
 export interface DocumentResult {
@@ -335,6 +475,8 @@ interface PlantResult {
   unitId: string | null;
   unitName: string | null;
   qty: number | null;
+  saleQty: number | null;
+  plantComment: string | null;
 }
 
 interface ProductItem{
@@ -351,6 +493,8 @@ interface ProductItem{
     name: string;
   };
   qty: number;
+  saleQty: number;
+  plantComment: string;
 };
 
 
@@ -381,7 +525,9 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
             c.characteristic_name AS characteristicName, 
             c.unit_id AS unitId, 
             c.unit_name AS unitName, 
-            c.currentQty AS qty
+            c.currentQty AS qty,
+            c.freeQty AS saleQty,
+            c.plantComment AS plantComment
          FROM plants p
          LEFT JOIN plant_characteristics c ON p.id = c.plant_id
          WHERE p.document_id = ?`,
@@ -402,8 +548,12 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
             id: nullID,
             name: row.characteristicName || ""
           },
-          qty: row.qty ?? 0
+          qty: row.qty ?? 0,
+          saleQty: row.saleQty ?? 0,
+          plantComment: row.plantComment || ""
         });
+      } else if(!row.characteristicId || !row.characteristicName) {
+        console.log('getDocumentWithDetails: empty characteristicId, characteristicName')
       } else {
         products.push({
           product: {
@@ -418,7 +568,9 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
             id: row.unitId || "",
             name: row.unitName || ""
           },
-          qty: row.qty ?? 0
+          qty: row.qty ?? 0,
+          saleQty: row.saleQty ?? 0,
+          plantComment: row.plantComment || ""
         });
       }
     }

@@ -6,7 +6,6 @@ import LabelImgShot from "@/components/Printer/LabelImgShot";
 import Title from "@/components/TitleScreen";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { RootState } from "@/redux/store";
-import { UploadStatus } from "@/types/typesScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Text, Vibration, View } from "react-native";
@@ -32,18 +31,17 @@ export default function Plant() {
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>
         ),
-        headerTitle: () => <Title title={"Рослина"} adTitle={`в ${params.docName?.toString()}` || undefined} docSent={docSent} />,
+        headerTitle: () => <Title title={"Рослина"} adTitle={`на ${params.docName?.toString()}` || undefined} docSent={docSent} />,
       }} />
       <View style={{ paddingLeft: 15, paddingVertical: 5, height: 40, justifyContent: 'center' }}><Text style={{ fontSize: 16, fontWeight: "600", }}>{namePlant}</Text></View>
       <PlantSizeItem plantName={namePlant} />
-      {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) &&
         <AddDetailsModal
           plantDBid={params.plantId && params.plantId.toString()}
           docId={params.docId && params.docId.toString()}
           productId={params.productId && params.productId.toString()}
-        />}
+        />
       <LabelImgShot />
-      {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) && <DocComment />}
+      <DocComment />
     </View>
   );
 }

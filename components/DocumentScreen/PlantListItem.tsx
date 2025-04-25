@@ -10,7 +10,6 @@ import { PlantNameDB, Storages } from "@/redux/stateServiceTypes";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { myToast } from "@/utils/toastConfig";
-import { UploadStatus } from "@/types/typesScreen";
 
 
 export default function PlantListItem() {
@@ -18,7 +17,6 @@ export default function PlantListItem() {
   const params = useLocalSearchParams();
   const docId = params.docId;
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
-  const docSent = Array.isArray(params.docSent) ? params.docSent[0] : params.docSent;
   const palnts = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
 
   const loadDBPlants = async () => {
@@ -30,12 +28,12 @@ export default function PlantListItem() {
       loadDBPlants()
     }, [])
   );
- 
+
   return (
     <FlatList
       data={palnts}
       keyExtractor={(item, index) => item.id.toString() + index}
-      renderItem={({ item, index }) => <PlantNameItem docName={docName} docSent={Number(docSent)} item={item} loadDB={() => loadDBPlants()} docId={Number(docId)} numRow={palnts.length - index} />}
+      renderItem={({ item, index }) => <PlantNameItem docName={docName} item={item} loadDB={() => loadDBPlants()} docId={Number(docId)} numRow={palnts.length - index} />}
       style={{ width: "100%", height: '100%', paddingBottom: 40 }}
       ListEmptyComponent={<EmptyList text="Немає доданих рослин" />}
       ListFooterComponent={<View></View>}
@@ -50,10 +48,9 @@ interface PlantNameItemProps {
   docId: number;
   numRow: number;
   docName: string;
-  docSent: number;
 };
 
-const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantNameItemProps) => {
+const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
   const router = useRouter();
@@ -81,20 +78,18 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantN
   }
 
   const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {
-    if ((docSent === UploadStatus.Start || docSent === UploadStatus.Excel)) {
-      try {
-        setLoding(true)
-        await dispatch(getPlantsNameThunk({ name: product_name, barcode: '', storageId: currentStorage?.id || '' })).unwrap().then(() => setLoding(false));
-      } catch (error: any) {
-        console.error("Failed to fetch plant details:", error);
-        myToast({
-          type: "customError",
-          text1: "Не вдалося отримати деталі рослини!",
-          text2: error?.message || "Помилка сервера",
-          visibilityTime: 5000,
-        });
-        setLoding(false)
-      }
+    try {
+      setLoding(true)
+      await dispatch(getPlantsNameThunk({ name: product_name, barcode: '', storageId: currentStorage?.id || '' })).unwrap().then(() => setLoding(false));
+    } catch (error: any) {
+      console.error("Failed to fetch plant details:", error);
+      myToast({
+        type: "customError",
+        text1: "Не вдалося отримати деталі рослини!",
+        text2: error?.message || "Помилка сервера",
+        visibilityTime: 5000,
+      });
+      setLoding(false)
     }
     await dispatch(getPlantsDetailsDB({ palntId: plantDBid, docId: docId }))
     router.push({
@@ -117,9 +112,20 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName, docSent }: PlantN
             <Text style={styles.itemNum}>{numRow}.</Text>
             <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
           </View>
-          <View style={[styles.rowItem, {alignItems: 'center'}]}>
-            {item.count_items === 0 && <Text style={styles.itemEmpty}>{'(пусто)'}</Text> }
-            {item.count_items > 0 && <Text style={[styles.itemNum, {maxWidth: 90, fontSize: 14, fontWeight: 700, textAlign: 'center'}]}>{item.total_qty} шт</Text>}
+          <View style={[styles.colItem]}>
+            {item.count_items === 0 && <Text style={styles.itemEmpty}>{'(пусто)'}</Text>}
+            {item.count_items > 0 && 
+              <View>
+                <Text style={[styles.itemQtysTitel]}>факт:</Text>
+                <Text style={[styles.itemQtys]}>{item.total_qty} </Text>
+              </View>
+            }
+            {item.count_items > 0 &&
+              <View>
+                <Text style={[styles.itemQtysTitel]}>продаж:</Text>
+                <Text style={[styles.itemQtys]}>{item.sale_qty} </Text>
+              </View>
+            }
           </View>
 
         </View>
@@ -154,6 +160,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 3
   },
+  colItem: {
+    display: "flex",
+    gap: 5,
+    alignItems: 'center',
+    flexDirection: 'row'
+  },
   itemSize: {
     fontSize: 13,
     fontWeight: "600",
@@ -165,6 +177,20 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     fontSize: 12,
     color: "grey",
+  },
+  itemQtys: {
+    alignSelf: "center",
+    color: "grey",
+    maxWidth: 90,
+    fontSize: 12,
+    fontWeight: 700,
+    textAlign: 'center'
+  },
+  itemQtysTitel: {
+    fontSize: 9,
+    fontWeight: 500,
+    color: "rgba(123, 123, 123, 0.9)",
+    alignSelf: "center",
   },
   itemEmpty: {
     alignSelf: "center",

@@ -12,7 +12,6 @@ import Title from "@/components/TitleScreen";
 import { formatDate } from "@/components/helpers";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { UploadStatus } from "@/types/typesScreen";
 
 export default function Document() {
   const params = useLocalSearchParams();
@@ -58,9 +57,9 @@ export default function Document() {
 
       <PlantListItem />
 
-      {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) && <ModalAddPlant />}
-      {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel || docSent === UploadStatus.OneC) && <UpLoadBtn />}
-      {(docSent === UploadStatus.Start || docSent === UploadStatus.Excel) && <DocComment />}
+      <ModalAddPlant />
+      <UpLoadBtn />
+      <DocComment />
     </View>
   );
 };

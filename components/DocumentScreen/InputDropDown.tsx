@@ -156,7 +156,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         if (typingTimeout.current) {
             clearTimeout(typingTimeout.current);
         }
-        if (input.trim() !== "" && input.length > 3 && dropdownVisible) {
+        if (input.trim() !== "" && input.length >= 3 && dropdownVisible) {
             typingTimeout.current = setTimeout(() => { handleSetSearch(input) }, 1000);
         }
         return () => {

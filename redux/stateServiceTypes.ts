@@ -37,6 +37,7 @@ export interface PlantItemRespons {
 export interface PlantNameDB {
     count_items: number;
     total_qty: number;
+    sale_qty: number;
     product_id: string;
     product_name: string;
     document_id: number;
@@ -55,6 +56,8 @@ export interface PlantDetails {
 export interface PlantDetailsResponse extends PlantDetails {
     id: number;
     currentQty: number;
+    freeQty: number;
+    plantComment: string;
 };
 
 export interface Label {

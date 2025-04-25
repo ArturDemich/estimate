@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
+    Keyboard,
     Modal,
     StyleSheet,
     Switch,
@@ -40,6 +41,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
     const [manual, setManual] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
 
     const handleClose = () => {
         setShow(false);
@@ -132,16 +134,30 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
     };
 
     useEffect(() => {
-        if (newDetailBarcode ) {
+        if (newDetailBarcode) {
             if (newAddPlants.length === 1 && newAddPlants.some((item) => item.barcode === newDetailBarcode)) {
                 addDetails(Number(plantDBid), newAddPlants[0])
             }
         }
     }, [palntDetails])
 
+    useEffect(() => {
+        const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+            setKeyboardVisible(true);
+        });
+        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardVisible(false);
+        });
+
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        };
+    }, []);
+
     return (
         <>
-            <View style={styles.containerNBTN}>
+            <View style={[styles.containerNBTN, { display: keyboardVisible ? 'none' : 'flex' }]}>
                 <TouchableVibrate
                     style={styles.buttonStep}
                     onPress={() => {
@@ -199,7 +215,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                     renderItem={({ item }) => (
                                         <TouchableVibrate
                                             style={styles.listItem}
-                                            onPress={() => addDetails( Number(plantDBid), item)}>
+                                            onPress={() => addDetails(Number(plantDBid), item)}>
                                             <Text style={styles.listItemName}>{item.characteristic.name}</Text>
                                             <Text style={styles.listItemQty}>{item.qty} {item.unit.name}</Text>
                                         </TouchableVibrate>
@@ -219,7 +235,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                             >
                                 <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                             </TouchableVibrate>
-                            {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0]?.product.name} /> }
+                            {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0]?.product.name} />}
                             <View style={styles.switchBlock}>
                                 <Switch
                                     trackColor={{ false: '#767577', true: '"rgba(255, 111, 97, 1)"' }}
@@ -247,7 +263,7 @@ interface ReloadBtnProps {
     name: string;
 };
 
-const ReloadBtn = ({dispatch, name}: ReloadBtnProps) => {
+const ReloadBtn = ({ dispatch, name }: ReloadBtnProps) => {
     const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
     const [isLoding, setLoding] = useState(false);
 

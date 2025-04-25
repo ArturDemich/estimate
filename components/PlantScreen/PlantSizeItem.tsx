@@ -13,7 +13,6 @@ import EmptyList from "@/components/ui/EmptyList";
  const PlantSizeItem = memo(({existPlantProps, plantName}: {existPlantProps: PlantDetails | null, plantName: string}) => {
   const dispatch = useDispatch<AppDispatch>();
   const palntDetails = useSelector<RootState, PlantDetailsResponse[]>((state) => state.data.dBPlantDetails);
-  const docSent = useSelector<RootState, number>((state) => state.data.docSent);
   const params = useLocalSearchParams();
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const flatListRef = useRef<FlatList>(null);
@@ -44,7 +43,6 @@ import EmptyList from "@/components/ui/EmptyList";
     };
   }, [existPlantProps]);
 
-  console.log('PlantSizeItem...', palntDetails)
   return (
     <View style={{ flex: 1 }}>
       <FlatList<PlantDetailsResponse> 
@@ -52,15 +50,15 @@ import EmptyList from "@/components/ui/EmptyList";
         data={palntDetails}
         onTouchStart={() => existPlantProps && dispatch(setExistPlantProps(null))}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} docSent={docSent} plantName={plantName} docName={docName} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
+        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} plantName={plantName} docName={docName} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
         style={{ width: "100%", }}
         ListEmptyComponent={<EmptyList text="Немає доданих х-ка" />}
         ListFooterComponent={<View></View>}
         ListFooterComponentStyle={{ height: 285 }}
         scrollEnabled={true}
         getItemLayout={(data, index) => ({
-          length: 65, // Approximate item height (adjust if needed)
-          offset: 65 * index,
+          length: 120, // Approximate item height (adjust if needed)
+          offset: 120 * index,
           index,
         })}
         onScrollToIndexFailed={(info) => {

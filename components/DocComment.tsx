@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -31,6 +31,7 @@ const DocComment = () => {
     const [commentShow, setCommentShow] = useState(false);
     const [input, setInput] = useState(docComment);
     const [isInputFocused, setIsInputFocused] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
 
     const handleSaveComment = async () => {
         await updateDocComment(Number(docId), input)
@@ -44,9 +45,23 @@ const DocComment = () => {
             })
     };
 
+    useEffect(() => {
+        const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+            setKeyboardVisible(true);
+        });
+        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardVisible(false);
+        });
+
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        };
+    }, []);
+
     return (
         <>
-            <TouchableVibrate onPress={() => setCommentShow(true)} style={[styles.buttonStep, styles.containerNBTN,]}>
+            <TouchableVibrate onPress={() => setCommentShow(true)} style={[styles.buttonStep, styles.containerNBTN, { display: !keyboardVisible ? 'flex' : 'none' }]}>
                 <MaterialCommunityIcons name="message-draw" size={28} color='rgba(106, 159, 53, 0.95)' />
                 <View style={styles.arrow} />
             </TouchableVibrate>
@@ -55,12 +70,12 @@ const DocComment = () => {
                     Keyboard.dismiss();
                     isInputFocused && setIsInputFocused(false)
                     setCommentShow(false)
-                    }}>
+                }}>
                     <View style={styles.centeredView}>
                         <Pressable style={[styles.modalView,]} onPress={() => {
                             Keyboard.dismiss();
                             isInputFocused && setIsInputFocused(false)
-                            }}>
+                        }}>
                             <View style={styles.titleBlock}>
                                 <Text style={styles.modalTitle}>Коментар до документа:</Text>
                                 <TouchableVibrate
