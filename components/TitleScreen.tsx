@@ -11,7 +11,7 @@ interface TitleProps {
 
 const Title = ({ title, adTitle, docSent }: TitleProps) => {
     return (
-        <View>
+        <View style={{maxWidth: 200}}>
             <View style={styles.titleBlock}>
                 <Text style={styles.title}>{title}</Text>
                 {(docSent === UploadStatus.OneC || docSent === UploadStatus.All) && <MaterialIcons name="cloud-done" size={16} color="rgb(77, 77, 77)" />}

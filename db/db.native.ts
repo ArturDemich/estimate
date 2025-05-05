@@ -24,50 +24,86 @@ export async function openDB(): Promise<SQLite.SQLiteDatabase> {
 /**
  * Initializes the database by setting the journal mode and creating the tables.
  */
-/* export async function initializeDB(): Promise<void> {
-  //checkDatabaseSchema()
+export async function initializeDB(): Promise<void> {
   const db = await openDB();
   try {
     await db.execAsync("PRAGMA foreign_keys = ON;");
     await db.execAsync("PRAGMA journal_mode = WAL;");
     await db.execAsync("BEGIN TRANSACTION;");
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS documents (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        number TEXT NOT NULL DEFAULT '',
-        storage_id TEXT NOT NULL DEFAULT '',
-        storage_name TEXT NOT NULL DEFAULT '',
-        comment TEXT NOT NULL DEFAULT '',
-        is_sent INTEGER DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
 
-      CREATE TABLE IF NOT EXISTS plants (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        document_id INTEGER NOT NULL,
-        product_id TEXT NOT NULL,
-        product_name TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
-      );
+    // Define expected schema
+    const requiredSchema: Record<string, { [column: string]: string }> = {
+      documents: {
+        id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+        number: "TEXT NOT NULL DEFAULT ''",
+        storage_id: "TEXT NOT NULL DEFAULT ''",
+        storage_name: "TEXT NOT NULL DEFAULT ''",
+        comment: "TEXT NOT NULL DEFAULT ''",
+        is_sent: "INTEGER DEFAULT 0",
+        created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      },
+      plants: {
+        id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+        document_id: 'INTEGER NOT NULL',
+        product_id: 'TEXT NOT NULL',
+        product_name: 'TEXT NOT NULL',
+        created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      },
+      plant_characteristics: {
+        id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+        plant_id: 'INTEGER NOT NULL',
+        characteristic_id: 'TEXT NOT NULL',
+        characteristic_name: 'TEXT NOT NULL',
+        unit_id: 'TEXT NOT NULL',
+        unit_name: 'TEXT NOT NULL',
+        barcode: 'TEXT NOT NULL',
+        quantity: 'INTEGER NOT NULL DEFAULT 0',
+        currentQty: 'INTEGER NOT NULL DEFAULT 0',
+        freeQty: 'INTEGER NOT NULL DEFAULT 0',
+        plantComment: "TEXT NOT NULL DEFAULT ''",
+        created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      }
+    };
 
-      CREATE TABLE IF NOT EXISTS plant_characteristics (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        plant_id INTEGER NOT NULL,
-        characteristic_id TEXT NOT NULL,
-        characteristic_name TEXT NOT NULL,
-        unit_id TEXT NOT NULL,
-        unit_name TEXT NOT NULL,
-        barcode TEXT NOT NULL,
-        quantity INTEGER NOT NULL DEFAULT 0,
-        currentQty INTEGER NOT NULL DEFAULT 0, 
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE
-      );
-    `);
+    // Loop over each table in the schema
+    for (const [tableName, columns] of Object.entries(requiredSchema)) {
+      const tableExists = await db.getAllAsync(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name=?;
+      `, tableName);
+
+      if (!tableExists) {
+        // Create full table
+        const columnsSQL = Object.entries(columns)
+          .map(([colName, colType]) => `${colName} ${colType}`)
+          .join(',\n  ');
+        const foreignKeys =
+          tableName === 'plants'
+            ? ',\n  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE'
+            : tableName === 'plant_characteristics'
+              ? ',\n  FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE'
+              : '';
+        const createTableSQL = `CREATE TABLE ${tableName} (\n  ${columnsSQL}${foreignKeys}\n);`;
+        await db.execAsync(createTableSQL);
+        console.log(`Created table: ${tableName}`);
+      } else {
+        // Check and add missing columns
+        const existingCols = await db.getAllAsync(`PRAGMA table_info(${tableName});`);
+        const existingColNames = existingCols.map((col: any) => col.name);
+
+        for (const [colName, colType] of Object.entries(columns)) {
+          if (!existingColNames.includes(colName)) {
+            const alterSQL = `ALTER TABLE ${tableName} ADD COLUMN ${colName} ${colType};`;
+            await db.execAsync(alterSQL);
+            console.log(`Added column '${colName}' to table '${tableName}'`);
+          }
+        }
+      }
+    }
+
+    // Triggers
     await db.execAsync(`
       CREATE TRIGGER IF NOT EXISTS update_plants_timestamp
       AFTER UPDATE ON plant_characteristics
@@ -85,14 +121,15 @@ export async function openDB(): Promise<SQLite.SQLiteDatabase> {
         UPDATE documents SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.document_id;
       END;
     `);
+
     await db.execAsync("COMMIT;");
-    console.log("Database initialized successfully");
+    console.log("Database initialized and schema verified.");
   } catch (error: any) {
     await db.execAsync("ROLLBACK;");
-    console.log("Error initializing database:", error);
-    Alert.alert("Error initializing database: ", error)
+    console.error("Error initializing database:", error);
+    Alert.alert("Error initializing database", error.message);
   }
-} */
+}
 
 
 export async function addDocument(nameStore: string, storeId: string): Promise<number | null> {
@@ -126,116 +163,11 @@ export async function addPlant(documentId: number, product: { id: string; name: 
     console.error("Error adding plant:", error);
     return null;
   }
-} 
+}
 
 
-  export async function initializeDB(): Promise<void> {
-    const db = await openDB();
-    try {
-      await db.execAsync("PRAGMA foreign_keys = ON;");
-      await db.execAsync("PRAGMA journal_mode = WAL;");
-      await db.execAsync("BEGIN TRANSACTION;");
-  
-      // Define expected schema
-      const requiredSchema: Record<string, { [column: string]: string }> = {
-        documents: {
-          id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
-          number: "TEXT NOT NULL DEFAULT ''",
-          storage_id: "TEXT NOT NULL DEFAULT ''",
-          storage_name: "TEXT NOT NULL DEFAULT ''",
-          comment: "TEXT NOT NULL DEFAULT ''",
-          is_sent: "INTEGER DEFAULT 0",
-          created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-          updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-        },
-        plants: {
-          id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
-          document_id: 'INTEGER NOT NULL',
-          product_id: 'TEXT NOT NULL',
-          product_name: 'TEXT NOT NULL',
-          created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-          updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-        },
-        plant_characteristics: {
-          id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
-          plant_id: 'INTEGER NOT NULL',
-          characteristic_id: 'TEXT NOT NULL',
-          characteristic_name: 'TEXT NOT NULL',
-          unit_id: 'TEXT NOT NULL',
-          unit_name: 'TEXT NOT NULL',
-          barcode: 'TEXT NOT NULL',
-          quantity: 'INTEGER NOT NULL DEFAULT 0',
-          currentQty: 'INTEGER NOT NULL DEFAULT 0',
-          freeQty: 'INTEGER NOT NULL DEFAULT 0',
-          plantComment: "TEXT NOT NULL DEFAULT ''",
-          created_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-          updated_at: "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-        }
-      };
-  
-      // Loop over each table in the schema
-      for (const [tableName, columns] of Object.entries(requiredSchema)) {
-        const tableExists = await db.getAllAsync(`
-          SELECT name FROM sqlite_master WHERE type='table' AND name=?;
-        `, tableName);
-  
-        if (!tableExists) {
-          // Create full table
-          const columnsSQL = Object.entries(columns)
-            .map(([colName, colType]) => `${colName} ${colType}`)
-            .join(',\n  ');
-          const foreignKeys =
-            tableName === 'plants'
-              ? ',\n  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE'
-              : tableName === 'plant_characteristics'
-                ? ',\n  FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE'
-                : '';
-          const createTableSQL = `CREATE TABLE ${tableName} (\n  ${columnsSQL}${foreignKeys}\n);`;
-          await db.execAsync(createTableSQL);
-          console.log(`Created table: ${tableName}`);
-        } else {
-          // Check and add missing columns
-          const existingCols = await db.getAllAsync(`PRAGMA table_info(${tableName});`);
-          const existingColNames = existingCols.map((col: any) => col.name);
-  
-          for (const [colName, colType] of Object.entries(columns)) {
-            if (!existingColNames.includes(colName)) {
-              const alterSQL = `ALTER TABLE ${tableName} ADD COLUMN ${colName} ${colType};`;
-              await db.execAsync(alterSQL);
-              console.log(`Added column '${colName}' to table '${tableName}'`);
-            }
-          }
-        }
-      }
-  
-      // Triggers
-      await db.execAsync(`
-        CREATE TRIGGER IF NOT EXISTS update_plants_timestamp
-        AFTER UPDATE ON plant_characteristics
-        FOR EACH ROW
-        BEGIN
-          UPDATE plants SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.plant_id;
-        END;
-      `);
-  
-      await db.execAsync(`
-        CREATE TRIGGER IF NOT EXISTS update_documents_timestamp
-        AFTER UPDATE ON plants
-        FOR EACH ROW
-        BEGIN
-          UPDATE documents SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.document_id;
-        END;
-      `);
-  
-      await db.execAsync("COMMIT;");
-      console.log("Database initialized and schema verified.");
-    } catch (error: any) {
-      await db.execAsync("ROLLBACK;");
-      console.error("Error initializing database:", error);
-      Alert.alert("Error initializing database", error.message);
-    }
-  }
-  
+
+
 
 export async function addCharacteristic(
   plantDBId: number,
@@ -264,6 +196,99 @@ export async function addCharacteristic(
     Alert.alert("Error adding plant characteristic to doc: ", plantItem.product.name)
     console.log("Error adding plant characteristic:", error);
     return null;
+  }
+}
+
+export async function addAllPlantToDB(
+  documentId: number,
+  serverData: PlantItemRespons[],
+  progressCallback?: (current: number, total: number) => void
+): Promise<void> {
+  const db = await openDB();
+
+  await db.execAsync("BEGIN TRANSACTION");
+
+  try {
+    const plantIdSet = new Set<string>(); // Запам'ятовуємо, які вже обробляли тут
+    let inserted = 0;
+
+    for (let i = 0; i < serverData.length; i++) {
+      const item = serverData[i];
+      const productId = item.product.id;
+
+      // Пропускаємо, якщо вже перевіряли цей productId у цій сесії
+      if (plantIdSet.has(productId)) {
+        continue;
+      }
+
+      plantIdSet.add(productId);
+
+      // Перевірка чи існує вже в базі
+      const existing = await db.getFirstAsync(
+        "SELECT id FROM plants WHERE document_id = ? AND product_id = ?",
+        [documentId, productId]
+      );
+
+      if (!existing) {
+        await db.runAsync(
+          "INSERT INTO plants (document_id, product_id, product_name) VALUES (?, ?, ?)",
+          [documentId, productId, item.product.name]
+        );
+      }
+
+      inserted++;
+      if (progressCallback) {
+        progressCallback(inserted, serverData.length);
+      }
+    }
+
+    await db.execAsync("COMMIT");
+  } catch (error) {
+    await db.execAsync("ROLLBACK");
+    console.error("Transaction failed:", error);
+    throw error;
+  }
+}
+
+
+export async function addAllCharToDB(
+  palntDBId: number,
+  detailData: PlantItemRespons[],
+  progressCallback?: (current: number, total: number) => void
+): Promise<void> {
+  const db = await openDB();
+  await db.execAsync("BEGIN TRANSACTION");
+
+  try {
+    let inserted = 0;
+
+    for (let i = 0; i < detailData.length; i++) {
+      const item = detailData[i];
+      await db.runAsync(
+        `INSERT INTO plant_characteristics 
+       (plant_id, characteristic_id, characteristic_name, unit_id, unit_name, barcode, quantity) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          palntDBId,
+          item.characteristic.id ? item.characteristic.id : 'null',
+          item.characteristic.name ? item.characteristic.name : 'null',
+          item.unit.id ? item.unit.id : 'null',
+          item.unit.name ? item.unit.name : 'null',
+          item.barcode ? item.barcode : 0,
+          item.qty ? item.qty : 0,
+        ]
+      );
+      inserted++;
+      if (progressCallback) {
+        progressCallback(inserted, detailData.length);
+      }
+    }
+
+    await db.execAsync("COMMIT");
+  } catch (error) {
+    await db.execAsync("ROLLBACK");
+    console.error("Transaction failed:", error);
+    throw error;
   }
 }
 
@@ -479,7 +504,7 @@ interface PlantResult {
   plantComment: string | null;
 }
 
-interface ProductItem{
+interface ProductItem {
   product: {
     id: string;
     name: string;
@@ -552,7 +577,7 @@ export async function getDocumentWithDetails(docId: number): Promise<DocumentRes
           saleQty: row.saleQty ?? 0,
           plantComment: row.plantComment || ""
         });
-      } else if(!row.characteristicId || !row.characteristicName) {
+      } else if (!row.characteristicId || !row.characteristicName) {
         console.log('getDocumentWithDetails: empty characteristicId, characteristicName')
       } else {
         products.push({

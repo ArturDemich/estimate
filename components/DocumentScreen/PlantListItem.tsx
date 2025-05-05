@@ -1,8 +1,8 @@
 import { deletePlant } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
+import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, setSortByEmptyThunk } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { getUkrainianPart } from "../helpers";
@@ -18,9 +18,22 @@ export default function PlantListItem() {
   const docId = params.docId;
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const palnts = useSelector<RootState, PlantNameDB[]>((state) => state.data.dBPlantsName);
+  const sortList = useSelector<RootState, PlantNameDB[]>((state) => state.data.sortingPlantList);
+  const [visiblePlants, setVisiblePlants] = useState<PlantNameDB[]>([]);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 13;
 
   const loadDBPlants = async () => {
     await dispatch(getPlantsNameDB({ docId: Number(docId) }))
+  };
+
+  const handleLoadMore = () => {
+    const sourceList = sortList.length > 0 ? sortList : palnts;
+    const nextPage = page + 1;
+    const nextItems = sourceList.slice(0, nextPage * itemsPerPage);
+    if (nextItems.length === visiblePlants.length) return;
+    setVisiblePlants(nextItems);
+    setPage(nextPage);
   };
 
   useFocusEffect(
@@ -29,15 +42,31 @@ export default function PlantListItem() {
     }, [])
   );
 
+  useEffect(() => {
+    const sourceList = sortList.length > 0 ? sortList : palnts;
+    if (sourceList.length > 0) {
+      const firstChunk = sourceList.slice(0, itemsPerPage);
+      setVisiblePlants(firstChunk);
+    }
+  }, [palnts, sortList]);
+
+  useEffect(() => {
+    if(sortList.length > 0) {
+      dispatch(setSortByEmptyThunk())
+    }
+  }, [palnts]);
+  
   return (
     <FlatList
-      data={palnts}
+      data={visiblePlants}
       keyExtractor={(item, index) => item.id.toString() + index}
       renderItem={({ item, index }) => <PlantNameItem docName={docName} item={item} loadDB={() => loadDBPlants()} docId={Number(docId)} numRow={palnts.length - index} />}
       style={{ width: "100%", height: '100%', paddingBottom: 40 }}
       ListEmptyComponent={<EmptyList text="Немає доданих рослин" />}
       ListFooterComponent={<View></View>}
       ListFooterComponentStyle={{ height: 50 }}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.3}
     />
   )
 };
@@ -50,12 +79,12 @@ interface PlantNameItemProps {
   docName: string;
 };
 
-const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemProps) => {
+const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: PlantNameItemProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
   const router = useRouter();
   const [isLoding, setLoding] = useState(false);
-
+  
   const handleDelete = (e: GestureResponderEvent, item: PlantNameDB) => {
     e.preventDefault()
     Alert.alert(
@@ -114,7 +143,7 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemPr
           </View>
           <View style={[styles.colItem]}>
             {item.count_items === 0 && <Text style={styles.itemEmpty}>{'(пусто)'}</Text>}
-            {item.count_items > 0 && 
+            {item.count_items > 0 &&
               <View>
                 <Text style={[styles.itemQtysTitel]}>факт:</Text>
                 <Text style={[styles.itemQtys]}>{item.total_qty} </Text>
@@ -132,7 +161,7 @@ const PlantNameItem = ({ item, loadDB, docId, numRow, docName }: PlantNameItemPr
       }
     </TouchableVibrate>
   )
-};
+});
 
 const styles = StyleSheet.create({
   documentItem: {

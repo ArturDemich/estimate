@@ -13,7 +13,7 @@ import {
     View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { addCharacteristic } from "@/db/db.native";
+import { addAllCharToDB, addCharacteristic } from "@/db/db.native";
 import { PlantDetails, PlantItemRespons, Storages } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { setExistPlantProps, setNewDetailBarcode } from "@/redux/dataSlice";
@@ -24,6 +24,7 @@ import EmptyList from "@/components/ui/EmptyList";
 import ManualDetailsAdd from "@/components/PlantScreen/ManualDetailsAdd";
 import { newSIZE, nullID, unitPC } from "@/types/typesScreen";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { myToast } from "@/utils/toastConfig";
 
 interface AddDetailsProps {
     plantDBid: string;
@@ -45,6 +46,29 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
 
     const handleClose = () => {
         setShow(false);
+    };
+
+    const handleLoadAll = async () => {
+        const addAll: PlantItemRespons[] = [];
+        dataPlant.forEach((char) => {
+            const exist = palntDetails.find((plant) => plant.characteristic_id === char.characteristic.id)
+            if (!exist && char.qty > 0) {
+                addAll.push(char)
+            }
+        })
+        if (addAll.length > 0) {
+            await addAllCharToDB(Number(plantDBid), addAll)
+            await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId: Number(docId) }))
+            handleClose()
+        } else {
+            myToast({
+                type: "customToast",
+                text1: "Немає характеристик з наявністю",
+                visibilityTime: 4000,
+                bottomOffset: 20,
+            });
+        }
+
     };
 
     const serachDetail = (data: PlantItemRespons[]) => {
@@ -236,6 +260,10 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                 <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                             </TouchableVibrate>
                             {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0]?.product.name} />}
+                            {!manual &&
+                                <TouchableVibrate style={styles.loadAllBtn} onPress={handleLoadAll}>
+                                    <MaterialCommunityIcons name="file-download-outline" size={24} color="rgb(100, 100, 100)" />
+                                </TouchableVibrate>}
                             <View style={styles.switchBlock}>
                                 <Switch
                                     trackColor={{ false: '#767577', true: '"rgba(255, 111, 97, 1)"' }}
@@ -247,7 +275,7 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                     }}
                                     value={manual}
                                 />
-                                <MaterialCommunityIcons name="draw-pen" size={24} color={manual ? "rgba(255, 111, 97, 1)" : "rgb(125, 125, 125)"} />
+                                <MaterialCommunityIcons name="draw-pen" size={22} color={manual ? "rgba(255, 111, 97, 1)" : "rgb(125, 125, 125)"} />
                             </View>
 
                         </View>
@@ -415,6 +443,7 @@ const styles = StyleSheet.create({
     switchBlock: {
         flexDirection: 'row',
         padding: 5,
+        alignItems: 'center',
     },
     reloadBtn: {
         elevation: 3,
@@ -426,5 +455,15 @@ const styles = StyleSheet.create({
         padding: 2,
         alignSelf: 'center',
         marginLeft: 25,
+    },
+    loadAllBtn: {
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.06)",
+        borderRadius: 8,
+        shadowColor: 'rgba(143, 143, 143, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 4,
+        alignSelf: 'center'
     },
 });

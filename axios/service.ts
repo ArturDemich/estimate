@@ -18,8 +18,8 @@ const sendData_URL = `${API}/createStorageDoc`;
 
 interface GetPlantsProps {
   token: string,
-  name: string,
-  barcode: string,
+  name?: string,
+  barcode?: string,
   storageId?: string,
   inStockOnly?: boolean
 };
@@ -88,7 +88,7 @@ export class DataService {
     try {
       return await axios.post(
         getPlants_URL,
-        { token, findbystring: name, barcodes: [barcode], storageId, inStockOnly },
+        { token, findbystring: name || '', ...(barcode && {barcodes: [barcode]}), storageId, inStockOnly },
         { headers: { 'Authorization': 'Basic ' + encodedToken } })
         .then((response) => response.data)
     } catch (error: any) {

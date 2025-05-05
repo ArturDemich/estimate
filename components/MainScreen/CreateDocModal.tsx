@@ -16,7 +16,7 @@ import Feather from '@expo/vector-icons/Feather';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
 import EmptyList from "@/components/ui/EmptyList";
-import { setCurrentStoage, setDocComment } from "@/redux/dataSlice";
+import { cleaneDBPlantsName, setCurrentStoage, setDocComment } from "@/redux/dataSlice";
 
 type StorageItem = {
   id: string;
@@ -65,6 +65,7 @@ export default function CreateDocModal() {
   const navigateToDocument = async (storeName: string, storeId: string) => {
     setShow(false);
     await dispatch(setDocComment(''))
+     await dispatch(cleaneDBPlantsName())
     const docId = await addDocument(storeName, storeId)
      await dispatch(setCurrentStoage({id: storeId, name: storeName}))
     router.push({

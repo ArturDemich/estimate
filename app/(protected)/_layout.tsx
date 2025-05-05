@@ -57,7 +57,7 @@ export default function ProtectedLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderLogout />, }} />
-        <Stack.Screen name="document" options={{ title: "Документ #", headerRight: () => <HeaderLogout />, }} />
+        <Stack.Screen name="document" options={{ title: "Документ #",  }} />
         <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => <HeaderLogout />, }} />
       </Stack>
     </ImageBackground>

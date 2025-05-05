@@ -1,9 +1,9 @@
 import { DataService } from "@/axios/service";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Platform } from "react-native";
-import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes } from "./stateServiceTypes";
+import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes, PalntAllInput } from "./stateServiceTypes";
 import { RootState } from "./store";
-import { fetchCharacteristics, fetchPlants } from "@/db/db.native";
+import { addAllPlantToDB, fetchCharacteristics, fetchPlants } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
 import { myToast } from "@/utils/toastConfig";
 
@@ -63,7 +63,7 @@ export const getStoragesThunk = createAsyncThunk<Storages[], void, { rejectValue
       if (!response.success) {
         return rejectWithValue(response.errors?.[0] || "Unknown error");
       }
-      
+
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch storages");
@@ -76,7 +76,7 @@ export const getNewVersionThunk = createAsyncThunk<NewVersionRes, void, { reject
   async (_, { rejectWithValue }) => {
     try {
       const response = await DataService.getNewVersion();
-      if(!response) {
+      if (!response) {
         myToast({
           type: "customError",
           text1: "Помилка перевірки нової версії",
@@ -107,18 +107,80 @@ export const getPlantsNameThunk = createAsyncThunk<PlantItemRespons[], PalntName
         return rejectWithValue("No valid token available");
       }
       const response = await DataService.getPlants({
-        token: tokenState.token, 
-        name: inputData.name, 
-        barcode: inputData.barcode, 
+        token: tokenState.token,
+        name: inputData.name,
+        barcode: inputData.barcode,
         storageId: inputData.storageId,
         inStockOnly: inputData.inStockOnly
       });
-        if (!response.success) {
-          return rejectWithValue(response.errors?.[0] || "Unknown error");
-        }
-        return response.data;
+      if (!response.success) {
+        return rejectWithValue(response.errors?.[0] || "Unknown error");
+      }
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch Plants");
+    }
+  }
+);
+
+export const getAllPlantsSaveDBThunk = createAsyncThunk<PlantItemRespons[], PalntAllInput & { progressCallback?: (current: number, total: number) => void }, { rejectValue: string, state: RootState }>(
+  'data/getAllPlants',
+  async (inputData, { rejectWithValue, getState }) => {
+    try {
+      const tokenState = getState().login.token;
+      if (!isTokenResponse(tokenState)) {
+        return rejectWithValue("No valid token available");
+      }
+      const response = await DataService.getPlants({
+        token: tokenState.token,
+        storageId: inputData.storageId,
+        inStockOnly: true
+      });
+      if (!response.success) {
+        return rejectWithValue(response.errors?.[0] || "Unknown error");
+      }
+      const sortPlantsByUkrainianName = (plants: PlantItemRespons[]) => {
+        const noComma: PlantItemRespons[] = [];
+        const withComma: PlantItemRespons[] = [];
+
+        plants.forEach(plant => {
+          const name = plant.product.name;
+          if (name.includes(",")) {
+            withComma.push(plant);
+          } else {
+            noComma.push(plant);
+          }
+        });
+
+        // Сортуємо лише ті, що мають кому — по українській частині (після коми)
+        withComma.sort((a, b) => {
+          const ukrA = a.product.name.split(",")[1]?.trim() || "";
+          const ukrB = b.product.name.split(",")[1]?.trim() || "";
+          return ukrA.localeCompare(ukrB, 'uk');
+        });
+
+        return [...noComma, ...withComma];
+      };
+      const sortedPlants: PlantItemRespons[] = sortPlantsByUkrainianName(response.data);
+
+      await addAllPlantToDB(inputData.docId, sortedPlants, inputData.progressCallback)
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch Plants");
+    }
+  }
+);
+
+export const setSortByEmptyThunk = createAsyncThunk<PlantNameDB[], void, { rejectValue: string, state: RootState }>(
+  'data/sortPlantListEmpty',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const plantList = getState().data.dBPlantsName;
+      const sortedByCountItemsAsc = [...plantList].sort((a, b) => a.count_items - b.count_items);
+
+      return sortedByCountItemsAsc;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to sorting Plants");
     }
   }
 );

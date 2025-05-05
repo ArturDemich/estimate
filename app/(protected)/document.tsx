@@ -12,19 +12,21 @@ import Title from "@/components/TitleScreen";
 import { formatDate } from "@/components/helpers";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+import HeaderLogout from "@/components/HeaderLogout";
+import SortingBtn from "@/components/SortingBtn";
 
 export default function Document() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const docSent = useSelector<RootState, number>((state) => state.data.docSent);
-  console.log("Document Page", params.docTimeCr)
+  const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
 
   const handleBackAction = async () => {
-    if (!params.docId) return;
+    if (!docId) return;
     try {
-      const plants = await fetchPlants(Number(params.docId));
+      const plants = await fetchPlants(Number(docId));
       if (plants.length === 0) {
-        await deleteDocument(Number(params.docId));
+        await deleteDocument(Number(docId));
       }
     } catch (error) {
       console.error("Error in back navigation check:", error);
@@ -38,7 +40,7 @@ export default function Document() {
 
 
   return (
-    <View>
+    <View style={{flex: 1}}>
       <Stack.Screen options={{
         headerBackVisible: false,
         headerLeft: () => (
@@ -53,6 +55,12 @@ export default function Document() {
           </TouchableVibrate>
         ),
         headerTitle: () => <Title title={params.docName?.toString() || "Document"} adTitle={`від: ${formatDate(params.docTimeCr?.toString())}` || undefined} docSent={docSent} />,
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', gap: 15, }}>
+            <SortingBtn />
+            <HeaderLogout />
+          </View> 
+        )
       }} />
 
       <PlantListItem />

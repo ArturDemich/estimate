@@ -77,6 +77,7 @@ export interface DataSlice {
     digStorages: Storages[];
     searchPlantName: PlantItemRespons[];
     dBPlantsName: PlantNameDB[];
+    sortingPlantList: PlantNameDB[];
     dBPlantDetails: PlantDetailsResponse[];
     existPlantProps: PlantDetails | null;
     labelData: Label | null;
@@ -91,8 +92,13 @@ export interface DataSlice {
 };
 
 export interface PalntNameInput {
-    name: string;
-    barcode: string;
+    name?: string;
+    barcode?: string;
     storageId?: string;
     inStockOnly?: boolean;
+};
+
+export interface PalntAllInput {
+    storageId: string;
+    docId: number;
 };

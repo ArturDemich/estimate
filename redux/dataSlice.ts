@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk } from './thunks';
+import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk, setSortByEmptyThunk } from './thunks';
 import { DataSlice, Label, PlantDetails, Storages } from './stateServiceTypes';
 import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 
@@ -8,6 +8,7 @@ const initialState: DataSlice = {
   digStorages: [],
   searchPlantName: [],
   dBPlantsName: [],
+  sortingPlantList: [],
   dBPlantDetails: [],
   existPlantProps: null,
   labelData: null,
@@ -83,6 +84,13 @@ const dataSlice = createSlice({
       state.newDetailBarcode = action.payload;
      // console.log('dataSlice __ newDetailBarcode', state.newDetailBarcode)
     },
+    cleaneDBPlantsName(state) {
+      state.dBPlantsName = []
+      state.sortingPlantList = []
+    },
+    cleaneSortList(state) {
+      state.sortingPlantList = []
+    },
     clearDataState(state) {
       state.digStorages = [];
       state.searchPlantName = [];
@@ -115,7 +123,12 @@ const dataSlice = createSlice({
 
       .addCase(getPlantsNameDB.fulfilled, (state, action) => {
         state.dBPlantsName = action.payload;
-       // console.log('dataSlice getPlantsNameDB',)
+       // console.log('dataSlice getPlantsNameDB', state.dBPlantsName )
+      })
+
+      .addCase(setSortByEmptyThunk.fulfilled, (state, action) => {
+        state.sortingPlantList = action.payload;
+       // console.log('dataSlice setSortByEmptyThunk', state.dBPlantsName )
       })
 
       .addCase(getPlantsDetailsDB.fulfilled, (state, action) => {
@@ -131,6 +144,6 @@ const dataSlice = createSlice({
 });
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
-  connectPrinter, setDocComment, setAutoPrint, clearDataState, setDocSent, 
-  setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment } = dataSlice.actions;
+  connectPrinter, setDocComment, setAutoPrint, clearDataState, setDocSent, cleaneDBPlantsName,
+  setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
 export default dataSlice.reducer;

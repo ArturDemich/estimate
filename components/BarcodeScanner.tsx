@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    bottom: height * 0.15,
+    bottom: height * 0.13,
     position: 'relative'
   },
   camera: {

@@ -14,6 +14,7 @@ import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useBackHandler } from "@react-native-community/hooks";
+import DownloadListBtn from "@/components/DownloadListBtn";
 
 
 export default function ModalAddPlant() {
@@ -27,20 +28,19 @@ export default function ModalAddPlant() {
   const handleSetScanning = (val: boolean) => {
     setIsScanning(val)
   };
-  console.log('ModalAddPlant', show)
 
   const handleBackAction = async () => {
-      if (show) {
-        setShow(false)
-      } else {
-        router.back()
-      }
-    };
-  
-    useBackHandler(() => {
-      handleBackAction()
-      return true;
-    });
+    if (show) {
+      setShow(false)
+    } else {
+      router.back()
+    }
+  };
+
+  useBackHandler(() => {
+    handleBackAction()
+    return true;
+  });
 
   return (
     <>
@@ -55,26 +55,30 @@ export default function ModalAddPlant() {
       </View>
 
       {show &&
-      <View style={styles.modal}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.centeredView}
-        >
-          <View style={styles.modalView}>
-            <View style={styles.btnBlock}>
-              <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
-                <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
-              </TouchableVibrate>
-              <Text style={styles.textStr}>Пошук</Text>
-              <TouchableVibrate style={styles.barcodeBtn} onPress={() => handleSetScanning(true)}>
-                <MaterialCommunityIcons name="barcode-scan" size={28} color="black" />
-              </TouchableVibrate>
-            </View>
-            <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
+        <View style={styles.modal}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.centeredView}
+          >
+            <View style={styles.modalView}>
+              <View style={styles.btnBlock}>
+                <Text style={styles.textStr}>Пошук</Text>
+              </View>
+              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
+              
+              <View style={[styles.btnBlock, {justifyContent: 'space-between'}]}>
+                <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>
+                  <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
+                </TouchableVibrate>
+                <DownloadListBtn docId={Number(docId)} closeModal={() => setShow(false)}/>
+                <TouchableVibrate style={styles.barcodeBtn} onPress={() => handleSetScanning(true)}>
+                  <MaterialCommunityIcons name="barcode-scan" size={28} color="black" />
+                </TouchableVibrate>
+              </View>
 
-          </View>
-        </KeyboardAvoidingView>
-      </View>}
+            </View>
+          </KeyboardAvoidingView>
+        </View>}
     </>
   );
 }
@@ -92,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     opacity: 0.95,
     elevation: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderColor: '#E4E4E7',
     shadowColor: "#131316",
     shadowOffset: { width: 0, height: 0 },
@@ -120,7 +124,7 @@ const styles = StyleSheet.create({
     width: "93%",
     backgroundColor: "rgba(255, 255, 255, 0.97)",
     borderRadius: 10,
-    padding: 10,
+    padding: 8,
     alignItems: "center",
     top: 15,
     shadowColor: "#000",
@@ -160,5 +164,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 3,
     alignSelf: 'center',
-},
+  },
 });
