@@ -74,7 +74,7 @@ export async function initializeDB(): Promise<void> {
         SELECT name FROM sqlite_master WHERE type='table' AND name=?;
       `, tableName);
 
-      if (!tableExists) {
+      if (tableExists.length === 0) {
         // Create full table
         const columnsSQL = Object.entries(columns)
           .map(([colName, colType]) => `${colName} ${colType}`)

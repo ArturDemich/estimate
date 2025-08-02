@@ -4,7 +4,7 @@ import { PlantNameDB } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { setSortByEmptyThunk } from "@/redux/thunks";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Vibration } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
 
@@ -13,6 +13,7 @@ const SortingBtn = () => {
     const sortList = useSelector<RootState, PlantNameDB[]>((state) => state.data.sortingPlantList);
 
     const sortData = async () => {
+        Vibration.vibrate(5);
         sortList.length > 0 ?
             await dispatch(cleaneSortList()) 
             :
@@ -20,7 +21,7 @@ const SortingBtn = () => {
     };
 
     return (
-        <TouchableVibrate style={styles.openBtn} onPress={sortData}>
+        <TouchableVibrate style={styles.openBtn} onPressOut={sortData}>
             {sortList.length > 0 ?
                 <MaterialCommunityIcons name="sort-reverse-variant" size={24} color="rgba(255, 111, 97, 1)" />
                 :
