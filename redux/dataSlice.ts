@@ -16,6 +16,7 @@ const initialState: DataSlice = {
   connectedPrinter: null,
   docComment: '',
   autoPrint: false,
+  isPrinterPuty: true,
   newVersion: null,
   docSent: 0,
   newDetailBarcode: null,
@@ -76,6 +77,10 @@ const dataSlice = createSlice({
       state.autoPrint = action.payload;
      // console.log('dataSlice __ setAutoPrint', state.autoPrint)
     },
+    setPrinterPuty(state, action: PayloadAction<boolean>) {
+      state.isPrinterPuty = action.payload;
+     // console.log('dataSlice __ setPrinterPuty', state.isPrinterPuty)
+    },
     setDocSent(state, action: PayloadAction<number>) {
       state.docSent = action.payload;
      // console.log('dataSlice __ setDocSent', state.docSent)
@@ -102,6 +107,7 @@ const dataSlice = createSlice({
       state.connectedPrinter = null;
       state.docComment = '';
       state.autoPrint = false;
+      state.isPrinterPuty = true;
       state.newVersion = null;
       state.docSent = 0;
       state.newDetailBarcode = null;
@@ -144,6 +150,6 @@ const dataSlice = createSlice({
 });
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
-  connectPrinter, setDocComment, setAutoPrint, clearDataState, setDocSent, cleaneDBPlantsName,
+  connectPrinter, setDocComment, setAutoPrint, setPrinterPuty, clearDataState, setDocSent, cleaneDBPlantsName,
   setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
 export default dataSlice.reducer;

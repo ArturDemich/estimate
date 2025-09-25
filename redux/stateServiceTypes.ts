@@ -85,6 +85,7 @@ export interface DataSlice {
     connectedPrinter: IBLEPrinter | null;
     docComment: string;
     autoPrint: boolean;
+    isPrinterPuty: boolean;
     newVersion: NewVersionRes | null;
     docSent: number;
     newDetailBarcode: string | null;

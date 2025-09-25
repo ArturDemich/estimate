@@ -1,7 +1,7 @@
 import { Label, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
-import { Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { connect, useDispatch } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db.native";
@@ -30,6 +30,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
+    const [printLoding, setPrintLoding] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
     const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
@@ -144,6 +145,13 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
         handleShowMenu(false);
     };
 
+    const setLoding = () => {
+        setPrintLoding(true)
+        setTimeout(() => {
+            setPrintLoding(false)
+        }, 6000)
+    };
+
     const handlePrint = async () => {
         const isBluetoothOn = await checkBluetoothEnabled();
         if (!isBluetoothOn) {
@@ -157,6 +165,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
             barcode: item.barcode,
             qtyPrint: Number(printQty)
         }
+        setLoding()
         dispatch(setLabelPrint(label))
     };
 
@@ -267,8 +276,11 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
 
                             </View>
                         )}
-                        <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdFreeQty(item.freeQty + 1, autoPrint)}>
-                            <Text style={styles.btnPlusText}>+1</Text>
+                        <TouchableVibrate disabled={printLoding} style={styles.btnPlus} onPress={() => handleUpdFreeQty(item.freeQty + 1, autoPrint)}>
+                            {!printLoding ?
+                                <Text style={styles.btnPlusText}>+1</Text>
+                                :
+                                <ActivityIndicator size={30} color={'white'} />}
                         </TouchableVibrate>
                     </View>
 
@@ -320,9 +332,13 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                                 <TouchableVibrate
                                     style={styles.menuItem}
                                     onPress={handlePrint}
+                                    disabled={printLoding}
                                 >
                                     <MaterialIcons name="print" size={24} color="black" />
-                                    <Text style={styles.menuText}>Друк</Text>
+                                    {printLoding ?
+                                        <Text style={styles.menuText}>Друк</Text>
+                                        :
+                                        <ActivityIndicator style={{width: 35}} size={30} color={'black'} />}
                                 </TouchableVibrate>
                             </View>
                         </View>
@@ -339,7 +355,7 @@ const mapStateToProps = (state: RootState) => ({
 })
 
 export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
-   // console.log('RenderPlantDetail MEMO', prevProps.item.id, nextProps.item.id)
+    // console.log('RenderPlantDetail MEMO', prevProps.item.id, nextProps.item.id)
     return (
         prevProps.item.currentQty === nextProps.item.currentQty &&
         prevProps.item.freeQty === nextProps.item.freeQty &&

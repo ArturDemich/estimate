@@ -22,17 +22,18 @@ import { Label } from "@/redux/stateServiceTypes";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { connectPrinter, setAutoPrint, setDevices } from "@/redux/dataSlice";
+import { connectPrinter, setAutoPrint, setDevices, setPrinterPuty } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
 import EmptyList from "@/components/ui/EmptyList";
 import { checkBluetoothEnabled } from "@/components/helpers";
 import { Entypo } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
+import PrinterPuty from "@/components/Printer/PrinterPuty";
 
 const KEYLableStorage = 'labelWeight';
 const KEYLableGap = 'labelGap';
 
-export const printLabel = async (img: string | null, label: Label | null) => {
+export const printLabel = async (img: string | null, label: Label | null, isPrinterPuty: boolean) => {
     if (!img || !label) {
         Alert.alert("Немає зображення", "Спробуйте ще раз або перезавантажте додаток");
         return;
@@ -40,9 +41,35 @@ export const printLabel = async (img: string | null, label: Label | null) => {
     const size = await SecureStore.getItemAsync(KEYLableStorage) || '40';
     const gap = await SecureStore.getItemAsync(KEYLableGap) || LabelGap.Gap;
     const barcode = label.barcode !== '0' ? label.barcode : null;
-    for (let i = 0; i < label.qtyPrint; i++) {
-        print(img, barcode, size, gap)
+    if (isPrinterPuty) {
+        onPrintImageBase64(img, Number(size), 30, label.qtyPrint)
+    } else {
+        for (let i = 0; i < label.qtyPrint; i++) {
+            print(img, barcode, size, gap)
+        }
     }
+};
+
+const onPrintImageBase64 = (base64Image: string, w: number, h: number, copies: number) => {
+    Toast.show({
+        type: "customToast",  // Can be 'success', 'error', 'info'
+        text1: "Друк...",
+        position: "bottom",
+        visibilityTime: 3000,
+        bottomOffset: 130,
+    })
+    PrinterPuty.printImage(base64Image, w, h, copies)
+        .then(res => Toast.show({
+            type: "customToast",  // Can be 'success', 'error', 'info'
+            text1: "Надруквано!",
+            position: "bottom",
+            visibilityTime: 2000,
+            bottomOffset: 130,
+        }))
+        .catch(err => {
+            console.error("Error", err.message)
+            Alert.alert("Error", err.message)
+        });
 };
 
 const print = (img: string, barcode: string | null, size: string, gap: string) => {
@@ -56,20 +83,21 @@ const print = (img: string, barcode: string | null, size: string, gap: string) =
                 imageHeight: imageHeight,  //200 max for 30mm
             },
         );
-        {gap === LabelGap.noGap ?
-            BLEPrinter.printText(
-                "\x1B\x33\x20" +
-                "\x1B\x61\x01" +  // Center barcode
-                `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
-                `${barcode ? barcode : barcode + "\n\n"}` +
-                "\x1B\x64\x01"
-            ) :
-            BLEPrinter.printTextGap(
-                "\x1B\x33\x00" +
-                "\x1B\x61\x01" +  // Center barcode
-                `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
-                barcode
-            );
+        {
+            gap === LabelGap.noGap ?
+                BLEPrinter.printText(
+                    "\x1B\x33\x20" +
+                    "\x1B\x61\x01" +  // Center barcode
+                    `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
+                    `${barcode ? barcode : barcode + "\n\n"}` +
+                    "\x1B\x64\x01"
+                ) :
+                BLEPrinter.printTextGap(
+                    "\x1B\x33\x00" +
+                    "\x1B\x61\x01" +  // Center barcode
+                    `${barcode && "\x1D\x6B\x02" + barcode + "\x00"}` +  // Barcode
+                    barcode
+                );
         }
         Toast.show({
             type: "customToast",  // Can be 'success', 'error', 'info'
@@ -99,6 +127,7 @@ const BluetoothPrintImg = () => {
     const pairedDevices = useSelector<RootState, IBLEPrinter[]>((state) => state.data.pairedDevices);
     const connectedPrinter = useSelector<RootState, IBLEPrinter | null>((state) => state.data.connectedPrinter);
     const autoPrint = useSelector<RootState, boolean>((state) => state.data.autoPrint);
+    const isPrinterPuty = useSelector<RootState, boolean>((state) => state.data.isPrinterPuty);
     const [printerShow, setPrinterShow] = useState(false);
     const screenHeight = Dimensions.get("window").height;
     const modalPosition = screenHeight - screenHeight * 0.6;
@@ -151,7 +180,13 @@ const BluetoothPrintImg = () => {
         }
     };
 
-    const handleSwitch = () => {
+    const handleSwitchPrinterPuty = () => {
+        Vibration.vibrate(5);
+        isPrinterPuty && closeConnectPrinter()
+        dispatch(setPrinterPuty(!isPrinterPuty))
+    };
+
+    const handleSwitchAutoPrint = () => {
         Vibration.vibrate(5);
         dispatch(setAutoPrint(!autoPrint))
     };
@@ -200,22 +235,42 @@ const BluetoothPrintImg = () => {
             dispatch(connectPrinter(null))
         }
         try {
-            await BLEPrinter
-                .connectPrinter(printer.inner_mac_address,)
-                .then((data) => {
-                    dispatch(connectPrinter(data))
-                    myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
-                })
-                .catch((error) => {
-                    console.error(error)
-                    myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
-                });
-
+            if (isPrinterPuty) {
+                await PrinterPuty.connectPrinter(printer.inner_mac_address)
+                    .then((data) => {
+                        console.log('connectPrinter DATA', data, printer)
+                        dispatch(connectPrinter(printer))
+                        myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
+                    })
+                    .catch((error) => {
+                        console.error(error)
+                        myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
+                    });
+            } else {
+                await BLEPrinter
+                    .connectPrinter(printer.inner_mac_address,)
+                    .then((data) => {
+                        dispatch(connectPrinter(data))
+                        myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
+                    })
+                    .catch((error) => {
+                        console.error(error)
+                        myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
+                    });
+            }
         } catch (error) {
             console.error("Connection failed:", error);
             Alert.alert("Error", "Failed to connect to the printer.");
         }
     };
+
+    const closeConnectPrinter = async () => {
+        if (isPrinterPuty) {
+            await PrinterPuty.disconnectPrinter().then(() => dispatch(connectPrinter(null)))
+        } else {
+            await BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))
+        }
+    }
 
     return (
         <>
@@ -236,7 +291,7 @@ const BluetoothPrintImg = () => {
                                     <Pressable style={styles.deviceItem}>
                                         <Text style={styles.deviceName}>{item.device_name}</Text>
                                         {connectedPrinter?.inner_mac_address === item.inner_mac_address ?
-                                            <TouchableVibrate style={styles.deviceBtnDisc} onPress={() => BLEPrinter.closeConn().then(() => dispatch(connectPrinter(null)))}>
+                                            <TouchableVibrate style={styles.deviceBtnDisc} onPress={closeConnectPrinter}>
                                                 <Text style={styles.deviceBtnText}>Відключити</Text>
                                             </TouchableVibrate>
                                             :
@@ -249,12 +304,15 @@ const BluetoothPrintImg = () => {
                                 ListEmptyComponent={<EmptyList text="Немає раніше підключених пристроїв" />}
                             />
 
-                            {connectedPrinter && (
-                                <View style={{ marginTop: 10, flexDirection: 'row', alignSelf: 'flex-start' }}>
-                                    <Text style={{ fontWeight: 500, color: 'grey' }}>підключено до: </Text>
-                                    <Text style={styles.connectedTitle}> {connectedPrinter.device_name}</Text>
-                                </View>
-                            )}
+
+                            <View style={{ marginTop: 10, flexDirection: 'row', minHeight: 19, alignSelf: 'flex-start' }}>
+                                {connectedPrinter &&
+                                    <>
+                                        <Text style={{ fontWeight: 500, color: 'grey' }}>підключено до: </Text>
+                                        <Text style={styles.connectedTitle}> {connectedPrinter.device_name}</Text>
+                                    </>}
+                            </View>
+
 
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 5 }}>
                                 <View style={styles.labeleSizeBlock}>
@@ -282,6 +340,19 @@ const BluetoothPrintImg = () => {
                                 </View>
 
                                 <View style={{ alignItems: 'flex-start', }}>
+                                    <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
+                                        <MaterialCommunityIcons name="printer" size={26} color={isPrinterPuty ? "rgba(255, 111, 97, 1)" : "black"} />
+                                        <Text style={{ fontWeight: 500, color: isPrinterPuty ? "rgba(255, 111, 97, 1)" : "black", lineHeight: 24 }}>PUTY:</Text>
+
+                                        <Switch
+                                            trackColor={{ false: '#767577', true: "rgba(255, 111, 97, 1)" }}
+                                            thumbColor={'#f4f3f4'}
+                                            ios_backgroundColor="#3e3e3e"
+                                            onValueChange={handleSwitchPrinterPuty}
+                                            value={isPrinterPuty}
+                                        />
+                                    </View>
+
                                     <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Вімкнути автодрук:</Text>
                                     <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
                                         <MaterialCommunityIcons name="printer-eye" size={26} color={autoPrint ? 'rgba(106, 159, 53, 0.95)' : "black"} />
@@ -289,22 +360,25 @@ const BluetoothPrintImg = () => {
                                             trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
                                             thumbColor={'#f4f3f4'}
                                             ios_backgroundColor="#3e3e3e"
-                                            onValueChange={handleSwitch}
+                                            onValueChange={handleSwitchAutoPrint}
                                             value={autoPrint}
                                         />
                                     </View>
 
-                                    <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Режим етикетки:</Text>
-                                    <View style={{ flexDirection: 'row', gap: 5, marginTop: 10, alignSelf: 'center' }}>
-                                        <MaterialCommunityIcons name="receipt" size={26} color={labelGap === LabelGap.Gap ? 'rgba(106, 159, 53, 0.95)' : "black"} />
-                                        <Switch
-                                            trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
-                                            thumbColor={'#f4f3f4'}
-                                            ios_backgroundColor="#3e3e3e"
-                                            onValueChange={handleSetLabelGap}
-                                            value={labelGap === LabelGap.Gap}
-                                        />
-                                    </View>
+                                    {!isPrinterPuty &&
+                                        <>
+                                            <Text style={{ fontWeight: 500, color: 'grey', marginTop: 8, }}>Режим етикетки:</Text>
+                                            <View style={{ flexDirection: 'row', gap: 5, marginTop: 5, alignSelf: 'center' }}>
+                                                <MaterialCommunityIcons name="receipt" size={26} color={labelGap === LabelGap.Gap ? 'rgba(106, 159, 53, 0.95)' : "black"} />
+                                                <Switch
+                                                    trackColor={{ false: '#767577', true: 'rgba(106, 159, 53, 0.95)' }}
+                                                    thumbColor={'#f4f3f4'}
+                                                    ios_backgroundColor="#3e3e3e"
+                                                    onValueChange={handleSetLabelGap}
+                                                    value={labelGap === LabelGap.Gap}
+                                                />
+                                            </View>
+                                        </>}
                                 </View>
                             </View>
                         </Pressable>

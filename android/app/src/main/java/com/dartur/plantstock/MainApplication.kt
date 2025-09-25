@@ -1,5 +1,8 @@
 package com.dartur.plantstock
 
+import com.dartur.plantstock.PrinterPutyPackage 
+import com.puty.sdk.PrinterInstance
+
 import android.app.Application
 import android.content.res.Configuration
 
@@ -25,6 +28,7 @@ class MainApplication : Application(), ReactApplication {
             val packages = PackageList(this).packages
             // Packages that cannot be autolinked yet can be added manually here, for example:
             // packages.add(new MyReactNativePackage());
+            packages.add(PrinterPutyPackage())
             return packages
           }
 
@@ -42,6 +46,7 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    PrinterInstance.init(this)
     SoLoader.init(this, OpenSourceMergedSoMapping)
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
