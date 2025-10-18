@@ -65,7 +65,7 @@ class PrinterPutyModule(reactContext: ReactApplicationContext) : ReactContextBas
             val result = printerInstance?.connect(macAddress) ?: false
 
             if (result) {
-                Log.d(TAG, "✅ Connected to $macAddress")
+                Log.d(TAG, "✅ Connected to $macAddress and $result")
                 promise.resolve("Connected to $macAddress")
             } else {
                 Log.w(TAG, "❌ Failed to connect $macAddress (connect() returned false)")
@@ -93,6 +93,39 @@ class PrinterPutyModule(reactContext: ReactApplicationContext) : ReactContextBas
             promise.reject("ERR_DISCONNECT", e)
         }
     }
+
+    @ReactMethod
+    fun checkPrinterStatus(promise: Promise) {
+        try {
+            val status = PrinterInstance.getInstance().getPrinterStatusEsc()
+
+            if (status != null && status.isNotEmpty()) {
+                val statusString = status.joinToString(", ") { it.toUByte().toString() }
+                val isConnected = if (status[0].toInt() != 0) 1 else 0
+
+                Log.e(TAG, "Printer status bytes: [$statusString], connected: $isConnected")
+                promise.resolve(isConnected)
+            } else {
+                Log.e(TAG, "Printer status is empty")
+                promise.resolve(0)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking printer status: ${e.message}", e)
+            promise.reject("ERR_STATUS", e)
+        }
+    }
+
+    @ReactMethod
+    fun isBluetoothEnabled(promise: Promise) {
+        try {
+            val result = PrinterInstance.getInstance().isBtEnabled() ?: false
+            Log.d(TAG, "Bluetooth enabled: $result")
+            promise.resolve(result)
+        } catch (e: Exception) {
+            promise.reject("ERR_BT_CHECK", e)
+        }
+    }
+
     
     @ReactMethod
     fun printImage(filePath: String, widthMm: Int, heightMm: Int, copies: Int, promise: Promise) {
@@ -119,7 +152,7 @@ class PrinterPutyModule(reactContext: ReactApplicationContext) : ReactContextBas
             val labelWidthMm = if (widthMm > 0) widthMm else defaultWidthMm
             val labelHeightMm = if (heightMm > 0) heightMm else defaultHeightMm
 
-            // ⚙️ Конвертація мм → пікселі (калібровано під твій принтер)
+            // Конвертація мм → пікселі (калібровано під твій принтер)
             val pxPerMm = 380f / defaultWidthMm  // ≈ 7.6 px на мм
 
             val printerWidthPx = (labelWidthMm * pxPerMm).toInt()
@@ -130,17 +163,6 @@ class PrinterPutyModule(reactContext: ReactApplicationContext) : ReactContextBas
             val blockHeight = (printerHeightPx / 8) * 8
 
             Log.d(TAG, "Printing image: width=${resizedBitmap.width}, height=${resizedBitmap.height}, blockHeight=$blockHeight")
-
-            /* for (i in 1..copies) {
-                PrinterInstance.getInstance().printLabelEsc(
-                    resizedBitmap,
-                    resizedBitmap.width / 8,
-                    blockHeight,
-                    1,
-                    4
-                )
-                Log.d(TAG, "Copy $i of $copies printed")
-            } */
 
             for (i in 1..copies) {
                 PrinterInstance.getInstance().printLabelNewEsc(

@@ -2,18 +2,18 @@ import { Label, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceT
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
 import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db.native";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import PressableVibrate from "@/components/ui/PressableVibrate";
 import { setLabelPrint, updateLocalCharacteristic, updateLocalComment, updateLocalFreeQty } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { checkBluetoothEnabled } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
 import { newSIZE } from "@/types/typesScreen";
 import * as Clipboard from 'expo-clipboard';
 import { FontAwesome6 } from "@expo/vector-icons";
+import PrinterPuty from "@/components/Printer/PrinterPuty";
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -30,6 +30,7 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
+    const labelState = useSelector<RootState, Label | null>((state) => state.data.labelData);
     const [printLoding, setPrintLoding] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -145,15 +146,8 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
         handleShowMenu(false);
     };
 
-    const setLoding = () => {
-        setPrintLoding(true)
-        setTimeout(() => {
-            setPrintLoding(false)
-        }, 6000)
-    };
-
     const handlePrint = async () => {
-        const isBluetoothOn = await checkBluetoothEnabled();
+        const isBluetoothOn = await PrinterPuty.isBluetoothEnabled();
         if (!isBluetoothOn) {
             myToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
             return;
@@ -161,13 +155,17 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
         const label: Label = {
             product_name: plantName,
             characteristic_name: item.characteristic_name,
+            labelItem_id: item.characteristic_id + numRow,
             storageName: docName,
             barcode: item.barcode,
             qtyPrint: Number(printQty)
         }
-        setLoding()
         dispatch(setLabelPrint(label))
     };
+
+    useEffect(() => {
+        setPrintLoding(labelState?.labelItem_id === item.characteristic_id + numRow);
+    }, [labelState]);
 
     useEffect(() => {
         if (isEditing) {
@@ -335,10 +333,10 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                                     disabled={printLoding}
                                 >
                                     <MaterialIcons name="print" size={24} color="black" />
-                                    {printLoding ?
+                                    {!printLoding ?
                                         <Text style={styles.menuText}>Друк</Text>
                                         :
-                                        <ActivityIndicator style={{width: 35}} size={30} color={'black'} />}
+                                        <ActivityIndicator style={{ width: 35 }} size={30} color={'black'} />}
                                 </TouchableVibrate>
                             </View>
                         </View>

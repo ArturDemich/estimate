@@ -1,6 +1,7 @@
 import DocComment from "@/components/DocComment";
 import { getUkrainianPart } from "@/components/helpers";
 import AddDetailsModal from "@/components/PlantScreen/AddDetailsModal";
+import { LockScreen } from "@/components/PlantScreen/LockScreen";
 import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
 import LabelImgShot from "@/components/Printer/LabelImgShot";
 import Title from "@/components/TitleScreen";
@@ -41,6 +42,7 @@ export default function Plant() {
           productId={params.productId && params.productId.toString()}
         />
       <LabelImgShot />
+      <LockScreen />
       <DocComment />
     </View>
   );

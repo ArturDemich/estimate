@@ -63,6 +63,7 @@ export interface PlantDetailsResponse extends PlantDetails {
 export interface Label {
     product_name: string;
     characteristic_name: string;
+    labelItem_id: string;
     barcode: string;
     storageName: string;
     qtyPrint: number;

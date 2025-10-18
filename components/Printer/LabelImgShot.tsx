@@ -53,9 +53,10 @@ const LabelImgShot = () => {
 
     const sendPrint = async () => {
         const uri = await shot();
+        setShowView(false);
         await printLabel(uri ? uri : null, label, isPrinterPuty);
         dispatch(setLabelPrint(null));
-        setShowView(false);
+        
     };
 
     useEffect(() => {

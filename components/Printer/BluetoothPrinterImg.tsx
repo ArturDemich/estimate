@@ -25,13 +25,13 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { connectPrinter, setAutoPrint, setDevices, setPrinterPuty } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
 import EmptyList from "@/components/ui/EmptyList";
-import { checkBluetoothEnabled } from "@/components/helpers";
 import { Entypo } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import PrinterPuty from "@/components/Printer/PrinterPuty";
 
 const KEYLableStorage = 'labelWeight';
 const KEYLableGap = 'labelGap';
+const LABEL_HIGHT = 30;
 
 export const printLabel = async (img: string | null, label: Label | null, isPrinterPuty: boolean) => {
     if (!img || !label) {
@@ -42,37 +42,44 @@ export const printLabel = async (img: string | null, label: Label | null, isPrin
     const gap = await SecureStore.getItemAsync(KEYLableGap) || LabelGap.Gap;
     const barcode = label.barcode !== '0' ? label.barcode : null;
     if (isPrinterPuty) {
-        onPrintImageBase64(img, Number(size), 30, label.qtyPrint)
+        await onPrintImageBase64(img, Number(size), LABEL_HIGHT, label.qtyPrint)
     } else {
         for (let i = 0; i < label.qtyPrint; i++) {
-            print(img, barcode, size, gap)
+            await print(img, barcode, size, gap)
         }
     }
 };
 
-const onPrintImageBase64 = (base64Image: string, w: number, h: number, copies: number) => {
+const onPrintImageBase64 = async (base64Image: string, w: number, h: number, copies: number) => {
     Toast.show({
-        type: "customToast",  // Can be 'success', 'error', 'info'
+        type: "customToast",
         text1: "Друк...",
         position: "bottom",
         visibilityTime: 3000,
         bottomOffset: 130,
-    })
-    PrinterPuty.printImage(base64Image, w, h, copies)
-        .then(res => Toast.show({
-            type: "customToast",  // Can be 'success', 'error', 'info'
-            text1: "Надруквано!",
+    });
+
+    try {
+        const res = await PrinterPuty.printImage(base64Image, w, h, copies);
+
+        Toast.show({
+            type: "customToast",
+            text1: "Надруковано!",
             position: "bottom",
-            visibilityTime: 2000,
+            visibilityTime: 1000,
             bottomOffset: 130,
-        }))
-        .catch(err => {
-            console.error("Error", err.message)
-            Alert.alert("Error", err.message)
         });
+
+        return res; // <-- повертаємо результат
+    } catch (err: any) {
+        console.error("Error", err.message);
+        Alert.alert("Error", err.message);
+        throw err; // <-- прокидаємо далі, щоб верхній рівень знав про помилку
+    }
 };
 
-const print = (img: string, barcode: string | null, size: string, gap: string) => {
+
+const print = async (img: string, barcode: string | null, size: string, gap: string) => {
     const sizeWidth = Number(size) === 40 ? 300 : 380;
     const imageHeight = 110; // height image
     try {
@@ -136,7 +143,7 @@ const BluetoothPrintImg = () => {
 
     const handleOpenModal = async () => {
         Vibration.vibrate(5);
-        const isBluetoothOn = await checkBluetoothEnabled();
+        const isBluetoothOn = await PrinterPuty.isBluetoothEnabled();
         if (!isBluetoothOn) {
             myToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
             return;
@@ -232,37 +239,64 @@ const BluetoothPrintImg = () => {
     /** Connects to Selected Printer */
     const connectToPrinter = async (printer: IBLEPrinter) => {
         if (connectedPrinter != null) {
-            dispatch(connectPrinter(null))
+            dispatch(connectPrinter(null));
         }
         try {
             if (isPrinterPuty) {
-                await PrinterPuty.connectPrinter(printer.inner_mac_address)
-                    .then((data) => {
-                        console.log('connectPrinter DATA', data, printer)
-                        dispatch(connectPrinter(printer))
-                        myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
-                    })
-                    .catch((error) => {
-                        console.error(error)
-                        myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
+                await PrinterPuty.connectPrinter(printer.inner_mac_address);
+                let connected = false;
+                
+                for (let i = 0; i < 10; i++) { // максимум 10 спроб (~5 секунд)
+                    const isConnected = await PrinterPuty.checkPrinterStatus();
+                    if (isConnected) {
+                        connected = true;
+                        break;
+                    }
+                    await new Promise(res => setTimeout(res, 500)); // чек 0.5 сек
+                }
+
+                if (connected) {
+                    dispatch(connectPrinter(printer));
+                    myToast({
+                        type: "customToast",
+                        text1: `✅ Підключено принтер: ${printer.device_name}`,
+                        position: "top",
                     });
+                } else {
+                    myToast({
+                        type: "customError",
+                        text1: "❌ Не підключено! Перевірь чи увімкнено принтер.",
+                        visibilityTime: 4000,
+                        position: "top",
+                    });
+                }
+
             } else {
-                await BLEPrinter
-                    .connectPrinter(printer.inner_mac_address,)
+                await BLEPrinter.connectPrinter(printer.inner_mac_address)
                     .then((data) => {
-                        dispatch(connectPrinter(data))
-                        myToast({ type: "customToast", text1: `Підключено принтер: ${printer.device_name}`, position: 'top' })
+                        dispatch(connectPrinter(data));
+                        myToast({
+                            type: "customToast",
+                            text1: `✅ Підключено принтер: ${printer.device_name}`,
+                            position: "top",
+                        });
                     })
                     .catch((error) => {
-                        console.error(error)
-                        myToast({ type: "customError", text1: `Не підключено! Перевірь чи увімкнено принтер.`, visibilityTime: 4000, position: 'top' })
+                        console.error(error);
+                        myToast({
+                            type: "customError",
+                            text1: "❌ Не підключено! Перевірь чи увімкнено принтер.",
+                            visibilityTime: 4000,
+                            position: "top",
+                        });
                     });
             }
         } catch (error) {
             console.error("Connection failed:", error);
-            Alert.alert("Error", "Failed to connect to the printer.");
+            Alert.alert("Error", "Не вдалося підключити принтер.");
         }
     };
+
 
     const closeConnectPrinter = async () => {
         if (isPrinterPuty) {
