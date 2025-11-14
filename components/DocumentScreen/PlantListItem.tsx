@@ -1,6 +1,6 @@
 import { deletePlant } from "@/db/db.native";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, setSortByEmptyThunk } from "@/redux/thunks";
+import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, setSortByEmptyThunk } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
@@ -51,11 +51,11 @@ export default function PlantListItem() {
   }, [palnts, sortList]);
 
   useEffect(() => {
-    if(sortList.length > 0) {
+    if (sortList.length > 0) {
       dispatch(setSortByEmptyThunk())
     }
   }, [palnts]);
-  
+
   return (
     <FlatList
       data={visiblePlants}
@@ -84,7 +84,7 @@ const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: Plan
   const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
   const router = useRouter();
   const [isLoding, setLoding] = useState(false);
-  
+
   const handleDelete = (e: GestureResponderEvent, item: PlantNameDB) => {
     e.preventDefault()
     Alert.alert(
@@ -109,6 +109,17 @@ const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: Plan
   const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {
     try {
       setLoding(true)
+      try {
+        await dispatch(fetchPhotosByProductId({ productId })).unwrap();
+      } catch (photoError: any) {
+        console.warn("⚠️ Failed to fetch photos:", photoError?.message || photoError);
+        myToast({
+          type: "customError",
+          text1: "Не вдалося отримати наявні фото!",
+          text2: photoError?.message || photoError,
+          visibilityTime: 5000,
+        });
+      }
       await dispatch(getPlantsNameThunk({ name: product_name, barcode: '', storageId: currentStorage?.id || '' })).unwrap().then(() => setLoding(false));
     } catch (error: any) {
       console.error("Failed to fetch plant details:", error);

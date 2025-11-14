@@ -38,10 +38,10 @@ export default function ManualDetailsAdd({add}: ManualDetailsAddProps) {
             </View>
             <TouchableVibrate
                 onPress={() => add(input)}
-                style={styles.buttonAdd}
+                style={[styles.buttonAdd, { opacity: input === '' ? 0.5 : 1 }]}
                 disabled={input === ''}
             >
-                <FontAwesome6 name="add" size={18} color="#FFFFFF" />
+                <FontAwesome6 name="check" size={18} color="#FFFFFF" />
                 <Text style={styles.buttonAddText}>Додати</Text>
             </TouchableVibrate>
         </View>

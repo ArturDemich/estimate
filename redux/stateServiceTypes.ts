@@ -15,6 +15,24 @@ export interface AuthSlice {
     token: TokenResponse | {},
 };
 
+export interface PhotoSlice {
+    photoList: PhotoItem[] | null,
+};
+
+export interface PhotoItem {
+  id: string;
+  url: string;
+  appProperties: {
+    productId: string;
+    plantName: string;
+    plantSize: string;
+    storageName: string;
+    sizeId: string;
+    barcode: string;
+    date: string;
+  };
+}
+
 export enum LoadingStatus {
     Loading = 'Loading',
     Succeeded = 'Succeeded',

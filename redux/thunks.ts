@@ -1,7 +1,7 @@
 import { DataService } from "@/axios/service";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Platform } from "react-native";
-import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes, PalntAllInput } from "./stateServiceTypes";
+import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes, PalntAllInput, PhotoItem } from "./stateServiceTypes";
 import { RootState } from "./store";
 import { addAllPlantToDB, fetchCharacteristics, fetchPlants } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
@@ -210,3 +210,28 @@ export const getPlantsDetailsDB = createAsyncThunk<PlantDetailsResponse[], { pal
     }
   }
 );
+
+export const fetchPhotosByProductId = createAsyncThunk<PhotoItem[], {productId: string}, { rejectValue: string, state: RootState } >(
+  "photos/fetchByProductId",
+  async ({productId}, { rejectWithValue }) => {
+    try {
+      const data = await DataService.getPhotosByProductId(productId);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch photos");
+    }
+  }
+);
+
+export const uploadPhotoThunk = createAsyncThunk<PhotoItem, { formData: FormData }, { rejectValue: string; state: RootState }>(
+  "photos/uploadPhoto",
+  async ({ formData }, { rejectWithValue }) => {
+    try {
+      const data = await DataService.uploadPhoto(formData);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to upload photo");
+    }
+  }
+);
+

@@ -16,6 +16,12 @@ const getStorages_URL = `${API}/getStorages`;
 const getPlants_URL = `${API}/getProductInfo`;
 const sendData_URL = `${API}/createStorageDoc`;
 
+const UPLOAD_PHOTO_API_KEY = 'my_secret_upload_key_123';
+const API_PHOTO_URL = 'http://192.168.1.94:3000';
+const uploadPhoto_URL = `${API_PHOTO_URL}/photos/upload`;
+const listPhoto_URL = `${API_PHOTO_URL}/photos/list`;
+
+
 interface GetPlantsProps {
   token: string,
   name?: string,
@@ -158,6 +164,57 @@ export class DataService {
         errorMessage = error.message;
       }
 
+      throw new Error(errorMessage);
+    }
+  }
+
+  static async uploadPhoto(formData: FormData) {
+    try {
+      const response = await axios.post(uploadPhoto_URL,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data', 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 10000, }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Error in service uploadPhoto:", error);
+      let errorMessage = "Failed to upload photo";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  static async getPhotosByProductId(productId: string) {
+    try {
+      if (!productId) throw new Error("productId is required");
+
+      const response = await axios.get(listPhoto_URL, {
+        params: { productId },
+        headers: {
+          "x-api-key": UPLOAD_PHOTO_API_KEY,
+        },
+        timeout: 10000,
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Error in service getPhotosByProductId:", error);
+      let errorMessage = "Failed to fetch list photos";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       throw new Error(errorMessage);
     }
   }

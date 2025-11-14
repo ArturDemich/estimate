@@ -1,4 +1,4 @@
-import { PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
+import { PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getPlantsDetailsDB } from "@/redux/thunks";
 import { useLocalSearchParams } from "expo-router";
@@ -8,15 +8,18 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import RenderPlantDetail from "./RenderPlantDetail";
 import { setExistPlantProps } from "@/redux/dataSlice";
 import EmptyList from "@/components/ui/EmptyList";
+import { findPhotoForPlantDetail } from "@/utils/findPhotoUrls";
 
 
- const PlantSizeItem = memo(({existPlantProps, plantName}: {existPlantProps: PlantDetails | null, plantName: string}) => {
+const PlantSizeItem = memo(({ existPlantProps, plantName }: { existPlantProps: PlantDetails | null, plantName: string }) => {
   const dispatch = useDispatch<AppDispatch>();
   const palntDetails = useSelector<RootState, PlantDetailsResponse[]>((state) => state.data.dBPlantDetails);
+  const photoList = useSelector<RootState, PhotoItem[] | null>((state) => state.photos.photoList);
   const params = useLocalSearchParams();
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
+  const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId;
   const flatListRef = useRef<FlatList>(null);
-  
+
   const loadDBDetails = async () => {
     const plantId = params.plantId;
     const docId = params.docId
@@ -30,9 +33,8 @@ import EmptyList from "@/components/ui/EmptyList";
         animated: true,
         viewPosition: 0.2,
       });
-  }
-};
-  
+    }
+  };
 
   useEffect(() => {
     if (existPlantProps?.characteristic_id && flatListRef.current) {
@@ -45,12 +47,22 @@ import EmptyList from "@/components/ui/EmptyList";
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList<PlantDetailsResponse> 
+      <FlatList<PlantDetailsResponse>
         ref={flatListRef}
         data={palntDetails}
         onTouchStart={() => existPlantProps && dispatch(setExistPlantProps(null))}
         keyExtractor={(item, index) => item.characteristic_id.toString() + index}
-        renderItem={({ item, index }) => <RenderPlantDetail flatListRef={() => handleFocus(index)} plantName={plantName} docName={docName} item={item} numRow={palntDetails.length - index} reloadList={() => loadDBDetails()}/>}
+        renderItem={({ item, index }) => (
+          <RenderPlantDetail
+            productId={productId}
+            photosUrl={findPhotoForPlantDetail(productId, item.characteristic_id, photoList)}
+            flatListRef={() => handleFocus(index)}
+            plantName={plantName}
+            docName={docName}
+            item={item}
+            numRow={palntDetails.length - index}
+            reloadList={() => loadDBDetails()}
+          />)}
         style={{ width: "100%", }}
         ListEmptyComponent={<EmptyList text="Немає доданих х-ка" />}
         ListFooterComponent={<View></View>}
@@ -66,10 +78,10 @@ import EmptyList from "@/components/ui/EmptyList";
           flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
         }}
       />
-      </View>
+    </View>
   );
 }, (prevProps, nextProps) => {
-return prevProps == nextProps
+  return prevProps == nextProps
 })
 
 const mapStateToProps = (state: RootState) => ({

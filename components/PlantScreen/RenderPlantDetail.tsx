@@ -14,6 +14,7 @@ import { newSIZE } from "@/types/typesScreen";
 import * as Clipboard from 'expo-clipboard';
 import { FontAwesome6 } from "@expo/vector-icons";
 import PrinterPuty from "@/components/Printer/PrinterPuty";
+import AddPhoto from "@/components/PlantScreen/AddPhoto";
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -24,9 +25,11 @@ interface RenderPlantDetailProps {
     plantName: string;
     docName: string;
     autoPrint: boolean;
+    productId: string;
+    photosUrl: string[] | null;
 };
 
-const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
@@ -193,6 +196,12 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <View style={{ display: "flex", flexDirection: "row", maxWidth: 340, }}>
                         <Text style={styles.itemNum}>{numRow}.</Text>
+                        {photosUrl ?
+                            <MaterialIcons style={{marginLeft: '1%'}} name="photo" size={20} color={photosUrl.length > 0 ? 'rgb(106, 159, 53)' : "rgba(255, 111, 97, 1)"} />
+                            : 
+                            <MaterialCommunityIcons name="image-off" size={20} color="red" />
+                        }
+                        
                         <Text style={[styles.itemSize, isManual && styles.manualSize]}>{
                             item.characteristic_name === '' || null ? 'Немає характеристики' : item.characteristic_name
                         }</Text>
@@ -319,6 +328,8 @@ const RenderPlantDetail = ({ item, numRow, existPlantProps, reloadList, flatList
                                 </View>
                             </View>
 
+                            <AddPhoto photosUrl={photosUrl} plantName={plantName} productId={productId} sizeId={item.characteristic_id} plantSize={item.characteristic_name} barcode={item.barcode} />
+
                             <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
                                 <TextInput
                                     style={styles.inputPrint}
@@ -360,7 +371,8 @@ export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, next
         prevProps.item.plantComment === nextProps.item.plantComment &&
         prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
         prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
-        prevProps.autoPrint === nextProps.autoPrint
+        prevProps.autoPrint === nextProps.autoPrint &&
+        prevProps.photosUrl === nextProps.photosUrl
     );
 }));
 
