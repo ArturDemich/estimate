@@ -33,6 +33,11 @@ export interface PhotoItem {
   };
 }
 
+export interface SelectedPhoto {
+  url: string;
+  id: string;
+};
+
 export enum LoadingStatus {
     Loading = 'Loading',
     Succeeded = 'Succeeded',

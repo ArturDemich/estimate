@@ -1,50 +1,59 @@
 import React from 'react';
-import { View, Alert, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { myToast } from '@/utils/toastConfig';
-import { uploadPhotoThunk } from '@/redux/thunks';
+import { uploadPhotoThunk, deletePhotoThunk } from '@/redux/thunks';
+import ModalAddPhoto from './ModalAddPhoto';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
+import { SelectedPhoto } from '@/redux/stateServiceTypes';
 
 interface AddPhotoProps {
   plantName: string;
   plantSize: string;
   barcode: string;
   productId: string;
-  photosUrl: string[] | null;
+  photosUrl: SelectedPhoto[] | null;
   sizeId: string;
 }
 
 const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId }: AddPhotoProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const currentStorage = useSelector((state: RootState) => state.data.currentStorage);
-  const [photo, setPhoto] = React.useState<string | null>(null);
   const [uploading, setUploading] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [modalVisible, setModalVisible] = React.useState(false);
 
-  const handleAddPhoto = async () => {
-    Alert.alert(
-      'Додати фото',
-      'Оберіть джерело',
-      [
-        { text: 'Скасувати', style: 'cancel' },
-        { text: 'Галерея', onPress: pickFromGallery },
-        { text: 'Камера', onPress: takePhoto },
-      ],
-      { cancelable: true }
-    );
+  const handleAddPhoto = () => {
+    setModalVisible(true);
+  };
+  const handleDeletePhotos = async (selected: SelectedPhoto[]) => {
+    setDeleting(true);
+    try {
+      const ids = selected.map(photo => photo.id);
+      console.log('Deleting photo IDs:', ids);
+      await dispatch(deletePhotoThunk({ids})).unwrap();
+      myToast({ type: "customToast", text1: "Фото видалено!", visibilityTime: 3000 });
+      setDeleting(false);
+    } catch (error: any) {
+      console.error('❌ Delete error:', error);
+      setDeleting(false);
+      myToast({ type: "customError", text1: "Помилка видалення фото!", text2: error?.message || String(error), visibilityTime: 4000 });
+    }
   };
 
   const pickFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return myToast({ 
-      type: "customError", 
-      text1: `Доступ до галереї заборонено!`, 
-      text2: 'Надайте дозвіл додатку у налаштуваннях пристрою.', 
-      visibilityTime: 4000 });
+    if (status !== 'granted') return myToast({
+      type: "customError",
+      text1: `Доступ до галереї заборонено!`,
+      text2: 'Надайте дозвіл додатку у налаштуваннях пристрою.',
+      visibilityTime: 4000
+    });
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -58,18 +67,20 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
   const takePhoto = async () => {
     // 🔹 Дозвіл на камеру
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') return myToast({ 
-      type: "customError", 
-      text1: `Доступ до камери заборонено!`, 
-      text2: 'Надайте дозвіл додатку у налаштуваннях пристрою.', 
-      visibilityTime: 4000 });
+    console.log('takePhoto___ status', status);
+    if (status !== 'granted') return myToast({
+      type: "customError",
+      text1: `Доступ до камери заборонено!`,
+      text2: 'Надайте дозвіл додатку у налаштуваннях пристрою.',
+      visibilityTime: 4000
+    });
 
     // 🔹 Відкрити стандартну камеру телефону
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: false,
       quality: 1,
     });
-
+    console.log('takePhoto result', result);
     if (!result.canceled) {
       const uri = result.assets[0].uri;
 
@@ -93,8 +104,6 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
         { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP }
       );
 
-      setPhoto(optimized.uri);
-
       const formData = new FormData();
       formData.append('file', {
         uri: optimized.uri,
@@ -111,10 +120,10 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
       await dispatch(uploadPhotoThunk({ formData })).unwrap();
       setUploading(false);
       myToast({
-            type: "customToast",
-            text1: "Фото завантажено успішно!",
-            visibilityTime: 5000,
-        });
+        type: "customToast",
+        text1: "Фото завантажено успішно!",
+        visibilityTime: 5000,
+      });
     } catch (error: any) {
       console.error('❌ Upload error:', error);
       setUploading(false);
@@ -123,6 +132,18 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     }
   };
 
+  const warmUpPicker = async () => {
+    console.log('warmUpPicker');
+    try {
+      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+      console.log('warmUpPicker___ status', status);
+    } catch {}
+  };
+
+  React.useEffect(() => {
+    warmUpPicker();
+  }, []);
+
   return (
     <View style={styles.addPhotoContainer}>
       <TouchableVibrate style={styles.copyBtn} onPress={handleAddPhoto} disabled={uploading}>
@@ -130,8 +151,16 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
           <MaterialIcons name="add-photo-alternate" size={32} color={photosUrl && photosUrl.length > 0 ? 'rgb(106, 159, 53)' : "rgba(255, 111, 97, 1)"} />
         }
       </TouchableVibrate>
-
-      
+      <ModalAddPhoto
+        visible={modalVisible}
+        uploading={uploading}
+        deleting={deleting}
+        onClose={() => setModalVisible(false)}
+        onGallery={pickFromGallery}
+        onCamera={takePhoto}
+        photosUrl={photosUrl}
+        onDelete={handleDeletePhotos}
+      />
     </View>
   );
 };

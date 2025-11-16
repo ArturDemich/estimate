@@ -235,3 +235,15 @@ export const uploadPhotoThunk = createAsyncThunk<PhotoItem, { formData: FormData
   }
 );
 
+export const deletePhotoThunk = createAsyncThunk<string[], { ids: string[] }, { rejectValue: string; state: RootState }>(
+  'photos/deletePhoto',
+  async ({ ids }, { rejectWithValue }) => {
+    try {
+      const data = await DataService.deletePhotos(ids);
+      return data.deletedIds; 
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to delete photos');
+    }
+  }
+);
+

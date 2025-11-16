@@ -1,4 +1,4 @@
-import { Label, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
+import { Label, PlantDetails, PlantDetailsResponse, SelectedPhoto } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
 import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
@@ -26,7 +26,7 @@ interface RenderPlantDetailProps {
     docName: string;
     autoPrint: boolean;
     productId: string;
-    photosUrl: string[] | null;
+    photosUrl: SelectedPhoto[] | null;
 };
 
 const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
@@ -197,11 +197,11 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                     <View style={{ display: "flex", flexDirection: "row", maxWidth: 340, }}>
                         <Text style={styles.itemNum}>{numRow}.</Text>
                         {photosUrl ?
-                            <MaterialIcons style={{marginLeft: '1%'}} name="photo" size={20} color={photosUrl.length > 0 ? 'rgb(106, 159, 53)' : "rgba(255, 111, 97, 1)"} />
-                            : 
+                            <MaterialIcons style={{ marginLeft: '1%' }} name="photo" size={20} color={photosUrl.length > 0 ? 'rgb(106, 159, 53)' : "rgba(255, 111, 97, 1)"} />
+                            :
                             <MaterialCommunityIcons name="image-off" size={20} color="red" />
                         }
-                        
+
                         <Text style={[styles.itemSize, isManual && styles.manualSize]}>{
                             item.characteristic_name === '' || null ? 'Немає характеристики' : item.characteristic_name
                         }</Text>
@@ -327,8 +327,15 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                                     </TouchableVibrate>
                                 </View>
                             </View>
-
-                            <AddPhoto photosUrl={photosUrl} plantName={plantName} productId={productId} sizeId={item.characteristic_id} plantSize={item.characteristic_name} barcode={item.barcode} />
+                            {!isManual &&
+                                <AddPhoto
+                                    photosUrl={photosUrl}
+                                    plantName={plantName}
+                                    productId={productId}
+                                    sizeId={item.characteristic_id}
+                                    plantSize={item.characteristic_name}
+                                    barcode={item.barcode}
+                                />}
 
                             <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
                                 <TextInput

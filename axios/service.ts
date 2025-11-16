@@ -16,10 +16,11 @@ const getStorages_URL = `${API}/getStorages`;
 const getPlants_URL = `${API}/getProductInfo`;
 const sendData_URL = `${API}/createStorageDoc`;
 
-const UPLOAD_PHOTO_API_KEY = 'my_secret_upload_key_123';
-const API_PHOTO_URL = 'http://192.168.1.94:3000';
+const UPLOAD_PHOTO_API_KEY = 'my_secret_upload_key_12334326745';
+const API_PHOTO_URL = 'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app' //'http://192.168.1.94:3000';
 const uploadPhoto_URL = `${API_PHOTO_URL}/photos/upload`;
 const listPhoto_URL = `${API_PHOTO_URL}/photos/list`;
+const deletePhoto_URL = `${API_PHOTO_URL}/photos/delete`;
 
 
 interface GetPlantsProps {
@@ -210,6 +211,30 @@ export class DataService {
       if (error.response?.data) {
         errorMessage =
           typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  static async deletePhotos(ids: string[]) {
+    try {
+      const response = await axios.post(
+        deletePhoto_URL,
+        { ids },
+        { headers: { 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 10000 }
+      );
+      console.log('Service deletePhotos response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error in service deletePhotos:', error);
+      let errorMessage = 'Failed to delete photos';
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === 'string'
             ? error.response.data
             : JSON.stringify(error.response.data);
       } else if (error.message) {
