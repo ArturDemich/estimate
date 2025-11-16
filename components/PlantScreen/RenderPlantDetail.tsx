@@ -55,6 +55,14 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
         setShowMenu(val)
     };
 
+    const handlSetPrintQty = (qty: string) => {
+        const parsedQty = Number(qty);
+        if (parsedQty < 0) {
+            return
+        }
+        setPrintQty(parsedQty);
+    }
+
     const handleUpdCurrentQty = async (currentQty: number) => {
         if (currentQty < 0) {
             return
@@ -341,7 +349,8 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                                 <TextInput
                                     style={styles.inputPrint}
                                     value={printQty.toString()}
-                                    onChangeText={setPrintQty}
+                                    onChangeText={handlSetPrintQty}
+                                    selectTextOnFocus={printQty === 1}
                                     keyboardType="numeric"
                                 />
 

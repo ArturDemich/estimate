@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, AppState, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -36,7 +36,7 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     try {
       const ids = selected.map(photo => photo.id);
       console.log('Deleting photo IDs:', ids);
-      await dispatch(deletePhotoThunk({ids})).unwrap();
+      await dispatch(deletePhotoThunk({ ids })).unwrap();
       myToast({ type: "customToast", text1: "Фото видалено!", visibilityTime: 3000 });
       setDeleting(false);
     } catch (error: any) {
@@ -64,10 +64,30 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     if (!result.canceled) optimizeAndUpload(result.assets[0].uri);
   };
 
+  const warmUpGallery = () => { // fix bug ImagePicker on Android 14+
+    try {
+      ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
+    } catch (e) {
+      console.log('Warm-up gallery error', e);
+    }
+  };
+
+  const warmUpCamera = async () => {  // fix bug ImagePicker on Android 14+
+    if (Platform.OS === 'android' && Platform.Version >= 34) {
+      warmUpGallery();
+      await new Promise(r => setTimeout(r, 100));
+      warmUpGallery();
+      await new Promise(r => setTimeout(r, 100));
+    }
+  };
+
   const takePhoto = async () => {
-    // 🔹 Дозвіл на камеру
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    console.log('takePhoto___ status', status);
+    console.log('takePhoto status', status);
     if (status !== 'granted') return myToast({
       type: "customError",
       text1: `Доступ до камери заборонено!`,
@@ -75,7 +95,6 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
       visibilityTime: 4000
     });
 
-    // 🔹 Відкрити стандартну камеру телефону
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: false,
       quality: 1,
@@ -83,14 +102,11 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     console.log('takePhoto result', result);
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-
-      // 🔹 Попросити дозвіл на збереження в медіатеку
       const { status: libStatus } = await MediaLibrary.requestPermissionsAsync();
       if (libStatus === 'granted') {
         await MediaLibrary.createAssetAsync(uri);
       }
 
-      // 🔹 Далі оптимізуємо і завантажуємо
       optimizeAndUpload(uri);
     }
   };
@@ -132,18 +148,6 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     }
   };
 
-  const warmUpPicker = async () => {
-    console.log('warmUpPicker');
-    try {
-      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      console.log('warmUpPicker___ status', status);
-    } catch {}
-  };
-
-  React.useEffect(() => {
-    warmUpPicker();
-  }, []);
-
   return (
     <View style={styles.addPhotoContainer}>
       <TouchableVibrate style={styles.copyBtn} onPress={handleAddPhoto} disabled={uploading}>
@@ -157,7 +161,7 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
         deleting={deleting}
         onClose={() => setModalVisible(false)}
         onGallery={pickFromGallery}
-        onCamera={takePhoto}
+        onCamera={() => { takePhoto(); warmUpCamera() }}
         photosUrl={photosUrl}
         onDelete={handleDeletePhotos}
       />
