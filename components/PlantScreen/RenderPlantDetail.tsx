@@ -1,4 +1,4 @@
-import { Label, PlantDetails, PlantDetailsResponse, SelectedPhoto } from "@/redux/stateServiceTypes";
+import { Label, PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
 import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
@@ -26,7 +26,7 @@ interface RenderPlantDetailProps {
     docName: string;
     autoPrint: boolean;
     productId: string;
-    photosUrl: SelectedPhoto[] | null;
+    photosUrl: PhotoItem[] | null;
 };
 
 const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {

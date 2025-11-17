@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator, AppState, Platform } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -10,14 +10,14 @@ import { uploadPhotoThunk, deletePhotoThunk } from '@/redux/thunks';
 import ModalAddPhoto from './ModalAddPhoto';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
-import { SelectedPhoto } from '@/redux/stateServiceTypes';
+import { PhotoItem } from '@/redux/stateServiceTypes';
 
 interface AddPhotoProps {
   plantName: string;
   plantSize: string;
   barcode: string;
   productId: string;
-  photosUrl: SelectedPhoto[] | null;
+  photosUrl: PhotoItem[] | null;
   sizeId: string;
 }
 
@@ -31,7 +31,7 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
   const handleAddPhoto = () => {
     setModalVisible(true);
   };
-  const handleDeletePhotos = async (selected: SelectedPhoto[]) => {
+  const handleDeletePhotos = async (selected: PhotoItem[]) => {
     setDeleting(true);
     try {
       const ids = selected.map(photo => photo.id);
@@ -62,27 +62,6 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     });
 
     if (!result.canceled) optimizeAndUpload(result.assets[0].uri);
-  };
-
-  const warmUpGallery = () => { // fix bug ImagePicker on Android 14+
-    try {
-      ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 1,
-      });
-    } catch (e) {
-      console.log('Warm-up gallery error', e);
-    }
-  };
-
-  const warmUpCamera = async () => {  // fix bug ImagePicker on Android 14+
-    if (Platform.OS === 'android' && Platform.Version >= 34) {
-      warmUpGallery();
-      await new Promise(r => setTimeout(r, 100));
-      warmUpGallery();
-      await new Promise(r => setTimeout(r, 100));
-    }
   };
 
   const takePhoto = async () => {
@@ -161,7 +140,7 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
         deleting={deleting}
         onClose={() => setModalVisible(false)}
         onGallery={pickFromGallery}
-        onCamera={() => { takePhoto(); warmUpCamera() }}
+        onCamera={takePhoto}
         photosUrl={photosUrl}
         onDelete={handleDeletePhotos}
       />

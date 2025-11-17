@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Platform } from 'react-native';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { MaterialIcons, FontAwesome6 } from '@expo/vector-icons';
-import { SelectedPhoto } from '@/redux/stateServiceTypes';
+import { PhotoItem } from '@/redux/stateServiceTypes';
+import { formatDate } from '@/components/helpers';
 
 interface ModalAddPhotoProps {
   visible: boolean;
   onClose: () => void;
   onGallery: () => void;
   onCamera: () => void;
-  photosUrl: SelectedPhoto[] | null;
-  onDelete: (selected: SelectedPhoto[]) => void;
+  photosUrl: PhotoItem[] | null;
+  onDelete: (selected: PhotoItem[]) => void;
   uploading: boolean;
   deleting: boolean;
 }
@@ -25,15 +26,16 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
   uploading,
   deleting
 }) => {
-  const [selected, setSelected] = useState<SelectedPhoto[]>([]);
+  const [selected, setSelected] = useState<PhotoItem[]>([]);
   const [selectMode, setSelectMode] = useState(false);
+  const showBtnCameraAndroid14Less = Platform.OS === 'android' && Platform.Version <= 34 ? true : false;
 
-  const handleLongPress = (url: SelectedPhoto) => {
+  const handleLongPress = (url: PhotoItem) => {
     setSelectMode(true);
     setSelected([url]);
   };
 
-  const handleSelect = (url: SelectedPhoto) => {
+  const handleSelect = (url: PhotoItem) => {
     if (!selectMode) return;
     setSelected((prev) =>
       prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
@@ -91,7 +93,7 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
                   selectMode && selected.includes(item) && styles.selectedImage,
                 ]}
               >
-                <PhotoPreview uri={item.url} />
+                <PhotoPreview item={item} />
                 {selectMode && selected.includes(item) && (
                   <View style={styles.checkIcon}>
                     <FontAwesome6 name="check" size={18} color="#fff" />
@@ -101,15 +103,15 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
             )}
             ListEmptyComponent={
               uploading ? <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" /> :
-              photosUrl === null ? (
-                <View style={styles.emptyPhoto}>
-                  <Text style={{ color: '#FF6F61', fontSize: 16 }}>Помилка завантаження фото</Text>
-                </View>
-              ) : (
-                <View style={styles.emptyPhoto}>
-                  <Text style={{ color: '#A0A0AB', fontSize: 16 }}>Фото ще не додано</Text>
-                </View>
-              )
+                photosUrl === null ? (
+                  <View style={styles.emptyPhoto}>
+                    <Text style={{ color: '#FF6F61', fontSize: 16 }}>Помилка завантаження фото</Text>
+                  </View>
+                ) : (
+                  <View style={styles.emptyPhoto}>
+                    <Text style={{ color: '#A0A0AB', fontSize: 16 }}>Фото ще не додано</Text>
+                  </View>
+                )
             }
           />
           <View style={styles.footerRow}>
@@ -117,14 +119,14 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
               <>
                 <TouchableVibrate style={styles.deleteBtn} onPress={handleDelete}>
                   {deleting ? <ActivityIndicator size="small" color="#fff" /> :
-                  <MaterialIcons name="delete" size={22} color="#fff" />}
+                    <MaterialIcons name="delete" size={22} color="#fff" />}
                   <Text style={styles.btnText}>Видалити {selected.length}</Text>
                 </TouchableVibrate>
-                <TouchableVibrate style={[styles.actionBtn, {backgroundColor: 'rgb(70, 70, 70)'}]} onPress={handleSelectAll}>
+                <TouchableVibrate style={[styles.actionBtn, { backgroundColor: 'rgb(70, 70, 70)' }]} onPress={handleSelectAll}>
                   <MaterialIcons name="done-all" size={20} color="#fff" />
                   <Text style={styles.btnText}>Всі</Text>
                 </TouchableVibrate>
-                <TouchableVibrate style={[styles.actionBtn, {backgroundColor: 'rgba(175, 175, 175, 0.95)'}]} onPress={handleDeselectAll}>
+                <TouchableVibrate style={[styles.actionBtn, { backgroundColor: 'rgba(175, 175, 175, 0.95)' }]} onPress={handleDeselectAll}>
                   <MaterialIcons name="remove-done" size={20} color="#fff" />
                   <Text style={styles.btnText}>Жодне</Text>
                 </TouchableVibrate>
@@ -139,10 +141,11 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
                     <MaterialIcons name="photo-library" size={22} color="#fff" />
                     <Text style={styles.btnText}>Галерея</Text>
                   </TouchableVibrate>
-                  <TouchableVibrate style={styles.actionBtn} onPress={onCamera}>
-                    <MaterialIcons name="photo-camera" size={22} color="#fff" />
-                    <Text style={styles.btnText}>Камера</Text>
-                  </TouchableVibrate>
+                  {showBtnCameraAndroid14Less &&
+                    <TouchableVibrate style={styles.actionBtn} onPress={onCamera}>
+                      <MaterialIcons name="photo-camera" size={22} color="#fff" />
+                      <Text style={styles.btnText}>Камера</Text>
+                    </TouchableVibrate>}
                 </View>
               </>
             )}
@@ -153,18 +156,22 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
   );
 };
 
-const PhotoPreview = ({ uri }: { uri: string }) => {
+const PhotoPreview = ({ item }: { item: PhotoItem }) => {
   const [loading, setLoading] = useState(true);
   return (
     <View style={styles.photoPreviewContainer}>
       {loading && <ActivityIndicator size="large" color='rgba(255, 111, 97, 1)' style={{ position: 'absolute', zIndex: 1 }} />}
-        <Image
-          source={{ uri }}
-          style={styles.image}
-          resizeMode="cover"
-          onError={(e) => console.log('Image load error:', e.nativeEvent)}
-          onLoadEnd={() => setLoading(false)}
-        />
+      <Image
+        source={{ uri: item.url }}
+        style={styles.image}
+        resizeMode="cover"
+        onError={(e) => console.log('Image load error:', e.nativeEvent)}
+        onLoadEnd={() => setLoading(false)}
+      />
+      <View style={styles.photoPreviewData}>
+        <Text style={styles.photoPreviewText}>{formatDate(item.appProperties.date)}</Text>
+        <Text style={styles.photoPreviewText}>{item.appProperties.storageName}</Text>
+      </View>
     </View>
   );
 };
@@ -221,10 +228,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 111, 97, 1)',
   },
   image: {
-    width: 90,
-    height: 90,
+    width: 80,
+    height: 80,
     backgroundColor: '#eee',
-    borderRadius: 8,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   checkIcon: {
     position: 'absolute',
@@ -260,19 +268,32 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   emptyPhoto: {
-    padding: 10, 
-    alignItems: 'center', 
+    padding: 10,
+    alignItems: 'center',
     justifyContent: 'center'
   },
   photoPreviewContainer: {
-     width: 90, 
-     height: 90, 
-     backgroundColor: '#dcdcdcff', 
-     borderRadius: 8, 
-     overflow: 'hidden', 
-     alignItems: 'center', 
-     justifyContent: 'center',
-     position: 'relative',
+    width: 80,
+    height: 100,
+    backgroundColor: '#dcdcdcff',
+    borderRadius: 8,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  photoPreviewData: {
+    width: '100%',
+    justifyContent: 'center',
+    backgroundColor: 'rgb(242, 242, 242)',
+    borderBottomRightRadius: 8,
+    paddingRight: 2,
+    paddingLeft: 5,
+  },
+  photoPreviewText: {
+    color: 'black',
+    fontSize: 8,
+    fontWeight: '600',
   }
 });
 

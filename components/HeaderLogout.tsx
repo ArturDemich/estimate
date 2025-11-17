@@ -7,8 +7,6 @@ import { logout } from "@/redux/authSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as SecureStore from "expo-secure-store";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
-import Foundation from '@expo/vector-icons/Foundation';
-import Fontisto from '@expo/vector-icons/Fontisto';
 import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
 import { clearDataState } from "@/redux/dataSlice";
 
@@ -32,18 +30,11 @@ export default function HeaderLogout() {
         
     };
 
-    const isProtectedIndex = segments[0] === "(protected)" && segments.length === 1;
     const isPlantScreen = segments[1] === "plant";
 
     return (
         <View style={{ flexDirection: 'row', gap: 15, }}>
             {isPlantScreen && <BluetoothPrintImg />}
-            {/* {!isProtectedIndex &&
-                <TouchableVibrate style={{ alignItems: 'center', width: 40 }}>
-                    <Fontisto name="cloud-down" size={18} color="black" style={{ lineHeight: 18, }} />
-                    <Foundation name="trees" size={12} color="black" style={{ lineHeight: 10, marginTop: -3, }} />
-                </TouchableVibrate>} */}
-
             <TouchableVibrate style={styles.openBtn} onPressOut={handleLogout} >
                 <MaterialCommunityIcons name="logout" size={24} color="black" />
             </TouchableVibrate>
