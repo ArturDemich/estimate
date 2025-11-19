@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Platform } from 'react-native';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { MaterialIcons, FontAwesome6 } from '@expo/vector-icons';
@@ -14,6 +14,8 @@ interface ModalAddPhotoProps {
   onDelete: (selected: PhotoItem[]) => void;
   uploading: boolean;
   deleting: boolean;
+  sendViber: boolean;
+  setSendViber: () => void;
 }
 
 const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
@@ -24,7 +26,9 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
   photosUrl,
   onDelete,
   uploading,
-  deleting
+  deleting,
+  sendViber,
+  setSendViber,
 }) => {
   const [selected, setSelected] = useState<PhotoItem[]>([]);
   const [selectMode, setSelectMode] = useState(false);
@@ -71,6 +75,8 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
     }
   }, [selected]);
 
+  const reversed = useMemo(() => photosUrl && [...photosUrl].reverse(), [photosUrl]);
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -78,11 +84,11 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
           <Text style={styles.title}>Актуальні фото: {photosUrl?.length}</Text>
 
           <FlatList
-            data={photosUrl}
+            data={reversed}
             keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={true}
-            style={{ marginVertical: 10, paddingBottom: 10 }}
+            style={{ marginVertical: 1, paddingBottom: 10 }}
             renderItem={({ item }) => (
               <TouchableVibrate
                 onLongPress={() => handleLongPress(item)}
@@ -117,7 +123,7 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
           <View style={styles.footerRow}>
             {deleting || selectMode && selected.length > 0 ? (
               <>
-                <TouchableVibrate style={styles.deleteBtn} onPress={handleDelete}>
+                <TouchableVibrate style={styles.deleteBtn} onPress={handleDelete} disabled={deleting}>
                   {deleting ? <ActivityIndicator size="small" color="#fff" /> :
                     <MaterialIcons name="delete" size={22} color="#fff" />}
                   <Text style={styles.btnText}>Видалити {selected.length}</Text>
@@ -128,7 +134,6 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
                 </TouchableVibrate>
                 <TouchableVibrate style={[styles.actionBtn, { backgroundColor: 'rgba(175, 175, 175, 0.95)' }]} onPress={handleDeselectAll}>
                   <MaterialIcons name="remove-done" size={20} color="#fff" />
-                  <Text style={styles.btnText}>Жодне</Text>
                 </TouchableVibrate>
               </>
             ) : (
@@ -137,13 +142,20 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
                   <MaterialIcons name="close" size={22} color="#fff" />
                 </TouchableVibrate>
                 <View style={styles.btnRow}>
-                  <TouchableVibrate style={styles.actionBtn} onPress={onGallery}>
-                    <MaterialIcons name="photo-library" size={22} color="#fff" />
+                  <TouchableVibrate style={styles.viberBtn} onPress={() => setSendViber()} >
+                    {sendViber ? <FontAwesome6 name="check-square" size={27} color='rgba(168, 80, 249, 0.95)' /> :
+                      <FontAwesome6 name="square" size={27} color='black' />}
+                    <FontAwesome6 name="viber" size={24} color={sendViber ? 'rgba(168, 80, 249, 0.95)' : 'black'} />
+                  </TouchableVibrate>
+                  <TouchableVibrate style={styles.actionBtn} onPress={onGallery} disabled={uploading}>
+                    {uploading ? <ActivityIndicator size="small" color="#fff" /> :
+                      <MaterialIcons name="photo-library" size={22} color="#fff" />}
                     <Text style={styles.btnText}>Галерея</Text>
                   </TouchableVibrate>
                   {showBtnCameraAndroid14Less &&
-                    <TouchableVibrate style={styles.actionBtn} onPress={onCamera}>
-                      <MaterialIcons name="photo-camera" size={22} color="#fff" />
+                    <TouchableVibrate style={styles.actionBtn} onPress={onCamera} disabled={uploading}>
+                      {uploading ? <ActivityIndicator size="small" color="#fff" /> :
+                        <MaterialIcons name="photo-camera" size={22} color="#fff" />}
                       <Text style={styles.btnText}>Камера</Text>
                     </TouchableVibrate>}
                 </View>
@@ -157,7 +169,9 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
 };
 
 const PhotoPreview = ({ item }: { item: PhotoItem }) => {
+  const viberSent = item.appProperties.viberSent;
   const [loading, setLoading] = useState(true);
+  console.log('item.appProperties.viberSent', item.appProperties.viberSent)
   return (
     <View style={styles.photoPreviewContainer}>
       {loading && <ActivityIndicator size="large" color='rgba(255, 111, 97, 1)' style={{ position: 'absolute', zIndex: 1 }} />}
@@ -168,6 +182,11 @@ const PhotoPreview = ({ item }: { item: PhotoItem }) => {
         onError={(e) => console.log('Image load error:', e.nativeEvent)}
         onLoadEnd={() => setLoading(false)}
       />
+      {(viberSent && viberSent === '1') && (
+        <View style={styles.viberSentLabel}>
+          <FontAwesome6 name="viber" size={18} color='rgb(142, 73, 169)' />
+        </View>
+      )}
       <View style={styles.photoPreviewData}>
         <Text style={styles.photoPreviewText}>{formatDate(item.appProperties.date)}</Text>
         <Text style={styles.photoPreviewText}>{item.appProperties.storageName}</Text>
@@ -211,6 +230,13 @@ const styles = StyleSheet.create({
     gap: 6,
     elevation: 3,
   },
+  viberBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    gap: 6,
+  },
   btnText: {
     color: '#fff',
     fontSize: 14,
@@ -227,13 +253,6 @@ const styles = StyleSheet.create({
   selectedImage: {
     borderColor: 'rgba(255, 111, 97, 1)',
   },
-  image: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#eee',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
   checkIcon: {
     position: 'absolute',
     top: 4,
@@ -241,6 +260,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 111, 97, 0.8)',
     borderRadius: 12,
     padding: 2,
+  },
+  viberSentLabel: {
+    position: 'absolute',
+    bottom: 30,
+    right: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.63)",
+    borderRadius: 6,
+    padding: 2
   },
   footerRow: {
     flexDirection: 'row',
@@ -272,9 +299,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
+  image: {
+    display: 'flex',
+    flex: 1,
+    width: 90,
+    height: 'auto',
+    backgroundColor: '#eee',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
   photoPreviewContainer: {
-    width: 80,
-    height: 100,
+    width: 90,
+    height: 110,
     backgroundColor: '#dcdcdcff',
     borderRadius: 8,
     overflow: 'hidden',
@@ -292,7 +328,7 @@ const styles = StyleSheet.create({
   },
   photoPreviewText: {
     color: 'black',
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '600',
   }
 });

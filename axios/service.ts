@@ -17,7 +17,7 @@ const getPlants_URL = `${API}/getProductInfo`;
 const sendData_URL = `${API}/createStorageDoc`;
 
 const UPLOAD_PHOTO_API_KEY = 'my_secret_upload_key_12334326745';
-const API_PHOTO_URL = 'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app' //'http://192.168.1.94:3000';
+const API_PHOTO_URL = 'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app' //'http://192.168.1.94:3000'; //'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app'
 const uploadPhoto_URL = `${API_PHOTO_URL}/photos/upload`;
 const listPhoto_URL = `${API_PHOTO_URL}/photos/list`;
 const deletePhoto_URL = `${API_PHOTO_URL}/photos/delete`;

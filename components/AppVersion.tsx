@@ -3,11 +3,11 @@ import Constants from 'expo-constants';
 
 
 
-const AppVersion = () => {
+const AppVersion = ({styles}: {styles?: any}) => {
     const ver = Constants.expoConfig?.version
     
     return (
-        <Text style={{marginTop: 10, alignSelf: 'center'}}>V {ver}</Text>
+        <Text style={[{marginTop: 10, alignSelf: 'center'}, styles]}>V {ver}</Text>
     )
 };
 

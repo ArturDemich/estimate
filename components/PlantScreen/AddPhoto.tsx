@@ -6,7 +6,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { myToast } from '@/utils/toastConfig';
-import { uploadPhotoThunk, deletePhotoThunk } from '@/redux/thunks';
+import { uploadPhotoThunk, deletePhotoThunk, toggleSendViber } from '@/redux/thunks';
 import ModalAddPhoto from './ModalAddPhoto';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
@@ -27,6 +27,7 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
   const [uploading, setUploading] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [modalVisible, setModalVisible] = React.useState(false);
+  const sendViber = useSelector((state: RootState) => state.photos.sendViber);
 
   const handleAddPhoto = () => {
     setModalVisible(true);
@@ -109,6 +110,7 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
       formData.append('plantSize', plantSize);
       formData.append('barcode', barcode);
       formData.append('productId', productId);
+      formData.append('viberSend', String(sendViber));
       formData.append('sizeId', sizeId);
       formData.append('storageName', currentStorage?.name || '');
 
@@ -143,6 +145,8 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
         onCamera={takePhoto}
         photosUrl={photosUrl}
         onDelete={handleDeletePhotos}
+        sendViber={sendViber}
+        setSendViber={() => dispatch(toggleSendViber())}
       />
     </View>
   );

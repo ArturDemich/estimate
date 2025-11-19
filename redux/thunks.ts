@@ -247,3 +247,21 @@ export const deletePhotoThunk = createAsyncThunk<string[], { ids: string[] }, { 
   }
 );
 
+export const loadSendViber = createAsyncThunk<boolean>(
+  'photos/loadSendViber',
+  async () => {
+    const value = await SecureStore.getItemAsync('sendViber');
+    return value === '1';
+  }
+);
+
+export const toggleSendViber = createAsyncThunk<boolean, void, { state: RootState }>(
+  'photos/toggleSendViber',
+  async (_, { getState }) => {
+    const current = getState().photos.sendViber;
+    const newValue = !current;
+    await SecureStore.setItemAsync('sendViber', newValue ? '1' : '0');
+    return newValue;
+  }
+);
+

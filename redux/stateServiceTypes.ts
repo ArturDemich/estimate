@@ -12,11 +12,12 @@ export interface TokenResponse {
 export interface AuthSlice {
     status: string;
     isAuthenticated: boolean;
-    token: TokenResponse | {},
+    token: TokenResponse | {};
 };
 
 export interface PhotoSlice {
-    photoList: PhotoItem[] | null,
+    photoList: PhotoItem[] | null;
+    sendViber: boolean;
 };
 
 export interface PhotoItem {
@@ -30,6 +31,7 @@ export interface PhotoItem {
     sizeId: string;
     barcode: string;
     date: string;
+    viberSent: string;
   };
 }
 

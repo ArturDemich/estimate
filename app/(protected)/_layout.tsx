@@ -2,9 +2,10 @@ import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import HeaderLogout from "@/components/HeaderLogout";
 import { ActivityIndicator, ImageBackground, View } from "react-native";
-import { getNewVersionThunk, loginThunk } from "@/redux/thunks";
+import { getNewVersionThunk, loadSendViber, loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
+import AppVersion from "@/components/AppVersion";
 
 
 export default function ProtectedLayout() {
@@ -23,6 +24,7 @@ export default function ProtectedLayout() {
       }
     };
     dispatch(getNewVersionThunk())
+    dispatch(loadSendViber());
     checkToken();
   }, []);
 
@@ -60,6 +62,15 @@ export default function ProtectedLayout() {
         <Stack.Screen name="document" options={{ title: "Документ #",  }} />
         <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => <HeaderLogout />, }} />
       </Stack>
+      <AppVersion styles={verStyle} />
     </ImageBackground>
   );
+}
+
+const verStyle = {
+  position: "absolute",
+  bottom: 1,
+  left: 40,
+  fontSize: 10,
+  zIndex: 0
 }
