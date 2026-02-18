@@ -17,6 +17,7 @@ export interface AuthSlice {
 
 export interface PhotoSlice {
     photoList: PhotoItem[] | null;
+    allPhotosList: PhotoItem[] | null;
     sendViber: boolean;
 };
 

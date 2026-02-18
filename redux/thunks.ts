@@ -223,6 +223,18 @@ export const fetchPhotosByProductId = createAsyncThunk<PhotoItem[], {productId: 
   }
 );
 
+export const fetchAllPhotos = createAsyncThunk<PhotoItem[], void, { rejectValue: string }>(
+  "photos/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await DataService.getAllPhotos();
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Failed to fetch all photos");
+    }
+  }
+);
+
 export const uploadPhotoThunk = createAsyncThunk<PhotoItem, { formData: FormData }, { rejectValue: string; state: RootState }>(
   "photos/uploadPhoto",
   async ({ formData }, { rejectWithValue }) => {

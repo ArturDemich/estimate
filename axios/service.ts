@@ -20,6 +20,7 @@ const UPLOAD_PHOTO_API_KEY = 'my_secret_upload_key_12334326745';
 const API_PHOTO_URL = 'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app' //'http://192.168.1.94:3000'; //'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app'
 const uploadPhoto_URL = `${API_PHOTO_URL}/photos/upload`;
 const listPhoto_URL = `${API_PHOTO_URL}/photos/list`;
+const listAllPhotos_URL = `${API_PHOTO_URL}/photos/list-all`;
 const deletePhoto_URL = `${API_PHOTO_URL}/photos/delete`;
 
 
@@ -208,6 +209,28 @@ export class DataService {
     } catch (error: any) {
       console.error("Error in service getPhotosByProductId:", error);
       let errorMessage = "Failed to fetch list photos";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  static async getAllPhotos() {
+    try {
+      const response = await axios.get(listAllPhotos_URL, {
+        headers: { "x-api-key": UPLOAD_PHOTO_API_KEY },
+        timeout: 15000,
+      });
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error: any) {
+      console.error("Error in service getAllPhotos:", error);
+      let errorMessage = "Failed to fetch all photos";
       if (error.response?.data) {
         errorMessage =
           typeof error.response.data === "string"

@@ -1,6 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import HeaderLogout from "@/components/HeaderLogout";
+import HeaderMenu from "@/components/HeaderMenu";
+import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
 import { ActivityIndicator, ImageBackground, View } from "react-native";
 import { getNewVersionThunk, loadSendViber, loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
@@ -58,9 +59,15 @@ export default function ProtectedLayout() {
           animation: 'slide_from_right'
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderLogout />, }} />
+        <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderMenu />, headerBackVisible: false }} />
         <Stack.Screen name="document" options={{ title: "Документ #",  }} />
-        <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => <HeaderLogout />, }} />
+        <Stack.Screen name="images" options={{ title: "Зображення", headerRight: () => <HeaderMenu />, headerBackVisible: false }} />
+        <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => (
+          <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+            <BluetoothPrintImg />
+            <HeaderMenu />
+          </View>
+        ), }} />
       </Stack>
       <AppVersion styles={verStyle} />
     </ImageBackground>

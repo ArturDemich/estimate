@@ -1,10 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
-import {deletePhotoThunk, fetchPhotosByProductId, loadSendViber, toggleSendViber, uploadPhotoThunk } from './thunks';
+import { deletePhotoThunk, fetchAllPhotos, fetchPhotosByProductId, loadSendViber, toggleSendViber, uploadPhotoThunk } from './thunks';
 import { PhotoSlice } from './stateServiceTypes';
 
 
 const initialState: PhotoSlice = {
     photoList: [],
+    allPhotosList: null,
     sendViber: true
   };
   
@@ -21,6 +22,12 @@ const photoSlice = createSlice({
       })
       .addCase(fetchPhotosByProductId.rejected, (state) => {
         state.photoList = null;
+      })
+      .addCase(fetchAllPhotos.fulfilled, (state, action) => {
+        state.allPhotosList = action.payload;
+      })
+      .addCase(fetchAllPhotos.rejected, (state) => {
+        state.allPhotosList = null;
       })
       .addCase(uploadPhotoThunk.fulfilled, (state, action) => {
         if (!state.photoList) {

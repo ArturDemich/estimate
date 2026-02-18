@@ -12,8 +12,7 @@ import Title from "@/components/TitleScreen";
 import { formatDate } from "@/components/helpers";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import HeaderLogout from "@/components/HeaderLogout";
-import SortingBtn from "@/components/SortingBtn";
+import HeaderMenu from "@/components/HeaderMenu";
 
 export default function Document() {
   const params = useLocalSearchParams();
@@ -55,12 +54,7 @@ export default function Document() {
           </TouchableVibrate>
         ),
         headerTitle: () => <Title title={params.docName?.toString() || "Document"} adTitle={`від: ${formatDate(params.docTimeCr?.toString())}` || undefined} docSent={docSent} />,
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', gap: 15, }}>
-            <SortingBtn />
-            <HeaderLogout />
-          </View> 
-        )
+        headerRight: () => <HeaderMenu />
       }} />
 
       <PlantListItem />

@@ -93,6 +93,9 @@ const dataSlice = createSlice({
       state.dBPlantsName = []
       state.sortingPlantList = []
     },
+    clearSearchPlantName(state) {
+      state.searchPlantName = []
+    },
     cleaneSortList(state) {
       state.sortingPlantList = []
     },
@@ -151,5 +154,5 @@ const dataSlice = createSlice({
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
   connectPrinter, setDocComment, setAutoPrint, setPrinterPuty, clearDataState, setDocSent, cleaneDBPlantsName,
-  setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
+  clearSearchPlantName, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
 export default dataSlice.reducer;
