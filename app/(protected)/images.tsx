@@ -100,6 +100,7 @@ export default function ImagesScreen() {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("add");
+  const [previousTab, setPreviousTab] = useState<TabId>("add");
   const [librarySearchQuery, setLibrarySearchQuery] = useState("");
   const [searchTabQuery, setSearchTabQuery] = useState("");
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -298,6 +299,18 @@ export default function ImagesScreen() {
     }
     return list;
   }, [allPhotosList, librarySearchQuery]);
+
+  const filteredLibraryPhotos = useMemo(() => {
+    if (activeTab !== "search" || !searchTabQuery.trim()) return groupedLibraryPhotos;
+    const q = searchTabQuery.trim().toLowerCase();
+    return groupedLibraryPhotos.filter((group) => {
+      const nameMatch = group.plantName.toLowerCase().includes(q);
+      const sizeMatch = group.sizes.some((size) =>
+        size.sizeName.toLowerCase().includes(q)
+      );
+      return nameMatch || sizeMatch;
+    });
+  }, [groupedLibraryPhotos, activeTab, searchTabQuery]);
 
   React.useEffect(() => {
     if (activeTab === "library") {
@@ -531,10 +544,24 @@ export default function ImagesScreen() {
   }, [librarySelectMode]);
 
   const handleLibrarySelectAll = useCallback(() => {
-    if (allPhotosList && allPhotosList.length > 0) {
-      setSelectedLibraryPhotos(allPhotosList);
+    // Якщо на вкладці search з previousTab === "library" і є пошук, виділяємо тільки відфільтровані фото
+    if (activeTab === "search" && previousTab === "library" && searchTabQuery.trim()) {
+      const filteredPhotos: PhotoItem[] = [];
+      filteredLibraryPhotos.forEach((group) => {
+        group.sizes.forEach((size) => {
+          filteredPhotos.push(...size.photos);
+        });
+      });
+      if (filteredPhotos.length > 0) {
+        setSelectedLibraryPhotos(filteredPhotos);
+      }
+    } else {
+      // Інакше виділяємо всі фото
+      if (allPhotosList && allPhotosList.length > 0) {
+        setSelectedLibraryPhotos(allPhotosList);
+      }
     }
-  }, [allPhotosList]);
+  }, [allPhotosList, activeTab, previousTab, searchTabQuery, filteredLibraryPhotos]);
 
   const handleLibraryDeselectAll = useCallback(() => {
     setSelectedLibraryPhotos([]);
@@ -585,7 +612,19 @@ export default function ImagesScreen() {
     }
   }, [selectedLibraryPhotos]);
 
-  const totalLibraryPhotos = useMemo(() => allPhotosList?.length ?? 0, [allPhotosList]);
+  const totalLibraryPhotos = useMemo(() => {
+    // Якщо на вкладці search з previousTab === "library" і є пошук, показуємо кількість відфільтрованих фото
+    if (activeTab === "search" && previousTab === "library" && searchTabQuery.trim()) {
+      let count = 0;
+      filteredLibraryPhotos.forEach((group) => {
+        group.sizes.forEach((size) => {
+          count += size.photos.length;
+        });
+      });
+      return count;
+    }
+    return allPhotosList?.length ?? 0;
+  }, [allPhotosList, activeTab, previousTab, searchTabQuery, filteredLibraryPhotos]);
 
   const renderLibrarySection = useCallback(
     ({ item }: { item: (typeof groupedLibraryPhotos)[0] }) => (
@@ -889,38 +928,54 @@ export default function ImagesScreen() {
             windowSize={6}
           />
           {librarySelectMode && (
-            <View style={styles.librarySelectionBar}>
-              <View style={styles.librarySelectionInfo}>
-                <Text style={styles.librarySelectionText}>
-                  Обрано: {selectedLibraryPhotos.length} з {totalLibraryPhotos}
-                </Text>
-              </View>
-              <View style={styles.librarySelectionButtons}>
-                <TouchableVibrate
-                  style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
-                  onPress={handleLibrarySelectAll}
-                  disabled={libraryDeleting}
-                >
-                  <Text style={styles.librarySelectionBtnTextSecondary}>Всі</Text>
-                </TouchableVibrate>
-                <TouchableVibrate
-                  style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
-                  onPress={handleLibraryDeselectAll}
-                  disabled={libraryDeleting}
-                >
-                  <Text style={styles.librarySelectionBtnTextSecondary}>Очистити</Text>
-                </TouchableVibrate>
-                <TouchableVibrate
-                  style={[styles.librarySelectionBtn, styles.librarySelectionBtnDanger]}
-                  onPress={handleLibraryDelete}
-                  disabled={selectedLibraryPhotos.length === 0 || libraryDeleting}
-                >
-                  {libraryDeleting ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={styles.librarySelectionBtnTextDanger}>Видалити</Text>
-                  )}
-                </TouchableVibrate>
+            <View
+              style={[
+                styles.librarySelectionBar,
+                {
+                  paddingBottom: Math.max(insets.bottom, 10),
+                  paddingLeft: Math.max(insets.left, 16),
+                  paddingRight: Math.max(insets.right, 16),
+                },
+              ]}
+            >
+              <View style={styles.librarySelectionPill}>
+                <View style={styles.librarySelectionInfo}>
+                  <Text style={styles.librarySelectionText}>
+                    Обрано: {selectedLibraryPhotos.length} з {totalLibraryPhotos}
+                  </Text>
+                </View>
+                <View style={styles.librarySelectionButtons}>
+                  <TouchableVibrate
+                    style={[styles.librarySelectionBtn, styles.librarySelectionBtnDanger]}
+                    onPress={handleLibraryDelete}
+                    disabled={selectedLibraryPhotos.length === 0 || libraryDeleting}
+                  >
+                    {libraryDeleting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <MaterialIcons name="delete" size={22} color="#fff" />
+                        <Text style={styles.librarySelectionBtnTextDanger}>Видалити</Text>
+                      </>
+                    )}
+                  </TouchableVibrate>
+                  <TouchableVibrate
+                    style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
+                    onPress={handleLibrarySelectAll}
+                    disabled={libraryDeleting}
+                  >
+                    <MaterialIcons name="done-all" size={20} color="#333" />
+                    <Text style={styles.librarySelectionBtnTextSecondary}>Всі</Text>
+                  </TouchableVibrate>
+                  <TouchableVibrate
+                    style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
+                    onPress={handleLibraryDeselectAll}
+                    disabled={libraryDeleting}
+                  >
+                    <MaterialIcons name="remove-done" size={20} color="#333" />
+                    <Text style={styles.librarySelectionBtnTextSecondary}>Очистити</Text>
+                  </TouchableVibrate>
+                </View>
               </View>
             </View>
           )}
@@ -935,7 +990,7 @@ export default function ImagesScreen() {
                 <MaterialIcons name="search" size={22} color="#666" />
                 <TextInput
                   style={styles.searchBarInput}
-                  placeholder="Фільтр по назві або розміру..."
+                  placeholder="По назві або розміру..."
                   value={searchTabQuery}
                   onChangeText={setSearchTabQuery}
                   placeholderTextColor="#888"
@@ -946,21 +1001,99 @@ export default function ImagesScreen() {
                     <MaterialIcons name="clear" size={22} color="#666" />
                   </TouchableVibrate>
                 )}
-                <TouchableVibrate onPress={() => setShowSearchBar(false)}>
+                <TouchableVibrate
+                  onPress={() => {
+                    setShowSearchBar(false);
+                    setActiveTab(previousTab);
+                    setSearchTabQuery("");
+                    // Очищаємо виділення і виходимо з режиму виділення
+                    setSelectedLibraryPhotos([]);
+                    setLibrarySelectMode(false);
+                  }}
+                >
                   <Text style={styles.searchBarClose}>Закрити</Text>
                 </TouchableVibrate>
               </View>
             </View>
           )}
-          <FlatList
-            data={visibleItemsFiltered}
-            keyExtractor={(item) => item.productId}
-            renderItem={renderAddItem}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={<EmptyList text="Немає результатів пошуку" />}
-            removeClippedSubviews={Platform.OS === "android"}
-            windowSize={10}
-          />
+          {previousTab === "library" ? (
+            <>
+              <FlatList
+                data={filteredLibraryPhotos}
+                keyExtractor={(item) => item.plantName}
+                renderItem={renderLibrarySection}
+                contentContainerStyle={[
+                  styles.listContent,
+                  librarySelectMode && { paddingBottom: 120 }
+                ]}
+                ListEmptyComponent={<EmptyList text="Немає результатів пошуку" />}
+                removeClippedSubviews={Platform.OS === "android"}
+                windowSize={6}
+              />
+              {librarySelectMode && (
+                <View
+                  style={[
+                    styles.librarySelectionBar,
+                    {
+                      paddingBottom: Math.max(insets.bottom, 10),
+                      paddingLeft: Math.max(insets.left, 16),
+                      paddingRight: Math.max(insets.right, 16),
+                    },
+                  ]}
+                >
+                  <View style={styles.librarySelectionPill}>
+                    <View style={styles.librarySelectionInfo}>
+                      <Text style={styles.librarySelectionText}>
+                        Обрано: {selectedLibraryPhotos.length} з {totalLibraryPhotos}
+                      </Text>
+                    </View>
+                    <View style={styles.librarySelectionButtons}>
+                      <TouchableVibrate
+                        style={[styles.librarySelectionBtn, styles.librarySelectionBtnDanger]}
+                        onPress={handleLibraryDelete}
+                        disabled={selectedLibraryPhotos.length === 0 || libraryDeleting}
+                      >
+                        {libraryDeleting ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <>
+                            <MaterialIcons name="delete" size={22} color="#fff" />
+                            <Text style={styles.librarySelectionBtnTextDanger}>Видалити</Text>
+                          </>
+                        )}
+                      </TouchableVibrate>
+                      <TouchableVibrate
+                        style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
+                        onPress={handleLibrarySelectAll}
+                        disabled={libraryDeleting}
+                      >
+                        <MaterialIcons name="done-all" size={20} color="#333" />
+                        <Text style={styles.librarySelectionBtnTextSecondary}>Всі</Text>
+                      </TouchableVibrate>
+                      <TouchableVibrate
+                        style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
+                        onPress={handleLibraryDeselectAll}
+                        disabled={libraryDeleting}
+                      >
+                        <MaterialIcons name="remove-done" size={20} color="#333" />
+                        <Text style={styles.librarySelectionBtnTextSecondary}>Очистити</Text>
+                      </TouchableVibrate>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </>
+          ) : (
+            <FlatList
+              data={visibleItemsFiltered}
+              keyExtractor={(item) => item.productId}
+              renderItem={renderAddItem}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={<EmptyList text="Немає результатів пошуку" />}
+              removeClippedSubviews={Platform.OS === "android"}
+              windowSize={10}
+            />
+          )}
         </>
       )}
 
@@ -979,7 +1112,12 @@ export default function ImagesScreen() {
           <View style={styles.tabBarPill}>
             <TouchableVibrate
               style={[styles.tab, activeTab === "add" && styles.tabActive]}
-              onPress={() => setActiveTab("add")}
+              onPress={() => {
+                if (activeTab !== "add") {
+                  setPreviousTab(activeTab);
+                }
+                setActiveTab("add");
+              }}
             >
               <MaterialIcons
                 name="add-photo-alternate"
@@ -992,7 +1130,12 @@ export default function ImagesScreen() {
             </TouchableVibrate>
             <TouchableVibrate
               style={[styles.tab, activeTab === "library" && styles.tabActive]}
-              onPress={() => setActiveTab("library")}
+              onPress={() => {
+                if (activeTab !== "library") {
+                  setPreviousTab(activeTab);
+                }
+                setActiveTab("library");
+              }}
             >
               <MaterialIcons
                 name="photo-library"
@@ -1006,6 +1149,9 @@ export default function ImagesScreen() {
             <TouchableVibrate
               style={[styles.tab, activeTab === "search" && styles.tabActive]}
               onPress={() => {
+                if (activeTab !== "search") {
+                  setPreviousTab(activeTab);
+                }
                 setActiveTab("search");
                 setShowSearchBar(true);
               }}
@@ -1356,40 +1502,59 @@ const styles = StyleSheet.create({
   },
   librarySelectionBar: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.1)",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    bottom: 0,
+    alignItems: "center",
+    paddingTop: 10,
+  },
+  librarySelectionPill: {
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 24,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    width: "100%",
   },
   librarySelectionInfo: {
-    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.06)",
+    marginBottom: 4,
   },
   librarySelectionText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
     color: "#333",
   },
   librarySelectionButtons: {
     flexDirection: "row",
-    gap: 8,
+    gap: 4,
     justifyContent: "center",
+    paddingHorizontal: 4,
   },
   librarySelectionBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    minWidth: 100,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    flex: 1,
   },
   librarySelectionBtnSecondary: {
     backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  librarySelectionBtnSecondaryActive: {
+    backgroundColor: "rgba(106, 159, 53, 0.1)",
   },
   librarySelectionBtnDanger: {
     backgroundColor: "rgba(255, 111, 97, 1)",
