@@ -13,6 +13,7 @@ import {
   Keyboard,
   ActivityIndicator,
   InteractionManager,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
@@ -110,6 +111,9 @@ export default function ImagesScreen() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [readyToRenderSizes, setReadyToRenderSizes] = useState<string | null>(null);
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
+  const [librarySelectMode, setLibrarySelectMode] = useState(false);
+  const [selectedLibraryPhotos, setSelectedLibraryPhotos] = useState<PhotoItem[]>([]);
+  const [libraryDeleting, setLibraryDeleting] = useState(false);
 
   // Refs для збереження актуальних значень у cleanup функції
   const selectedStorageRef = useRef(selectedStorage);
@@ -514,6 +518,75 @@ export default function ImagesScreen() {
     [storages, storageExpanded, toggleStorageExpand]
   );
 
+  const handleLibraryPhotoLongPress = useCallback((photo: PhotoItem) => {
+    setLibrarySelectMode(true);
+    setSelectedLibraryPhotos([photo]);
+  }, []);
+
+  const handleLibraryPhotoPress = useCallback((photo: PhotoItem) => {
+    if (!librarySelectMode) return;
+    setSelectedLibraryPhotos((prev) =>
+      prev.includes(photo) ? prev.filter((p) => p.id !== photo.id) : [...prev, photo]
+    );
+  }, [librarySelectMode]);
+
+  const handleLibrarySelectAll = useCallback(() => {
+    if (allPhotosList && allPhotosList.length > 0) {
+      setSelectedLibraryPhotos(allPhotosList);
+    }
+  }, [allPhotosList]);
+
+  const handleLibraryDeselectAll = useCallback(() => {
+    setSelectedLibraryPhotos([]);
+  }, []);
+
+  const handleLibraryDelete = useCallback(() => {
+    if (selectedLibraryPhotos.length === 0) return;
+    Alert.alert(
+      "Видалити фото?",
+      `Ви впевнені, що хочете видалити ${selectedLibraryPhotos.length} фото?`,
+      [
+        { text: "Скасувати", style: "cancel" },
+        {
+          text: "Видалити",
+          style: "destructive",
+          onPress: async () => {
+            setLibraryDeleting(true);
+            try {
+              const ids = selectedLibraryPhotos.map((p) => p.id);
+              await dispatch(deletePhotoThunk({ ids })).unwrap();
+              myToast({
+                type: "customToast",
+                text1: `Видалено ${selectedLibraryPhotos.length} фото!`,
+                visibilityTime: 3000,
+              });
+              setSelectedLibraryPhotos([]);
+              setLibrarySelectMode(false);
+              dispatch(fetchAllPhotos());
+            } catch (error: any) {
+              myToast({
+                type: "customError",
+                text1: "Помилка видалення фото!",
+                text2: error?.message || String(error),
+                visibilityTime: 4000,
+              });
+            } finally {
+              setLibraryDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [selectedLibraryPhotos, dispatch]);
+
+  useEffect(() => {
+    if (selectedLibraryPhotos.length === 0) {
+      setLibrarySelectMode(false);
+    }
+  }, [selectedLibraryPhotos]);
+
+  const totalLibraryPhotos = useMemo(() => allPhotosList?.length ?? 0, [allPhotosList]);
+
   const renderLibrarySection = useCallback(
     ({ item }: { item: (typeof groupedLibraryPhotos)[0] }) => (
       <View style={styles.librarySectionContainer}>
@@ -525,27 +598,44 @@ export default function ImagesScreen() {
             <View style={styles.libraryPhotosWrap}>
               {size.photos.map((photo) => {
                 const viberSent = photo.appProperties.viberSent === '1';
+                const isSelected = selectedLibraryPhotos.some((p) => p.id === photo.id);
                 return (
-                  <View key={photo.id} style={[styles.libraryPhotoWrap, { width: libraryItemSize, height: libraryItemSize }]}>
-                    <Image
-                      source={{ uri: photo.url }}
-                      style={styles.libraryPhoto}
-                      resizeMode="cover"
-                    />
-                    {viberSent && (
-                      <View style={styles.libraryViberLabel}>
-                        <FontAwesome6 name="viber" size={16} color="rgb(142, 73, 169)" />
+                  <TouchableVibrate
+                    key={photo.id}
+                    onLongPress={() => handleLibraryPhotoLongPress(photo)}
+                    onPress={() => handleLibraryPhotoPress(photo)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.libraryPhotoWrap,
+                      { width: libraryItemSize, height: libraryItemSize },
+                      librarySelectMode && isSelected && styles.libraryPhotoSelected
+                    ]}>
+                      <Image
+                        source={{ uri: photo.url }}
+                        style={styles.libraryPhoto}
+                        resizeMode="cover"
+                      />
+                      {librarySelectMode && isSelected && (
+                        <View style={styles.libraryPhotoCheckIcon}>
+                          <FontAwesome6 name="check" size={16} color="#fff" />
+                        </View>
+                      )}
+                      {viberSent && (
+                        <View style={styles.libraryViberLabel}>
+                          <FontAwesome6 name="viber" size={16} color="rgb(142, 73, 169)" />
+                        </View>
+                      )}
+                      <View style={styles.libraryPhotoOverlay}>
+                        <Text style={styles.libraryPhotoOverlayText} numberOfLines={1}>
+                          {photo.appProperties.storageName}
+                        </Text>
+                        <Text style={styles.libraryPhotoOverlayText}>
+                          {formatDate(photo.appProperties.date)}
+                        </Text>
                       </View>
-                    )}
-                    <View style={styles.libraryPhotoOverlay}>
-                      <Text style={styles.libraryPhotoOverlayText} numberOfLines={1}>
-                        {photo.appProperties.storageName}
-                      </Text>
-                      <Text style={styles.libraryPhotoOverlayText}>
-                        {formatDate(photo.appProperties.date)}
-                      </Text>
                     </View>
-                  </View>
+                  </TouchableVibrate>
                 );
               })}
             </View>
@@ -553,7 +643,7 @@ export default function ImagesScreen() {
         ))}
       </View>
     ),
-    [groupedLibraryPhotos, libraryItemSize]
+    [groupedLibraryPhotos, libraryItemSize, librarySelectMode, selectedLibraryPhotos, handleLibraryPhotoLongPress, handleLibraryPhotoPress]
   );
 
   // Підрахунок фото для всіх продуктів з allPhotosList (синхронізовано з пошуком та вкладкою Бібліотека)
@@ -785,15 +875,56 @@ export default function ImagesScreen() {
       )}
 
       {activeTab === "library" && (
-        <FlatList
-          data={groupedLibraryPhotos}
-          keyExtractor={(item) => item.plantName}
-          renderItem={renderLibrarySection}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<EmptyList text="Немає завантажених фото" />}
-          removeClippedSubviews={Platform.OS === "android"}
-          windowSize={6}
-        />
+        <>
+          <FlatList
+            data={groupedLibraryPhotos}
+            keyExtractor={(item) => item.plantName}
+            renderItem={renderLibrarySection}
+            contentContainerStyle={[
+              styles.listContent,
+              librarySelectMode && { paddingBottom: 120 }
+            ]}
+            ListEmptyComponent={<EmptyList text="Немає завантажених фото" />}
+            removeClippedSubviews={Platform.OS === "android"}
+            windowSize={6}
+          />
+          {librarySelectMode && (
+            <View style={styles.librarySelectionBar}>
+              <View style={styles.librarySelectionInfo}>
+                <Text style={styles.librarySelectionText}>
+                  Обрано: {selectedLibraryPhotos.length} з {totalLibraryPhotos}
+                </Text>
+              </View>
+              <View style={styles.librarySelectionButtons}>
+                <TouchableVibrate
+                  style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
+                  onPress={handleLibrarySelectAll}
+                  disabled={libraryDeleting}
+                >
+                  <Text style={styles.librarySelectionBtnTextSecondary}>Всі</Text>
+                </TouchableVibrate>
+                <TouchableVibrate
+                  style={[styles.librarySelectionBtn, styles.librarySelectionBtnSecondary]}
+                  onPress={handleLibraryDeselectAll}
+                  disabled={libraryDeleting}
+                >
+                  <Text style={styles.librarySelectionBtnTextSecondary}>Очистити</Text>
+                </TouchableVibrate>
+                <TouchableVibrate
+                  style={[styles.librarySelectionBtn, styles.librarySelectionBtnDanger]}
+                  onPress={handleLibraryDelete}
+                  disabled={selectedLibraryPhotos.length === 0 || libraryDeleting}
+                >
+                  {libraryDeleting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.librarySelectionBtnTextDanger}>Видалити</Text>
+                  )}
+                </TouchableVibrate>
+              </View>
+            </View>
+          )}
+        </>
       )}
 
       {activeTab === "search" && (
@@ -834,7 +965,7 @@ export default function ImagesScreen() {
       )}
 
       {/* Bottom tab bar */}
-      {activeTab !== "search" || !showSearchBar ? (
+      {!librarySelectMode && (activeTab !== "search" || !showSearchBar) && (
         <View
           style={[
             styles.tabBar,
@@ -890,7 +1021,7 @@ export default function ImagesScreen() {
             </TouchableVibrate>
           </View>
         </View>
-      ) : null}
+      )}
 
       {/* Storage picker modal */}
       <Modal
@@ -1206,6 +1337,72 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 4,
     zIndex: 2,
+  },
+  libraryPhotoSelected: {
+    borderWidth: 3,
+    borderColor: "rgba(255, 111, 97, 1)",
+  },
+  libraryPhotoCheckIcon: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "rgba(255, 111, 97, 1)",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 3,
+  },
+  librarySelectionBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.1)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  librarySelectionInfo: {
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  librarySelectionText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+  librarySelectionButtons: {
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+  },
+  librarySelectionBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    minWidth: 100,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  librarySelectionBtnSecondary: {
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  librarySelectionBtnDanger: {
+    backgroundColor: "rgba(255, 111, 97, 1)",
+  },
+  librarySelectionBtnTextSecondary: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  librarySelectionBtnTextDanger: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#fff",
   },
   searchBarContainer: {
     paddingHorizontal: 12,
