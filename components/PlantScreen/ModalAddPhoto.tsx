@@ -16,6 +16,8 @@ interface ModalAddPhotoProps {
   deleting: boolean;
   sendViber: boolean;
   setSendViber: () => void;
+  plantName?: string;
+  plantSize?: string;
 }
 
 const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
@@ -29,6 +31,8 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
   deleting,
   sendViber,
   setSendViber,
+  plantName,
+  plantSize,
 }) => {
   const [selected, setSelected] = useState<PhotoItem[]>([]);
   const [selectMode, setSelectMode] = useState(false);
@@ -81,7 +85,14 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.title}>Актуальні фото: {photosUrl?.length}</Text>
+          {plantName ? (
+            <View style={styles.titleContainer}>
+              <Text style={styles.plantName}>{plantName}</Text>
+              {plantSize && <Text style={styles.plantSize}>{plantSize} фото: {photosUrl?.length ?? 0}</Text>}
+            </View>
+          ) : (
+            <Text style={styles.title}>Актуальні фото: {photosUrl?.length}</Text>
+          )}
 
           <FlatList
             data={reversed}
@@ -209,6 +220,29 @@ const styles = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     elevation: 5,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 10,
+    width: '100%',
+  },
+  plantName: {
+    fontWeight: '600',
+    fontSize: 14,
+    color: 'rgba(92, 92, 92, 1)',
+    textAlign: 'center',
+  },
+  plantSize: {
+    fontSize: 12,
+    color: 'rgba(92, 92, 92, 0.7)',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  photoCount: {
+    fontSize: 13,
+    color: 'rgba(92, 92, 92, 0.8)',
+    marginTop: 4,
+    textAlign: 'center',
   },
   title: {
     fontWeight: '600',

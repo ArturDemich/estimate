@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, memo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -12,12 +12,15 @@ import {
   Platform,
   Keyboard,
   ActivityIndicator,
+  InteractionManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
+import { useFocusEffect } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { EvilIcons } from "@expo/vector-icons";
+import { EvilIcons, Foundation } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as MediaLibrary from "expo-media-library";
@@ -37,12 +40,12 @@ import {
   deletePhotoThunk,
   toggleSendViber,
 } from "@/redux/thunks";
-import { clearSearchPlantName } from "@/redux/dataSlice";
-import { findPhotoForPlantDetail } from "@/utils/findPhotoUrls";
+import { clearSearchPlantName, setImagesScreenState, clearImagesScreenState } from "@/redux/dataSlice";
 import { formatDate, getUkrainianPart } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
 import EmptyList from "@/components/ui/EmptyList";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 type StorageItem = { id: string; id_parent?: string; is_group?: boolean; name: string };
 
@@ -72,17 +75,24 @@ export default function ImagesScreen() {
 
   const dispatch = useDispatch<AppDispatch>();
   const storages = useSelector((state: RootState) => state.data.digStorages) as StorageItem[];
-  const searchPlantName = useSelector((state: RootState) => state.data.searchPlantName);
+  const imagesScreenState = useSelector((state: RootState) => state.data.imagesScreenState);
+  const globalSearchPlantName = useSelector((state: RootState) => state.data.searchPlantName);
   const photoList = useSelector((state: RootState) => state.photos.photoList);
   const allPhotosList = useSelector((state: RootState) => state.photos.allPhotosList);
   const sendViber = useSelector((state: RootState) => state.photos.sendViber);
 
-  const [selectedStorage, setSelectedStorage] = useState<Storages | null>(null);
+  // Використовуємо searchPlantName з imagesScreenState якщо є, інакше з загального стейту
+  const searchPlantName = imagesScreenState?.searchPlantName ?? globalSearchPlantName;
+
+  // Відновлюємо стейт з Redux або використовуємо дефолтні значення
+  const [selectedStorage, setSelectedStorage] = useState<Storages | null>(
+    imagesScreenState?.selectedStorage ?? null
+  );
   const [storageModalVisible, setStorageModalVisible] = useState(false);
   const [storageExpanded, setStorageExpanded] = useState<string[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(imagesScreenState?.input ?? "");
   const [barcode, setBarcode] = useState("");
-  const [inStockOnly, setInStockOnly] = useState(true);
+  const [inStockOnly, setInStockOnly] = useState(imagesScreenState?.inStockOnly ?? true);
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedPlant, setSelectedPlant] = useState<PlantItemRespons | null>(null);
@@ -96,12 +106,76 @@ export default function ImagesScreen() {
     storageId: string | null;
     name: string;
     inStockOnly: boolean;
-  }>({ storageId: null, name: "", inStockOnly: true });
+  }>(imagesScreenState?.lastSearchParams ?? { storageId: null, name: "", inStockOnly: true });
   const [searchLoading, setSearchLoading] = useState(false);
+  const [readyToRenderSizes, setReadyToRenderSizes] = useState<string | null>(null);
+  const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
+
+  // Refs для збереження актуальних значень у cleanup функції
+  const selectedStorageRef = useRef(selectedStorage);
+  const inputRef = useRef(input);
+  const inStockOnlyRef = useRef(inStockOnly);
+  const lastSearchParamsRef = useRef(lastSearchParams);
+  const searchPlantNameRef = useRef(searchPlantName);
+  const hasRestoredStateRef = useRef(false);
+  const imagesScreenStateRef = useRef(imagesScreenState);
+
+  useEffect(() => {
+    imagesScreenStateRef.current = imagesScreenState;
+  }, [imagesScreenState]);
+
+  useEffect(() => {
+    selectedStorageRef.current = selectedStorage;
+    inputRef.current = input;
+    inStockOnlyRef.current = inStockOnly;
+    lastSearchParamsRef.current = lastSearchParams;
+    searchPlantNameRef.current = searchPlantName;
+  }, [selectedStorage, input, inStockOnly, lastSearchParams, searchPlantName]);
+
+  // Один useFocusEffect: відновлюємо при фокусі, зберігаємо при blur. Без imagesScreenState в deps — інакше цикл при пошуку.
+  useFocusEffect(
+    useCallback(() => {
+      const savedState = imagesScreenStateRef.current;
+      if (savedState && !hasRestoredStateRef.current) {
+        hasRestoredStateRef.current = true;
+        setSelectedStorage(savedState.selectedStorage);
+        setInput(savedState.input);
+        setInStockOnly(savedState.inStockOnly);
+        setLastSearchParams(savedState.lastSearchParams);
+      }
+
+      return () => {
+        hasRestoredStateRef.current = false;
+        if (selectedStorageRef.current || inputRef.current.trim() || lastSearchParamsRef.current.storageId) {
+          dispatch(setImagesScreenState({
+            selectedStorage: selectedStorageRef.current,
+            input: inputRef.current,
+            inStockOnly: inStockOnlyRef.current,
+            lastSearchParams: lastSearchParamsRef.current,
+            searchPlantName: searchPlantNameRef.current,
+          }));
+        }
+        dispatch(clearSearchPlantName());
+      };
+    }, [dispatch])
+  );
 
   const toggleProductExpand = useCallback((productId: string) => {
-    setExpandedProductId((prev) => (prev === productId ? null : productId));
-  }, []);
+    const newExpandedId = expandedProductId === productId ? null : productId;
+    setExpandedProductId(newExpandedId);
+
+    // Відкладаємо рендеринг розмірів до завершення анімації та інтеракцій
+    if (newExpandedId) {
+      setReadyToRenderSizes(null);
+      InteractionManager.runAfterInteractions(() => {
+        requestAnimationFrame(() => {
+          setReadyToRenderSizes(newExpandedId);
+        });
+      });
+    } else {
+      setReadyToRenderSizes(null);
+    }
+  }, [expandedProductId]);
 
   const toggleStorageExpand = useCallback((id: string) => {
     setStorageExpanded((prev) =>
@@ -109,29 +183,47 @@ export default function ImagesScreen() {
     );
   }, []);
 
+  const isNumericBarcode = useCallback((value: string) => /^\d+$/.test(value.trim()), []);
+
   const handleSearch = useCallback(async () => {
     if (!selectedStorage) return;
-    const name = input.trim();
-    setLastSearchParams({
+    const value = input.trim();
+    const newLastSearchParams = {
       storageId: selectedStorage.id,
-      name,
+      name: value,
       inStockOnly,
-    });
+    };
+    setLastSearchParams(newLastSearchParams);
     Keyboard.dismiss();
     dispatch(clearSearchPlantName());
     setSearchLoading(true);
     try {
-      await dispatch(
+      const result = await dispatch(
         getPlantsNameThunk({
           storageId: selectedStorage.id,
-          name: name || undefined,
+          name: isNumericBarcode(value) ? undefined : value || undefined,
+          barcode: isNumericBarcode(value) ? value : undefined,
           inStockOnly,
         })
       ).unwrap();
+      dispatch(setImagesScreenState({
+        selectedStorage,
+        input,
+        inStockOnly,
+        lastSearchParams: newLastSearchParams,
+        searchPlantName: result,
+      }));
+      dispatch(fetchAllPhotos());
     } finally {
       setSearchLoading(false);
     }
-  }, [selectedStorage, input, inStockOnly, dispatch]);
+  }, [selectedStorage, input, inStockOnly, dispatch, isNumericBarcode]);
+
+  const handleBarcodeScanned = useCallback((scannedBarcode: string) => {
+    setBarcodeScannerVisible(false);
+    setBarcode(scannedBarcode);
+    setInput(scannedBarcode);
+  }, []);
 
   // Кнопка «Пошук» disabled, якщо немає складу або жоден параметр не змінився з моменту останнього пошуку
   const searchParamsUnchanged = useMemo(() => {
@@ -209,11 +301,18 @@ export default function ImagesScreen() {
     }
   }, [activeTab, dispatch]);
 
+  // Рендеринг розмірів після розгортання (дані з allPhotosList, без окремого запиту)
   React.useEffect(() => {
     if (expandedProductId) {
-      dispatch(fetchPhotosByProductId({ productId: expandedProductId }));
+      InteractionManager.runAfterInteractions(() => {
+        requestAnimationFrame(() => {
+          setReadyToRenderSizes(expandedProductId);
+        });
+      });
+    } else {
+      setReadyToRenderSizes(null);
     }
-  }, [expandedProductId, dispatch]);
+  }, [expandedProductId]);
 
   const handlePlantPress = useCallback(
     (item: PlantItemRespons) => {
@@ -298,6 +397,7 @@ export default function ImagesScreen() {
           visibilityTime: 5000,
         });
         dispatch(fetchPhotosByProductId({ productId: selectedPlant.product.id }));
+        dispatch(fetchAllPhotos());
       } catch (error: any) {
         const msg =
           typeof error === "string" ? error : error?.message || JSON.stringify(error);
@@ -323,6 +423,7 @@ export default function ImagesScreen() {
         await dispatch(deletePhotoThunk({ ids })).unwrap();
         myToast({ type: "customToast", text1: "Фото видалено!", visibilityTime: 3000 });
         dispatch(fetchPhotosByProductId({ productId: selectedPlant.product.id }));
+        dispatch(fetchAllPhotos());
       } catch (error: any) {
         myToast({
           type: "customError",
@@ -344,13 +445,19 @@ export default function ImagesScreen() {
     );
   }, [selectedPlant, photoList]);
 
-  const libraryItemSize = width > 0 ? Math.floor((width - 32) / 3) - 8 : 100;
+  const libraryColumns = width >= 420 ? 3 : 2;
+  const libraryGap = 8;
+  const libraryPadding = 56;
+  const libraryItemSize =
+    width > 0
+      ? Math.floor((width - libraryPadding - libraryGap * (libraryColumns - 1)) / libraryColumns) - 4
+      : 100;
 
   const renderStorageItem = useCallback(
     ({ item }: { item: StorageItem }) => {
       const children = storages.filter((c) => c.id_parent === item.id);
       const isExpanded = storageExpanded.includes(item.id);
-      
+
       return (
         <View>
           <TouchableVibrate
@@ -416,23 +523,31 @@ export default function ImagesScreen() {
           <View key={size.sizeName} style={styles.librarySizeBlock}>
             <Text style={styles.librarySizeName}>{size.sizeName}</Text>
             <View style={styles.libraryPhotosWrap}>
-              {size.photos.map((photo) => (
-                <View key={photo.id} style={[styles.libraryPhotoWrap, { width: libraryItemSize, height: libraryItemSize }]}>
-                  <Image
-                    source={{ uri: photo.url }}
-                    style={styles.libraryPhoto}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.libraryPhotoOverlay}>
-                    <Text style={styles.libraryPhotoOverlayText} numberOfLines={1}>
-                      {photo.appProperties.storageName}
-                    </Text>
-                    <Text style={styles.libraryPhotoOverlayText}>
-                      {formatDate(photo.appProperties.date)}
-                    </Text>
+              {size.photos.map((photo) => {
+                const viberSent = photo.appProperties.viberSent === '1';
+                return (
+                  <View key={photo.id} style={[styles.libraryPhotoWrap, { width: libraryItemSize, height: libraryItemSize }]}>
+                    <Image
+                      source={{ uri: photo.url }}
+                      style={styles.libraryPhoto}
+                      resizeMode="cover"
+                    />
+                    {viberSent && (
+                      <View style={styles.libraryViberLabel}>
+                        <FontAwesome6 name="viber" size={16} color="rgb(142, 73, 169)" />
+                      </View>
+                    )}
+                    <View style={styles.libraryPhotoOverlay}>
+                      <Text style={styles.libraryPhotoOverlayText} numberOfLines={1}>
+                        {photo.appProperties.storageName}
+                      </Text>
+                      <Text style={styles.libraryPhotoOverlayText}>
+                        {formatDate(photo.appProperties.date)}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
         ))}
@@ -441,21 +556,28 @@ export default function ImagesScreen() {
     [groupedLibraryPhotos, libraryItemSize]
   );
 
+  // Підрахунок фото для всіх продуктів з allPhotosList (синхронізовано з пошуком та вкладкою Бібліотека)
+  const productPhotoCountsMap = useMemo(() => {
+    const map = new Map<string, { withPhoto: number; total: number }>();
+    const allPhotos = allPhotosList ?? [];
+    for (const group of groupedByProduct) {
+      const total = group.items.length;
+      const productPhotos = allPhotos.filter((p) => p.appProperties.productId === group.productId);
+      let withPhoto = 0;
+      for (const it of group.items) {
+        const hasPhoto = productPhotos.some((p) => p.appProperties.sizeId === it.characteristic.id);
+        if (hasPhoto) withPhoto++;
+      }
+      map.set(group.productId, { withPhoto, total });
+    }
+    return map;
+  }, [groupedByProduct, allPhotosList]);
+
   const getProductPhotoCounts = useCallback(
     (productId: string) => {
-      const total = groupedByProduct.find((g) => g.productId === productId)?.items.length ?? 0;
-      if (expandedProductId !== productId || !photoList) return { withPhoto: 0, total };
-      let withPhoto = 0;
-      const group = groupedByProduct.find((g) => g.productId === productId);
-      if (group) {
-        for (const it of group.items) {
-          const arr = findPhotoForPlantDetail(productId, it.characteristic.id, photoList);
-          if (arr && arr.length > 0) withPhoto++;
-        }
-      }
-      return { withPhoto, total };
+      return productPhotoCountsMap.get(productId) ?? { withPhoto: 0, total: 0 };
     },
-    [groupedByProduct, expandedProductId, photoList]
+    [productPhotoCountsMap]
   );
 
   const renderProductHeader = useCallback(
@@ -467,7 +589,7 @@ export default function ImagesScreen() {
         <TouchableVibrate
           style={styles.productHeader}
           onPress={() => toggleProductExpand(productId)}
-          delayPressIn={80}
+          delayPressIn={0}
         >
           <Text style={styles.productName} numberOfLines={1}>
             {getUkrainianPart(productName)}
@@ -490,28 +612,41 @@ export default function ImagesScreen() {
         </TouchableVibrate>
       );
     },
-    [getProductPhotoCounts, toggleProductExpand, expandedProductId, photoList]
+    [getProductPhotoCounts, toggleProductExpand, expandedProductId]
   );
+
+  // Кількість фото по розмірах розгорнутого продукту з allPhotosList
+  const expandedProductPhotosMap = useMemo(() => {
+    if (!expandedProductId) return new Map<string, number>();
+    const map = new Map<string, number>();
+    const allPhotos = allPhotosList ?? [];
+    const productPhotos = allPhotos.filter((p) => p.appProperties.productId === expandedProductId);
+    const group = groupedByProduct.find((g) => g.productId === expandedProductId);
+    if (group) {
+      for (const it of group.items) {
+        const count = productPhotos.filter((p) => p.appProperties.sizeId === it.characteristic.id).length;
+        map.set(it.characteristic.id, count);
+      }
+    }
+    return map;
+  }, [expandedProductId, allPhotosList, groupedByProduct]);
 
   const renderSizeRow = useCallback(
     (item: PlantItemRespons, productId: string) => {
-      const photos = findPhotoForPlantDetail(
-        productId,
-        item.characteristic.id,
-        expandedProductId === productId ? photoList : null
-      );
-      const count = photos?.length ?? 0;
+      const count = expandedProductId === productId
+        ? (expandedProductPhotosMap.get(item.characteristic.id) ?? 0)
+        : 0;
       const hasPhoto = count > 0;
       return (
         <TouchableVibrate
           key={item.characteristic.id}
           style={styles.sizeRow}
           onPress={() => handlePlantPress(item)}
-          delayPressIn={80}
+          delayPressIn={0}
         >
           <View style={styles.sizeRowTop}>
             <Text style={styles.sizeName} numberOfLines={1}>
-              {getUkrainianPart(item.characteristic.name)}
+              {item.characteristic.name}
             </Text>
             <Text style={styles.sizeQty}>{item.qty} шт</Text>
           </View>
@@ -530,24 +665,35 @@ export default function ImagesScreen() {
         </TouchableVibrate>
       );
     },
-    [handlePlantPress, expandedProductId, photoList]
+    [handlePlantPress, expandedProductId, expandedProductPhotosMap]
   );
 
   const renderAddItem = useCallback(
     ({ item }: { item: (typeof visibleItemsFiltered)[0] }) => {
       const expanded = expandedProductId === item.productId;
+      const productId = item.productId;
+
       return (
         <View style={styles.productCard}>
           {renderProductHeader(item.productId, item.productName, item.items.length)}
           {expanded && (
             <View style={styles.sizesBlock}>
-              {item.items.map((sizeItem) => renderSizeRow(sizeItem, item.productId))}
+                <FlatList
+                  data={item.items}
+                  keyExtractor={(sizeItem) => sizeItem.characteristic.id}
+                  renderItem={({ item: sizeItem }) => renderSizeRow(sizeItem, productId)}
+                  scrollEnabled={false}
+                  removeClippedSubviews={Platform.OS === "android"}
+                  windowSize={3}
+                  maxToRenderPerBatch={10}
+                  initialNumToRender={10}
+                />
             </View>
           )}
         </View>
       );
     },
-    [expandedProductId, renderProductHeader, renderSizeRow]
+    [expandedProductId, readyToRenderSizes, renderProductHeader, renderSizeRow]
   );
 
   return (
@@ -597,14 +743,17 @@ export default function ImagesScreen() {
                     <MaterialIcons name="clear" size={22} color="#666" />
                   </TouchableVibrate>
                 ) : selectedStorage ? (
-                  <TouchableVibrate onPress={() => setBarcode("")} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <TouchableVibrate
+                    onPress={() => setBarcodeScannerVisible(true)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
                     <MaterialIcons name="qr-code-2" size={24} color="#333" />
                   </TouchableVibrate>
                 ) : null}
               </View>
             </View>
             <View style={[styles.inStockRow, !input.trim() && styles.inStockRowDisabled]}>
-              <Text style={styles.inStockLabel}>В наявності</Text>
+              <Foundation name="trees" size={24} color={inStockOnly ? "rgba(106, 159, 53, 0.95)" : "black"} />
               <Switch
                 value={inStockOnly}
                 onValueChange={setInStockOnly}
@@ -628,8 +777,10 @@ export default function ImagesScreen() {
             <EmptyList text="Оберіть склад і натисніть Пошук" />
           }
           removeClippedSubviews={Platform.OS === "android"}
-          windowSize={10}
-          maxToRenderPerBatch={8}
+          windowSize={5}
+          maxToRenderPerBatch={5}
+          initialNumToRender={11}
+          updateCellsBatchingPeriod={50}
         />
       )}
 
@@ -759,12 +910,32 @@ export default function ImagesScreen() {
               contentContainerStyle={{ flexGrow: 1 }}
               ListEmptyComponent={<EmptyList text="Склади не завантажено" />}
             />
-            <TouchableVibrate
-              style={styles.modalCloseBtn}
-              onPress={() => setStorageModalVisible(false)}
-            >
-              <EvilIcons name="close" size={28} color="#fff" />
-            </TouchableVibrate>
+            <View style={styles.btnBlock}>
+              <TouchableVibrate
+                style={styles.modalCloseBtn}
+                onPress={() => setStorageModalVisible(false)}
+              >
+                <EvilIcons name="close" size={24} color="#fff" style={{ lineHeight: 24 }} />
+              </TouchableVibrate>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Barcode scanner modal */}
+      <Modal
+        visible={barcodeScannerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setBarcodeScannerVisible(false)}
+      >
+        <View style={styles.barcodeScannerModalOverlay}>
+          <View style={styles.barcodeScannerModalContent}>
+            <Text style={styles.barcodeScannerTitle}>Скануйте штрихкод</Text>
+            <BarcodeScanner
+              onScan={handleBarcodeScanned}
+              onClose={() => setBarcodeScannerVisible(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -784,6 +955,8 @@ export default function ImagesScreen() {
         deleting={deleting}
         sendViber={sendViber}
         setSendViber={() => dispatch(toggleSendViber())}
+        plantName={selectedPlant ? getUkrainianPart(selectedPlant.product.name) : undefined}
+        plantSize={selectedPlant ? selectedPlant.characteristic.name : undefined}
       />
     </View>
   );
@@ -879,15 +1052,13 @@ const styles = StyleSheet.create({
   inStockRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
     flexShrink: 0,
+    flex: 0.4,
   },
   inStockRowDisabled: {
     opacity: 0.5,
-  },
-  inStockLabel: {
-    fontSize: 14,
-    color: "#333",
   },
   listContent: {
     paddingHorizontal: 12,
@@ -896,7 +1067,7 @@ const styles = StyleSheet.create({
   },
   productCard: {
     marginBottom: 10,
-    backgroundColor: "rgba(255,255,255,0.6)",
+    backgroundColor: "rgba(255,255,255,0.7)",
     borderRadius: 10,
     overflow: "hidden",
     borderWidth: 1,
@@ -930,6 +1101,11 @@ const styles = StyleSheet.create({
   sizesBlock: {
     paddingHorizontal: 12,
     paddingBottom: 12,
+  },
+  sizesBlockPlaceholder: {
+    paddingVertical: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
   sizeRow: {
     paddingVertical: 10,
@@ -1021,6 +1197,15 @@ const styles = StyleSheet.create({
   libraryPhotoOverlayText: {
     color: "#fff",
     fontSize: 11,
+  },
+  libraryViberLabel: {
+    position: "absolute",
+    bottom: 3,
+    right: 3,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 6,
+    padding: 4,
+    zIndex: 2,
   },
   searchBarContainer: {
     paddingHorizontal: 12,
@@ -1131,11 +1316,36 @@ const styles = StyleSheet.create({
     width: "100%",
     flex: 1,
   },
+  btnBlock: {
+    flexDirection: "row",
+    width: "100%",
+    marginTop: 5,
+  },
   modalCloseBtn: {
-    marginTop: 10,
-    padding: 8,
-    backgroundColor: "rgba(140,140,140,0.9)",
     borderRadius: 8,
+    elevation: 3,
+    padding: 4,
+    backgroundColor: "rgba(199, 199, 199, 0.99)",
+    justifyContent: "center",
+    alignItems: 'center',
+  },
+  barcodeScannerModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.99)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  barcodeScannerModalContent: {
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+  },
+  barcodeScannerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#fff",
+    marginBottom: 16,
   },
   storageRow: {
     flexDirection: "row",

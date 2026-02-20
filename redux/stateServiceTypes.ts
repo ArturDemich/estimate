@@ -100,6 +100,18 @@ export interface NewVersionRes {
     url: string;
 };
 
+export interface ImagesScreenState {
+    selectedStorage: Storages | null;
+    input: string;
+    inStockOnly: boolean;
+    lastSearchParams: {
+        storageId: string | null;
+        name: string;
+        inStockOnly: boolean;
+    };
+    searchPlantName: PlantItemRespons[];
+}
+
 export interface DataSlice {
     digStorages: Storages[];
     searchPlantName: PlantItemRespons[];
@@ -117,6 +129,7 @@ export interface DataSlice {
     docSent: number;
     newDetailBarcode: string | null;
     currentStorage: Storages | null;
+    imagesScreenState: ImagesScreenState | null;
 };
 
 export interface PalntNameInput {

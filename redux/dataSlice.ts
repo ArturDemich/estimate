@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk, setSortByEmptyThunk } from './thunks';
-import { DataSlice, Label, PlantDetails, Storages } from './stateServiceTypes';
+import { DataSlice, ImagesScreenState, Label, PlantDetails, Storages } from './stateServiceTypes';
 import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 
 
@@ -21,6 +21,7 @@ const initialState: DataSlice = {
   docSent: 0,
   newDetailBarcode: null,
   currentStorage: null,
+  imagesScreenState: null,
 };
 
 
@@ -96,6 +97,12 @@ const dataSlice = createSlice({
     clearSearchPlantName(state) {
       state.searchPlantName = []
     },
+    setImagesScreenState(state, action: PayloadAction<ImagesScreenState>) {
+      state.imagesScreenState = action.payload;
+    },
+    clearImagesScreenState(state) {
+      state.imagesScreenState = null;
+    },
     cleaneSortList(state) {
       state.sortingPlantList = []
     },
@@ -154,5 +161,5 @@ const dataSlice = createSlice({
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
   connectPrinter, setDocComment, setAutoPrint, setPrinterPuty, clearDataState, setDocSent, cleaneDBPlantsName,
-  clearSearchPlantName, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
+  clearSearchPlantName, setImagesScreenState, clearImagesScreenState, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
 export default dataSlice.reducer;
