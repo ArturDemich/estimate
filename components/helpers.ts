@@ -27,3 +27,19 @@ export function getUkrainianPart(name: string): string {
 export const formatDate = (timestamp: string): string => { 
     return format(timestamp, 'dd.MM.y - HH:mm');
 }
+
+export function compareUkrainian(strA: string, strB: string): number {
+    const alphabet = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюя";
+    const getOrder = (c: string) => {
+      const idx = alphabet.indexOf(c.toLowerCase());
+      if (idx >= 0) return idx;
+      return 1000 + c.charCodeAt(0); // не-українські символи в кінці
+    };
+    const len = Math.min(strA.length, strB.length);
+    for (let i = 0; i < len; i++) {
+      const oa = getOrder(strA[i]);
+      const ob = getOrder(strB[i]);
+      if (oa !== ob) return oa - ob;
+    }
+    return strA.length - strB.length;
+  }

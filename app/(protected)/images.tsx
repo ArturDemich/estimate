@@ -42,7 +42,7 @@ import {
   toggleSendViber,
 } from "@/redux/thunks";
 import { clearSearchPlantName, setImagesScreenState, clearImagesScreenState } from "@/redux/dataSlice";
-import { formatDate, getUkrainianPart } from "@/components/helpers";
+import { compareUkrainian, formatDate, getUkrainianPart } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
 import EmptyList from "@/components/ui/EmptyList";
@@ -249,11 +249,13 @@ export default function ImagesScreen() {
       }
       map.get(id)!.items.push(item);
     }
-    return Array.from(map.entries()).map(([productId, { productName, items }]) => ({
+    const list = Array.from(map.entries()).map(([productId, { productName, items }]) => ({
       productId,
       productName,
       items,
     }));
+    list.sort((a, b) => compareUkrainian(getUkrainianPart(a.productName), getUkrainianPart(b.productName)));
+    return list;
   }, [searchPlantName]);
 
   const visibleItemsFiltered = useMemo(() => {
