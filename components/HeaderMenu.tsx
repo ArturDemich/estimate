@@ -83,12 +83,6 @@ export default function HeaderMenu() {
                                     </TouchableVibrate>
                                 )}
 
-                                {/* Logout button - always visible */}
-                                <TouchableVibrate style={styles.menuItem} onPressOut={handleLogout}>
-                                    <MaterialCommunityIcons name="logout" size={24} color="black" />
-                                    <Text style={styles.menuItemText}>Вихід</Text>
-                                </TouchableVibrate>
-
                                 {/* SortingBtn - only on document screen */}
                                 {isDocumentScreen && (
                                     <View style={styles.menuItem}>
@@ -96,6 +90,12 @@ export default function HeaderMenu() {
                                         <Text style={styles.menuItemText}>Сортування</Text>
                                     </View>
                                 )}
+
+                                {/* Logout button - always visible */}
+                                <TouchableVibrate style={styles.menuItem} onPressOut={handleLogout}>
+                                    <MaterialCommunityIcons name="logout" size={24} color="black" />
+                                    <Text style={styles.menuItemText}>Вихід</Text>
+                                </TouchableVibrate>
                             </View>
                         </Pressable>
                     </View>

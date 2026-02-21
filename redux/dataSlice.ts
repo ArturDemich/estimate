@@ -139,6 +139,7 @@ const dataSlice = createSlice({
 
       .addCase(getPlantsNameDB.fulfilled, (state, action) => {
         state.dBPlantsName = action.payload;
+        //state.sortingPlantList = []
        // console.log('dataSlice getPlantsNameDB', state.dBPlantsName )
       })
 

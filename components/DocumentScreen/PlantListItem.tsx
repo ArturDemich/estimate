@@ -47,6 +47,8 @@ export default function PlantListItem() {
     if (sourceList.length > 0) {
       const firstChunk = sourceList.slice(0, itemsPerPage);
       setVisiblePlants(firstChunk);
+    } else {
+      setVisiblePlants([]);
     }
   }, [palnts, sortList]);
 

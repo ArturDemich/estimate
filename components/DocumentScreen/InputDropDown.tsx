@@ -12,7 +12,7 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB, Storages } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
+import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { addPlant } from "@/db/db.native";
 import { getUkrainianPart } from "../helpers";
 import { useRouter } from "expo-router";
@@ -57,8 +57,19 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const [barcode, setBarcode] = useState("");
     const [isSendSearch, setSendSearch] = useState(false);
 
-    const navigateToPlantScreen = async (name: string, id: number | null, productId?: string,) => {
+    const navigateToPlantScreen = async (name: string, id: number | null, productId: string,) => {
         id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
+        try {
+            await dispatch(fetchPhotosByProductId({ productId })).unwrap();
+          } catch (photoError: any) {
+            console.warn("⚠️ Failed to fetch photos:", photoError?.message || photoError);
+            myToast({
+              type: "customError",
+              text1: "Не вдалося отримати наявні фото!",
+              text2: photoError?.message || photoError,
+              visibilityTime: 5000,
+            });
+          }
         router.push({
             pathname: "/plant",
             params: { plantName: name, plantId: id, docId: docId, productId: productId, docName },
