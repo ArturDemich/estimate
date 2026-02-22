@@ -13,7 +13,12 @@ const initialState: PhotoSlice = {
 const photoSlice = createSlice({
   name: 'photos',
   initialState,
-  reducers: {},
+  reducers: {
+    clearImagesPhotoData(state) {
+      state.allPhotosList = null;
+      state.photoList = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchPhotosByProductId.fulfilled, (state, action) => {
@@ -52,5 +57,5 @@ const photoSlice = createSlice({
   },
 });
 
-export const {  } = photoSlice.actions;
+export const { clearImagesPhotoData } = photoSlice.actions;
 export default photoSlice.reducer;

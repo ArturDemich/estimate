@@ -42,6 +42,7 @@ import {
   toggleSendViber,
 } from "@/redux/thunks";
 import { clearSearchPlantName, setImagesScreenState, clearImagesScreenState } from "@/redux/dataSlice";
+import { clearImagesPhotoData } from "@/redux/photoSlice";
 import { compareUkrainian, formatDate, getUkrainianPart } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
@@ -70,7 +71,7 @@ function filterStorages(storages: StorageItem[]) {
 
 type TabId = "add" | "library" | "search";
 
-export default function ImagesScreen() {
+function ImagesScreenContent() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
@@ -161,6 +162,7 @@ export default function ImagesScreen() {
           }));
         }
         dispatch(clearSearchPlantName());
+        dispatch(clearImagesPhotoData());
       };
     }, [dispatch])
   );
@@ -1239,6 +1241,18 @@ export default function ImagesScreen() {
       />
     </View>
   );
+}
+
+export default function ImagesScreen() {
+  const [isFocused, setIsFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, [])
+  );
+  if (!isFocused) return null;
+  return <ImagesScreenContent />;
 }
 
 const styles = StyleSheet.create({
