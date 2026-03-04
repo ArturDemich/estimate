@@ -1,6 +1,6 @@
 import { PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
-import { getPlantsDetailsDB } from "@/redux/thunks";
+import { fetchPhotosByProductId, getPlantsDetailsDB } from "@/redux/thunks";
 import { useLocalSearchParams } from "expo-router";
 import { memo, useEffect, useRef } from "react";
 import { FlatList, View } from "react-native";
@@ -22,9 +22,23 @@ const PlantSizeItem = memo(({ existPlantProps, plantName }: { existPlantProps: P
 
   const loadDBDetails = async () => {
     const plantId = params.plantId;
-    const docId = params.docId
-    await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId: Number(docId) }))
+    const docId = params.docId;
+    if (plantId != null && docId != null) {
+      await dispatch(getPlantsDetailsDB({ palntId: Number(plantId), docId: Number(docId) }));
+    }
   };
+
+  // After refresh: load details and photos from params (state is lost)
+  useEffect(() => {
+    const plantId = params.plantId;
+    const docId = params.docId;
+    if (plantId != null && docId != null) {
+      loadDBDetails();
+    }
+    if (productId) {
+      dispatch(fetchPhotosByProductId({ productId }));
+    }
+  }, [params.plantId, params.docId, productId]);
 
   const handleFocus = (index: number) => {
     if (flatListRef.current) {

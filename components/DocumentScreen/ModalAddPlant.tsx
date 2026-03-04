@@ -22,6 +22,8 @@ export default function ModalAddPlant() {
   const router = useRouter();
   const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
+  const storageId = Array.isArray(params.storageId) ? params.storageId[0] : params.storageId;
+  const storageName = Array.isArray(params.storageName) ? params.storageName[0] : params.storageName;
   const [show, setShow] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
@@ -64,7 +66,7 @@ export default function ModalAddPlant() {
               <View style={styles.btnBlock}>
                 <Text style={styles.textStr}>Пошук</Text>
               </View>
-              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} />
+              <InputDropDown docId={docId} docName={docName} close={() => setShow(false)} handleSetScanning={(val) => handleSetScanning(val)} isScanning={isScanning} storageId={storageId} storageName={storageName} />
               
               <View style={[styles.btnBlock, {justifyContent: 'space-between'}]}>
                 <TouchableVibrate onPress={() => setShow(false)} style={styles.buttonClose}>

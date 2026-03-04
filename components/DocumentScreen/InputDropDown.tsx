@@ -12,8 +12,8 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { PlantItemRespons, PlantNameDB, Storages } from "@/redux/stateServiceTypes";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
-import { addPlant } from "@/db/db.native";
+import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk } from "@/redux/thunks";
+import { addPlant } from "@/db/db";
 import { getUkrainianPart } from "../helpers";
 import { useRouter } from "expo-router";
 import BarcodeScanner from "../BarcodeScanner";
@@ -41,9 +41,11 @@ interface InputDropDownProps {
     close: () => void;
     handleSetScanning: (val: boolean) => void;
     isScanning: boolean;
+    storageId?: string;
+    storageName?: string;
 };
 
-export default function InputDropDown({ docId, close, docName, handleSetScanning, isScanning }: InputDropDownProps) {
+export default function InputDropDown({ docId, close, docName, handleSetScanning, isScanning, storageId: storageIdProp, storageName: storageNameProp }: InputDropDownProps) {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const searchPlantsList = useSelector<RootState, PlantItemRespons[]>((state) => state.data.searchPlantName);
@@ -83,21 +85,38 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         try {
             const existingPlant = checkIfPlantExists(productId);
             if (existingPlant) {
-                navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
+                await navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
             } else {
-                const addingId = await addPlant(Number(docId), { id: productId, name });
-                navigateToPlantScreen(name, addingId, productId);
+                const docIdNum = Number(docId);
+                if (Number.isNaN(docIdNum)) {
+                    myToast({ type: "customError", text1: "Помилка", text2: "Невірний документ" });
+                    return;
+                }
+                const addingId = await addPlant(docIdNum, { id: productId, name });
+                if (addingId == null || addingId <= 0) {
+                    myToast({ type: "customError", text1: "Не вдалося додати рослину", text2: "Спробуйте ще раз" });
+                    return;
+                }
+                await dispatch(getPlantsNameDB({ docId: docIdNum }));
+                await navigateToPlantScreen(name, addingId, productId);
             }
-            close();
         } catch (error) {
             console.error("Error in handleCreatePlant:", error);
+            myToast({ type: "customError", text1: "Помилка", text2: (error as Error)?.message ?? "Не вдалося додати рослину" });
+        } finally {
+            close();
         }
     };
 
+    const effectiveStorageId = currentStorage?.id ?? storageIdProp ?? '';
     const handleSetSearch = async (name?: string, barcode?: string) => {
+        if (!effectiveStorageId) {
+            myToast({ type: "customError", text1: "Оберіть склад", text2: "Склад не визначено (оновите сторінку зі списку документів)", visibilityTime: 5000 });
+            return;
+        }
         setSendSearch(true);
         try {
-            return await dispatch(getPlantsNameThunk({ name: name || '', barcode: barcode || '', storageId: currentStorage?.id || '' })).unwrap();
+            return await dispatch(getPlantsNameThunk({ name: name || '', barcode: barcode || '', storageId: effectiveStorageId })).unwrap();
         } catch (error: any) {
             console.error("Search Error:", error);
             myToast({
@@ -217,7 +236,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                         setInput(text);
                         setDropdownVisible(!!text);
                     }}
-                    onBlur={() => setDropdownVisible(false)}
+                    //onBlur={() => setDropdownVisible(false)}
                     value={input}
                     placeholder={input ? "" : "Введіть назву рослини"}
                     placeholderTextColor="#A0A0AB"

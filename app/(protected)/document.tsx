@@ -1,6 +1,6 @@
 import ModalAddPlant from "@/components/DocumentScreen/ModalAddPlant";
 import PlantListItem from "@/components/DocumentScreen/PlantListItem";
-import { deleteDocument, fetchPlants } from "@/db/db.native";
+import { deleteDocument, fetchPlants } from "@/db/db";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Vibration, View } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -30,10 +30,15 @@ export default function Document() {
     } catch (error) {
       console.error("Error in back navigation check:", error);
     }
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
   };
 
   useBackHandler(() => {
-    handleBackAction().then(() => router.back())
+    handleBackAction();
     return true;
   });
 
@@ -47,7 +52,7 @@ export default function Document() {
             style={{ marginLeft: -5, height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto', }} 
             onPressOut={() => {
               Vibration.vibrate(5);
-              handleBackAction().then(() => router.back());
+              handleBackAction();
             }}
           >
             <Ionicons name="arrow-back" size={24} color="black" />

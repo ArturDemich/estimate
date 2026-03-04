@@ -9,7 +9,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { RootState } from "@/redux/store";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Text, Vibration, View } from "react-native";
+import { Platform, Text, Vibration, View } from "react-native";
 import { useSelector } from "react-redux";
 
 export default function Plant() {
@@ -18,16 +18,22 @@ export default function Plant() {
   const docSent = useSelector<RootState, number>((state) => state.data.docSent);
   const namePlant = Array.isArray(params.plantName) ? getUkrainianPart(params.plantName[0]) : getUkrainianPart(params.plantName);
 
+  const handleBack = () => {
+    Vibration.vibrate(5);
+    if (Platform.OS === "web" && !router.canGoBack()) {
+      router.replace("/");
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View style={{ position: 'relative', height: '100%' }}>
       <Stack.Screen options={{
         headerLeft: () => (
           <TouchableVibrate
             style={{ marginLeft: -5, height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto', }}
-            onPressOut={() => {
-              Vibration.vibrate(5);
-              router.back();
-            }}
+            onPressOut={handleBack}
           >
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>

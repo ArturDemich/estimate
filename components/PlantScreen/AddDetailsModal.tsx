@@ -13,7 +13,7 @@ import {
     View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { addAllCharToDB, addCharacteristic } from "@/db/db.native";
+import { addAllCharToDB, addCharacteristic } from "@/db/db";
 import { PlantDetails, PlantItemRespons, Storages } from "@/redux/stateServiceTypes";
 import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { setExistPlantProps, setNewDetailBarcode } from "@/redux/dataSlice";

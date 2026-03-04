@@ -1,4 +1,4 @@
-import { DocumentResult } from "@/db/db.native";
+import { DocumentResult } from "@/db/db";
 import { myToast } from "@/utils/toastConfig";
 import axios from "axios";
 import { Buffer } from 'buffer';

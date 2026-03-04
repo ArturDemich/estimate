@@ -1,4 +1,4 @@
-import { deleteDocument, fetchDocuments } from "@/db/db.native";
+import { deleteDocument, fetchDocuments } from "@/db/db";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
@@ -39,7 +39,7 @@ export default function DocumentList() {
     await dispatch(cleaneDBPlantsName())
     router.push({
       pathname: "/document",
-      params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at, docSent: item.is_sent },
+      params: { docName: item.storage_name, docId: item.id, docTimeCr: item.created_at, docSent: item.is_sent, storageId: item.storage_id, storageName: item.storage_name },
     });
   };
 

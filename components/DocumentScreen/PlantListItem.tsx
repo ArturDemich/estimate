@@ -1,4 +1,4 @@
-import { deletePlant } from "@/db/db.native";
+import { deletePlant } from "@/db/db";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, setSortByEmptyThunk } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
