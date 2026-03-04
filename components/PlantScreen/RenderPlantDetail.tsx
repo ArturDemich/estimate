@@ -1,10 +1,10 @@
 import { Label, PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
-import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { connect, useDispatch, useSelector } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db.native";
+import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import PressableVibrate from "@/components/ui/PressableVibrate";
 import { setLabelPrint, updateLocalCharacteristic, updateLocalComment, updateLocalFreeQty } from "@/redux/dataSlice";
@@ -345,6 +345,7 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                                     barcode={item.barcode}
                                 />}
 
+                            {Platform.OS !== 'web' && (
                             <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
                                 <TextInput
                                     style={styles.inputPrint}
@@ -366,6 +367,7 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                                         <ActivityIndicator style={{ width: 35 }} size={30} color={'black'} />}
                                 </TouchableVibrate>
                             </View>
+                            )}
                         </View>
                     </PressableVibrate>
                 </Modal>

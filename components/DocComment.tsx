@@ -17,7 +17,7 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { setDocComment } from "@/redux/dataSlice";
 import { myToast } from "@/utils/toastConfig";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
-import { updateDocComment } from "@/db/db.native";
+import { updateDocComment } from "@/db/db";
 import { useLocalSearchParams } from "expo-router";
 
 

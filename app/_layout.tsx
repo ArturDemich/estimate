@@ -3,13 +3,11 @@ import { StatusBar } from "expo-status-bar";
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
 import { useEffect } from "react";
-import { Platform } from "react-native";
-import { initializeDB } from "@/db/db.native";
+import { initializeDB } from "@/db/db";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "@/utils/toastConfig";
 import NewVersionModal from "@/components/NewVersionModal";
-
 
 
 export default function RootLayout() {
@@ -27,9 +25,7 @@ export default function RootLayout() {
     };
 
     prepare();
-    if (Platform.OS !== "web") {
-      initializeDB();
-    }
+    initializeDB();
   }, []);
 
   return (

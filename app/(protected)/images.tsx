@@ -45,6 +45,7 @@ import { clearSearchPlantName, setImagesScreenState, clearImagesScreenState } fr
 import { clearImagesPhotoData } from "@/redux/photoSlice";
 import { compareUkrainian, formatDate, getUkrainianPart } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
+import { toViewableImageUrl } from "@/utils/imageUrl";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
 import EmptyList from "@/components/ui/EmptyList";
 import BarcodeScanner from "@/components/BarcodeScanner";
@@ -655,7 +656,7 @@ function ImagesScreenContent() {
                       librarySelectMode && isSelected && styles.libraryPhotoSelected
                     ]}>
                       <Image
-                        source={{ uri: photo.url }}
+                        source={{ uri: toViewableImageUrl(photo.url) }}
                         style={styles.libraryPhoto}
                         resizeMode="cover"
                       />

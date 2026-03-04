@@ -41,7 +41,10 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "display": "standalone",
+      "themeColor": "#ffffff",
+      "description": "PlantStock — інвентаризація та зображення рослин"
     },
     "plugins": [
       "expo-router",

@@ -4,6 +4,7 @@ import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { MaterialIcons, FontAwesome6 } from '@expo/vector-icons';
 import { PhotoItem } from '@/redux/stateServiceTypes';
 import { formatDate } from '@/components/helpers';
+import { toViewableImageUrl } from '@/utils/imageUrl';
 
 interface ModalAddPhotoProps {
   visible: boolean;
@@ -187,7 +188,7 @@ const PhotoPreview = ({ item }: { item: PhotoItem }) => {
     <View style={styles.photoPreviewContainer}>
       {loading && <ActivityIndicator size="large" color='rgba(255, 111, 97, 1)' style={{ position: 'absolute', zIndex: 1 }} />}
       <Image
-        source={{ uri: item.url }}
+        source={{ uri: toViewableImageUrl(item.url) }}
         style={styles.image}
         resizeMode="cover"
         onError={(e) => console.log('Image load error:', e.nativeEvent)}

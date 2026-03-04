@@ -3,7 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Platform } from "react-native";
 import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes, PalntAllInput, PhotoItem } from "./stateServiceTypes";
 import { RootState } from "./store";
-import { addAllPlantToDB, fetchCharacteristics, fetchPlants } from "@/db/db.native";
+import { addAllPlantToDB, fetchCharacteristics, fetchPlants } from "@/db/db";
 import * as SecureStore from "expo-secure-store";
 import { myToast } from "@/utils/toastConfig";
 

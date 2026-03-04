@@ -1,6 +1,6 @@
 import { DataService } from '@/axios/service';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
-import { getDocumentWithDetails, markDocumentAsSent } from '@/db/db.native';
+import { getDocumentWithDetails, markDocumentAsSent } from "@/db/db";
 import { setDocSent } from '@/redux/dataSlice';
 import { TokenResponse } from '@/redux/stateServiceTypes';
 import { AppDispatch, RootState } from '@/redux/store';

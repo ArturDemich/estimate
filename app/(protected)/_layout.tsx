@@ -2,7 +2,7 @@ import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import HeaderMenu from "@/components/HeaderMenu";
 import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
-import { ActivityIndicator, ImageBackground, View } from "react-native";
+import { ActivityIndicator, ImageBackground, Platform, View } from "react-native";
 import { getNewVersionThunk, loadSendViber, loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -61,10 +61,10 @@ export default function ProtectedLayout() {
       >
         <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderMenu />, headerBackVisible: false }} />
         <Stack.Screen name="document" options={{ title: "Документ #",  }} />
-        <Stack.Screen name="images" options={{ title: "Зображення", headerRight: () => <HeaderMenu />, headerBackVisible: false }} />
+        <Stack.Screen name="images" options={{ title: "Зображення", headerRight: () => <HeaderMenu />, headerBackVisible: false, headerLeft: () => null }} />
         <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => (
           <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-            <BluetoothPrintImg />
+            {Platform.OS !== 'web' && <BluetoothPrintImg />}
             <HeaderMenu />
           </View>
         ), }} />

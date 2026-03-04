@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "expo-router";
-import { addDocument } from "@/db/db.native";
+import { addDocument } from "@/db/db";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
