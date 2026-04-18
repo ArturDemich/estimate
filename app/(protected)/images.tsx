@@ -35,6 +35,7 @@ import {
 } from "@/redux/stateServiceTypes";
 import {
   getPlantsNameThunk,
+  getStoragesThunk,
   fetchPhotosByProductId,
   fetchAllPhotos,
   uploadPhotoThunk,
@@ -322,6 +323,10 @@ function ImagesScreenContent() {
       dispatch(fetchAllPhotos());
     }
   }, [activeTab, dispatch]);
+
+  useEffect(() => {
+    dispatch(getStoragesThunk());
+  }, [dispatch]);
 
   // Рендеринг розмірів після розгортання (дані з allPhotosList, без окремого запиту)
   React.useEffect(() => {
@@ -1329,7 +1334,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingLeft: 12,
     paddingRight: 8,
-    fontSize: 15,
+    fontSize: 16,
     color: "#333",
     backgroundColor: "transparent",
   },
@@ -1606,7 +1611,7 @@ const styles = StyleSheet.create({
   },
   searchBarInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: "#333",
     paddingVertical: 4,
   },

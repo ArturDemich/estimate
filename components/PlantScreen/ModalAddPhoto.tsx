@@ -7,7 +7,7 @@ import { formatDate } from '@/components/helpers';
 import { toViewableImageUrl } from '@/utils/imageUrl';
 
 interface ModalAddPhotoProps {
-  visible: boolean;
+  visible: boolean; 
   onClose: () => void;
   onGallery: () => void;
   onCamera: () => void;
@@ -188,7 +188,7 @@ const PhotoPreview = ({ item }: { item: PhotoItem }) => {
     <View style={styles.photoPreviewContainer}>
       {loading && <ActivityIndicator size="large" color='rgba(255, 111, 97, 1)' style={{ position: 'absolute', zIndex: 1 }} />}
       <Image
-        source={{ uri: toViewableImageUrl(item.url) }}
+        source={{ uri: `https://lh3.googleusercontent.com/d/${item.id}` }}
         style={styles.image}
         resizeMode="cover"
         onError={(e) => console.log('Image load error:', e.nativeEvent)}

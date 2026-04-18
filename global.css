@@ -1,0 +1,4 @@
+/* global.css */
+#root, #root > div, #root > div > div > div > div > div {
+    background-color: transparent !important;
+  }

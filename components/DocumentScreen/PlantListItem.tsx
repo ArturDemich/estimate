@@ -38,8 +38,8 @@ export default function PlantListItem() {
 
   useFocusEffect(
     useCallback(() => {
-      loadDBPlants()
-    }, [])
+      if (docId != null) loadDBPlants();
+    }, [docId])
   );
 
   useEffect(() => {

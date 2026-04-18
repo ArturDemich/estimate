@@ -262,6 +262,10 @@ export const deletePhotoThunk = createAsyncThunk<string[], { ids: string[] }, { 
 export const loadSendViber = createAsyncThunk<boolean>(
   'photos/loadSendViber',
   async () => {
+    if (Platform.OS === 'web') {
+      const value = localStorage.getItem('sendViber');
+      return value === '1';
+    }
     const value = await SecureStore.getItemAsync('sendViber');
     return value === '1';
   }
@@ -272,6 +276,10 @@ export const toggleSendViber = createAsyncThunk<boolean, void, { state: RootStat
   async (_, { getState }) => {
     const current = getState().photos.sendViber;
     const newValue = !current;
+    if (Platform.OS === 'web') {
+      localStorage.setItem('sendViber', newValue ? '1' : '0');
+      return newValue;
+    }
     await SecureStore.setItemAsync('sendViber', newValue ? '1' : '0');
     return newValue;
   }

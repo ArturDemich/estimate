@@ -325,6 +325,7 @@ const styles = StyleSheet.create({
         paddingRight: 45,
         backgroundColor: "#f6f6f6",
         marginBottom: 5,
+        fontSize: 16,
     },
     clearButton: {
         position: "absolute",

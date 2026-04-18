@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "@/utils/toastConfig";
 import NewVersionModal from "@/components/NewVersionModal";
+import '../global.css';
 
 
 export default function RootLayout() {
@@ -15,17 +16,15 @@ export default function RootLayout() {
     const prepare = async () => {
       try {
         await SplashScreen.preventAutoHideAsync();
-
-        setTimeout(async () => {
-          await SplashScreen.hideAsync();
-        }, 2000);
+        await initializeDB();
+        await SplashScreen.hideAsync();
       } catch (error) {
-        console.error("Failed to hide splash screen:", error);
+        console.error("Failed to prepare app:", error);
+        await SplashScreen.hideAsync();
       }
     };
 
     prepare();
-    initializeDB();
   }, []);
 
   return (

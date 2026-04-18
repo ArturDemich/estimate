@@ -30,19 +30,22 @@ interface AddDetailsProps {
     plantDBid: string;
     docId: string;
     productId: string;
-};
+    plantName?: string;
+}
 
-export default function AddDetailsModal({ plantDBid, docId, productId }: AddDetailsProps) {
+export default function AddDetailsModal({ plantDBid, docId, productId, plantName }: AddDetailsProps) {
     const dispatch = useDispatch<AppDispatch>();
     const palntDetails = useSelector<RootState, PlantDetails[]>((state) => state.data.dBPlantDetails);
     const existPlantProps = useSelector<RootState, PlantDetails | null>((state) => state.data.existPlantProps);
     const newDetailBarcode = useSelector<RootState, string | null>((state) => state.data.newDetailBarcode);
+    const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
     const newAddPlants: PlantItemRespons[] = useSelector((state: RootState) => state.data.searchPlantName);
     const dataPlant = newAddPlants?.length > 0 ? newAddPlants.filter((item) => item.product.id === productId).sort((a, b) => (b.qty > 0 ? 1 : 0) - (a.qty > 0 ? 1 : 0)) : [];
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
     const [manual, setManual] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
+    const [loadingSizes, setLoadingSizes] = useState(false);
 
     const handleClose = () => {
         setShow(false);
@@ -163,7 +166,22 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                 addDetails(Number(plantDBid), newAddPlants[0])
             }
         }
-    }, [palntDetails])
+    }, [palntDetails]);
+
+    useEffect(() => {
+        if (!show || dataPlant.length > 0 || !plantName || !currentStorage?.id) return;
+        const loadSizes = async () => {
+            setLoadingSizes(true);
+            try {
+                await dispatch(getPlantsNameThunk({ name: plantName, barcode: "", storageId: currentStorage.id })).unwrap();
+            } catch (e) {
+                console.warn("AddDetailsModal: failed to load sizes", e);
+            } finally {
+                setLoadingSizes(false);
+            }
+        };
+        loadSizes();
+    }, [show, plantName, currentStorage?.id, dispatch]);
 
     useEffect(() => {
         const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
@@ -246,7 +264,11 @@ export default function AddDetailsModal({ plantDBid, docId, productId }: AddDeta
                                     )}
                                     style={{ width: '100%' }}
                                     keyboardShouldPersistTaps="handled"
-                                    ListEmptyComponent={<EmptyList text="Співпадінь не знайдено" />}
+                                    ListEmptyComponent={
+                                        loadingSizes
+                                            ? <View style={styles.emptyList}><ActivityIndicator size="large" color="rgba(106, 159, 53, 0.95)" /></View>
+                                            : <EmptyList text="Співпадінь не знайдено" />
+                                    }
                                 />
                             </>
                         }
@@ -427,6 +449,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#f6f6f6",
         marginBottom: 5,
         marginTop: 5,
+        fontSize: 16,
     },
     clearButton: {
         position: "absolute",
@@ -465,5 +488,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         padding: 4,
         alignSelf: 'center'
+    },
+    emptyList: {
+        paddingVertical: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

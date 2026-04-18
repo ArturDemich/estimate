@@ -46,7 +46,7 @@ export default function ProtectedLayout() {
         height: "100%",
         position: "absolute",
       }}
-      blurRadius={15}
+      blurRadius={10}
     >
       <Stack
         screenOptions={{

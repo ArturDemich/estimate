@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         padding: 3,
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         justifyContent: 'space-between'
     },
     menuItem: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
         borderColor: "#ccc",
         borderRadius: 5,
         paddingHorizontal: 8,
-        fontSize: 14,
+        fontSize: 16,
         minWidth: 50,
         maxWidth: 100,
         minHeight: 30,
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
         borderColor: "#ccc",
         borderRadius: 5,
         paddingHorizontal: 8,
-        fontSize: 14,
+        fontSize: 16,
         minHeight: 30,
         width: '100%',
         paddingVertical: 0,
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
         borderColor: "#ccc",
         borderRadius: 5,
         paddingHorizontal: 4,
-        fontSize: 14,
+        fontSize: 16,
         width: 50,
         height: 40,
         paddingVertical: 0,
@@ -597,5 +597,6 @@ const styles = StyleSheet.create({
         shadowColor: 'rgba(0, 0, 0, 0.9)',
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         width: 35,
+        alignSelf: 'flex-end',
     }
 });

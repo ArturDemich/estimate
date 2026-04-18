@@ -305,6 +305,27 @@ export async function fetchDocuments(): Promise<any[]> {
   }
 }
 
+export interface DocumentMeta {
+  comment: string;
+  is_sent: number;
+  storage_id: string;
+  storage_name: string;
+}
+
+export async function getDocumentById(docId: number): Promise<DocumentMeta | null> {
+  const db = await openDB();
+  try {
+    const rows = await db.getAllAsync<DocumentMeta>(
+      "SELECT comment, is_sent, storage_id, storage_name FROM documents WHERE id = ?",
+      docId
+    );
+    return rows[0] ?? null;
+  } catch (error) {
+    console.error("Error getDocumentById:", error);
+    return null;
+  }
+}
+
 export async function fetchPlants(documentId: number): Promise<any[]> {
   const db = await openDB();
   console.log('fetchPlants__', documentId)

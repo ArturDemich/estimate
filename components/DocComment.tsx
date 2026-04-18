@@ -33,6 +33,10 @@ const DocComment = () => {
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
 
+    useEffect(() => {
+        setInput(docComment);
+    }, [docComment]);
+
     const handleSaveComment = async () => {
         await updateDocComment(Number(docId), input)
             .then(() => {
@@ -227,6 +231,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(251, 248, 240, 0.98)",
         marginBottom: 10,
         marginTop: 10,
+        fontSize: 16,
     },
     clearButton: {
         position: "absolute",

@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#f6f6f6",
         marginBottom: 5,
         marginTop: 5,
+        fontSize: 16,
     },
     clearButton: {
         position: "absolute",
