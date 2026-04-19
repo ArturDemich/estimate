@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, memo, useEffect, useRef } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -42,11 +42,10 @@ import {
   deletePhotoThunk,
   toggleSendViber,
 } from "@/redux/thunks";
-import { clearSearchPlantName, setImagesScreenState, clearImagesScreenState } from "@/redux/dataSlice";
+import { clearSearchPlantName, setImagesScreenState } from "@/redux/dataSlice";
 import { clearImagesPhotoData } from "@/redux/photoSlice";
 import { compareUkrainian, formatDate, getUkrainianPart } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
-import { toViewableImageUrl } from "@/utils/imageUrl";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
 import EmptyList from "@/components/ui/EmptyList";
 import BarcodeScanner from "@/components/BarcodeScanner";
