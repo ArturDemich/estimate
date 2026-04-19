@@ -36,9 +36,15 @@ local.properties
 
 # node.js
 #
-/node_modules
+
 npm-debug.log
 yarn-error.log
+dist/
+node_modules/
+.expo/
+web-build/
+
+
 
 # fastlane
 #
