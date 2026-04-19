@@ -40,8 +40,23 @@
     },
     "web": {
       "bundler": "metro",
+      "meta": [
+        {
+          "name": "apple-mobile-web-app-capable",
+          "content": "yes"
+        },
+        {
+          "name": "apple-mobile-web-app-status-bar-style",
+          "content": "black-translucent"
+        },
+        {
+          "name": "apple-mobile-web-app-title",
+          "content": "Plantstock"
+        }
+      ],
       "output": "static",
-      "favicon": "./assets/images/favicon.png",
+      "favicon": "./assets/favicon.png",
+      "appleTouchIcon": "./public/apple-touch-icon.png",
       "display": "standalone",
       "themeColor": "#ffffff",
       "description": "PlantStock — інвентаризація та зображення рослин"

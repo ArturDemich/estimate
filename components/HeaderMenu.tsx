@@ -9,6 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import SortingBtn from "@/components/SortingBtn";
 import { clearDataState } from "@/redux/dataSlice";
+import AppVersion from "./AppVersion";
 
 export default function HeaderMenu() {
     const dispatch = useDispatch<AppDispatch>();
@@ -97,9 +98,12 @@ export default function HeaderMenu() {
                                     <Text style={styles.menuItemText}>Вихід</Text>
                                 </TouchableVibrate>
                             </View>
+                            <AppVersion styles={verStyle} />
                         </Pressable>
+                        
                     </View>
                 </TouchableWithoutFeedback>
+                
             </Modal>
         </>
     );
@@ -113,7 +117,8 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         shadowColor: 'rgba(143, 143, 143, 0.9)',
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        padding: 5
+        padding: 5,
+        marginRight: 10
     },
     modalOverlay: {
         flex: 1,
@@ -157,3 +162,11 @@ const styles = StyleSheet.create({
         color: 'black',
     },
 })
+
+const verStyle = {
+    position: "absolute",
+    bottom: 1,
+    right: 7,
+    fontSize: 10,
+    zIndex: 0
+  }

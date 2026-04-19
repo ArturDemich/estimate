@@ -1,19 +1,18 @@
-import { Label, PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
+import { PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
-import { ActivityIndicator, Alert, Modal, Platform, StyleSheet, Text, TextInput, View } from "react-native";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
+import { connect, useDispatch } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import PressableVibrate from "@/components/ui/PressableVibrate";
-import { setLabelPrint, updateLocalCharacteristic, updateLocalComment, updateLocalFreeQty } from "@/redux/dataSlice";
+import { updateLocalCharacteristic, updateLocalComment, updateLocalFreeQty } from "@/redux/dataSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { myToast } from "@/utils/toastConfig";
 import { newSIZE } from "@/types/typesScreen";
 import * as Clipboard from 'expo-clipboard';
 import { FontAwesome6 } from "@expo/vector-icons";
-import PrinterPuty from "@/components/Printer/PrinterPuty";
 import AddPhoto from "@/components/PlantScreen/AddPhoto";
 
 interface RenderPlantDetailProps {
@@ -29,12 +28,10 @@ interface RenderPlantDetailProps {
     photosUrl: PhotoItem[] | null;
 };
 
-const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
-    const labelState = useSelector<RootState, Label | null>((state) => state.data.labelData);
-    const [printLoding, setPrintLoding] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
     const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
@@ -55,14 +52,6 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
         setShowMenu(val)
     };
 
-    const handlSetPrintQty = (qty: string) => {
-        const parsedQty = Number(qty);
-        if (parsedQty < 0) {
-            return
-        }
-        setPrintQty(parsedQty);
-    }
-
     const handleUpdCurrentQty = async (currentQty: number) => {
         if (currentQty < 0) {
             return
@@ -75,14 +64,13 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
         }
     };
 
-    const handleUpdFreeQty = async (freeQty: number, print: boolean) => {
+    const handleUpdFreeQty = async (freeQty: number) => {
         if (freeQty < 0) {
             return
         }
         const success = await updateDBFreeQty(item.id, freeQty);
         if (success) {
             dispatch(updateLocalFreeQty({ id: item.id, freeQty: freeQty }));
-            print && handlePrint()
         } else {
             console.error("Failed to update characteristic in DB.");
         }
@@ -156,27 +144,6 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
         )
         handleShowMenu(false);
     };
-
-    const handlePrint = async () => {
-        const isBluetoothOn = await PrinterPuty.isBluetoothEnabled();
-        if (!isBluetoothOn) {
-            myToast({ type: "customError", text1: `Bluetooth не включений!`, text2: 'Включіть Bluetooth в налаштуваннях телефона.', visibilityTime: 4000 })
-            return;
-        }
-        const label: Label = {
-            product_name: plantName,
-            characteristic_name: item.characteristic_name,
-            labelItem_id: item.characteristic_id + numRow,
-            storageName: docName,
-            barcode: item.barcode,
-            qtyPrint: Number(printQty)
-        }
-        dispatch(setLabelPrint(label))
-    };
-
-    useEffect(() => {
-        setPrintLoding(labelState?.labelItem_id === item.characteristic_id + numRow);
-    }, [labelState]);
 
     useEffect(() => {
         if (isEditing) {
@@ -263,7 +230,7 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
 
 
                     <View style={{ flexDirection: 'row', gap: 8, }}>
-                        <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdFreeQty(item.freeQty - 1, false)}>
+                        <TouchableVibrate style={styles.btnMinus} onPress={() => handleUpdFreeQty(item.freeQty - 1)}>
                             <Text style={styles.btnPlusText}>-1</Text>
                         </TouchableVibrate>
                         {isEditingFree ? (
@@ -274,7 +241,7 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                                 onChangeText={handleChangeFreeQty}
                                 keyboardType="numeric"
                                 selectTextOnFocus={item.freeQty === 0}
-                                onBlur={() => handleUpdFreeQty(item.freeQty, false).then(() => setIsEditingFree(false))}
+                                onBlur={() => handleUpdFreeQty(item.freeQty).then(() => setIsEditingFree(false))}
                             />
                         ) : (
                             <View style={{ alignSelf: 'flex-end', minWidth: 47 }}>
@@ -291,11 +258,8 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
 
                             </View>
                         )}
-                        <TouchableVibrate disabled={printLoding} style={styles.btnPlus} onPress={() => handleUpdFreeQty(item.freeQty + 1, autoPrint)}>
-                            {!printLoding ?
-                                <Text style={styles.btnPlusText}>+1</Text>
-                                :
-                                <ActivityIndicator size={30} color={'white'} />}
+                        <TouchableVibrate style={styles.btnPlus} onPress={() => handleUpdFreeQty(item.freeQty + 1)}>
+                            <Text style={styles.btnPlusText}>+1</Text>
                         </TouchableVibrate>
                     </View>
 
@@ -344,30 +308,6 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
                                     plantSize={item.characteristic_name}
                                     barcode={item.barcode}
                                 />}
-
-                            {Platform.OS !== 'web' && (
-                            <View style={{ flexDirection: 'row', backgroundColor: '#ffffffdb', gap: 4, padding: 5, borderRadius: 5 }}>
-                                <TextInput
-                                    style={styles.inputPrint}
-                                    value={printQty.toString()}
-                                    onChangeText={handlSetPrintQty}
-                                    selectTextOnFocus={printQty === 1}
-                                    keyboardType="numeric"
-                                />
-
-                                <TouchableVibrate
-                                    style={styles.menuItem}
-                                    onPress={handlePrint}
-                                    disabled={printLoding}
-                                >
-                                    <MaterialIcons name="print" size={24} color="black" />
-                                    {!printLoding ?
-                                        <Text style={styles.menuText}>Друк</Text>
-                                        :
-                                        <ActivityIndicator style={{ width: 35 }} size={30} color={'black'} />}
-                                </TouchableVibrate>
-                            </View>
-                            )}
                         </View>
                     </PressableVibrate>
                 </Modal>
@@ -378,7 +318,6 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
 
 const mapStateToProps = (state: RootState) => ({
     existPlantProps: state.data.existPlantProps,
-    autoPrint: state.data.autoPrint,
 })
 
 export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, nextProps) => {
@@ -389,7 +328,6 @@ export default connect(mapStateToProps)(memo(RenderPlantDetail, (prevProps, next
         prevProps.item.plantComment === nextProps.item.plantComment &&
         prevProps.existPlantProps?.characteristic_id === nextProps.existPlantProps?.characteristic_id &&
         prevProps.item.characteristic_id === nextProps.item.characteristic_id &&
-        prevProps.autoPrint === nextProps.autoPrint &&
         prevProps.photosUrl === nextProps.photosUrl
     );
 }));

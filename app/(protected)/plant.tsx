@@ -3,7 +3,6 @@ import { getUkrainianPart } from "@/components/helpers";
 import AddDetailsModal from "@/components/PlantScreen/AddDetailsModal";
 import { LockScreen } from "@/components/PlantScreen/LockScreen";
 import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
-import LabelImgShot from "@/components/Printer/LabelImgShot";
 import Title from "@/components/TitleScreen";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { AppDispatch, RootState } from "@/redux/store";
@@ -51,7 +50,7 @@ export default function Plant() {
       <Stack.Screen options={{
         headerLeft: () => (
           <TouchableVibrate
-            style={{ height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto' }}
+            style={{ height: 45, width: 50, marginLeft: 10, justifyContent: 'center', pointerEvents: 'auto' }}
             onPressOut={handleBack}
           >
             <Ionicons name="arrow-back" size={24} color="black" />
@@ -67,7 +66,6 @@ export default function Plant() {
           productId={params.productId && params.productId.toString()}
           plantName={plantNameFull}
         />
-      <LabelImgShot />
       <LockScreen />
       <DocComment />
     </View>

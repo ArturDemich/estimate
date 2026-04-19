@@ -65,7 +65,7 @@ export default function Document() {
         headerBackVisible: false,
         headerLeft: () => (
           <TouchableVibrate 
-            style={{ height: 45, width: 50, justifyContent: 'center', pointerEvents: 'auto' }} 
+            style={{ height: 45, width: 50, marginLeft: 10, justifyContent: 'center', pointerEvents: 'auto' }} 
             onPressOut={() => {
               Vibration.vibrate(5);
               handleBackAction();

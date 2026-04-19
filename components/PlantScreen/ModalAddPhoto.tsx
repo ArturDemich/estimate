@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Platform } from 'react-native';
+import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Platform, GestureResponderEvent } from 'react-native';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { MaterialIcons, FontAwesome6 } from '@expo/vector-icons';
 import { PhotoItem } from '@/redux/stateServiceTypes';
@@ -39,7 +39,8 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
   const [selectMode, setSelectMode] = useState(false);
   const showBtnCameraAndroid14Less = Platform.OS === 'android' && Platform.Version <= 34 ? true : false;
 
-  const handleLongPress = (url: PhotoItem) => {
+  const handleLongPress = (url: PhotoItem, e: GestureResponderEvent) => {
+    e.preventDefault()
     setSelectMode(true);
     setSelected([url]);
   };
@@ -95,6 +96,7 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
             <Text style={styles.title}>Актуальні фото: {photosUrl?.length}</Text>
           )}
 
+          <View style={{overflow: 'hidden',width: '100%',}}>
           <FlatList
             data={reversed}
             keyExtractor={(item) => item.id}
@@ -103,7 +105,7 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
             style={{ marginVertical: 1, paddingBottom: 10 }}
             renderItem={({ item }) => (
               <TouchableVibrate
-                onLongPress={() => handleLongPress(item)}
+                onLongPress={(e) => handleLongPress(item, e)}
                 onPress={() => handleSelect(item)}
                 activeOpacity={0.7}
                 style={[
@@ -132,6 +134,7 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
                 )
             }
           />
+          </View>
           <View style={styles.footerRow}>
             {deleting || selectMode && selected.length > 0 ? (
               <>
@@ -284,6 +287,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     overflow: 'hidden',
     position: 'relative',
+    userSelect: 'none',
   },
   selectedImage: {
     borderColor: 'rgba(255, 111, 97, 1)',

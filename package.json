@@ -1,19 +1,12 @@
 {
-  "name": "plantstock",
+  "name": "PlantStock",
   "main": "expo-router/entry",
   "version": "1.4.0",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "jest --watchAll",
-    "lint": "expo lint",
-    "preBuildA": "npx expo prebuild --platform android",
-    "nativeStart": "npx expo run:android",
-    "easBuildA": "eas build --profile preview --platform android",
-    "postinstall": "patch-package"
+    "build": "npx expo export --platform web"
   },
   "jest": {
     "preset": "jest-expo"
@@ -23,8 +16,6 @@
     "react-native": "0.76.6"
   },
   "dependencies": {
-    "@charles-johnson/react-native-ping": "^1.2.15",
-    "@conodene/react-native-thermal-receipt-printer-image-qr": "github:herksaw/react-native-thermal-receipt-printer-image-qr",
     "@expo/vector-icons": "^14.0.0",
     "@react-native-community/hooks": "^3.0.0",
     "@react-navigation/native": "^6.0.2",
@@ -38,11 +29,9 @@
     "expo-image-manipulator": "~13.0.6",
     "expo-image-picker": "~16.0.6",
     "expo-linking": "~7.0.5",
-    "expo-media-library": "~17.0.6",
     "expo-router": "~4.0.16",
     "expo-secure-store": "^14.0.1",
     "expo-splash-screen": "~0.29.20",
-    "expo-sqlite": "^15.0.6",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -55,7 +44,6 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "^15.12.1",
     "react-native-toast-message": "^2.2.1",
-    "react-native-view-shot": "^4.0.3",
     "react-redux": "^9.2.0",
     "sql.js": "^1.14.0"
   },

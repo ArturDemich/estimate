@@ -89,23 +89,16 @@ const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: Plan
 
   const handleDelete = (e: GestureResponderEvent, item: PlantNameDB) => {
     e.preventDefault()
-    Alert.alert(
-      'Увага!',
-      'Бажаєте видалити рослину і всі її записи?',
-      [
-        {
-          text: 'Скасувати',
-          style: 'cancel'
-        },
-        {
-          text: 'Видалити',
-          onPress: async () => {
-            await deletePlant(docId, item.id)
-            loadDB();
-          },
-        }
-      ]
-    )
+    myToast({
+      type: 'confirmToast',
+      text1: getUkrainianPart(item.product_name),
+      text2: `Бажаєте видалити і всі її записи?`,
+      autoHideFalse: false,
+      onConfirmFunc: async () => {
+        await deletePlant(docId, item.id)
+        loadDB();
+      },
+    })
   }
 
   const toPlantDetails = async (product_name: string, plantDBid: number, productId: string) => {

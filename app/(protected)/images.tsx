@@ -128,6 +128,8 @@ function ImagesScreenContent() {
   const hasRestoredStateRef = useRef(false);
   const imagesScreenStateRef = useRef(imagesScreenState);
 
+  const [photosLoading, setPhotosLoading] = useState(true);
+
   useEffect(() => {
     imagesScreenStateRef.current = imagesScreenState;
   }, [imagesScreenState]);
@@ -167,6 +169,25 @@ function ImagesScreenContent() {
         dispatch(clearImagesPhotoData());
       };
     }, [dispatch])
+  );
+
+  const switchTab = useCallback(
+    (nextTab: TabId, options?: { openSearch?: boolean; clearSearch?: boolean }) => {
+      if (activeTab !== nextTab) {
+        setPreviousTab(activeTab);
+      }
+
+      setActiveTab(nextTab);
+
+      if (options?.openSearch !== undefined) {
+        setShowSearchBar(options.openSearch);
+      }
+
+      if (options?.clearSearch) {
+        setSearchTabQuery("");
+      }
+    },
+    [activeTab]
   );
 
   const toggleProductExpand = useCallback((productId: string) => {
@@ -319,11 +340,20 @@ function ImagesScreenContent() {
   }, [groupedLibraryPhotos, activeTab, searchTabQuery]);
 
   React.useEffect(() => {
-    if (activeTab === "library") {
-      dispatch(fetchAllPhotos());
-    }
+    if (activeTab !== "library") return;
+    let mounted = true;
+    const load = async () => {
+      setPhotosLoading(true);
+      try {
+        await dispatch(fetchAllPhotos()).unwrap();
+      } finally {
+        if (mounted) setPhotosLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
   }, [activeTab, dispatch]);
-
+ 
   useEffect(() => {
     dispatch(getStoragesThunk());
   }, [dispatch]);
@@ -341,14 +371,22 @@ function ImagesScreenContent() {
     }
   }, [expandedProductId]);
 
-  const handlePlantPress = useCallback(
-    (item: PlantItemRespons) => {
+  const handlePlantPress = useCallback(async (item: PlantItemRespons) => {
+    setPhotosLoading(true);
+    try {
+      await dispatch(fetchPhotosByProductId({ productId: item.product.id })).unwrap();
       setSelectedPlant(item);
       setPhotoModalVisible(true);
-      dispatch(fetchPhotosByProductId({ productId: item.product.id }));
-    },
-    [dispatch]
-  );
+    } catch (e) {
+      myToast({
+        type: "customError",
+        text1: "Не вдалося завантажити фото",
+        text2: String((e as Error)?.message ?? e),
+      });
+    } finally {
+      setPhotosLoading(false);
+    }
+  }, [dispatch]);
 
   const pickFromGallery = useCallback(async () => {
     if (!selectedPlant) return;
@@ -661,7 +699,7 @@ function ImagesScreenContent() {
                       librarySelectMode && isSelected && styles.libraryPhotoSelected
                     ]}>
                       <Image
-                        source={{ uri: toViewableImageUrl(photo.url) }}
+                         source={{ uri: `https://lh3.googleusercontent.com/d/${photo.id}` }}
                         style={styles.libraryPhoto}
                         resizeMode="cover"
                       />
@@ -817,16 +855,16 @@ function ImagesScreenContent() {
           {renderProductHeader(item.productId, item.productName, item.items.length)}
           {expanded && (
             <View style={styles.sizesBlock}>
-                <FlatList
-                  data={item.items}
-                  keyExtractor={(sizeItem) => sizeItem.characteristic.id}
-                  renderItem={({ item: sizeItem }) => renderSizeRow(sizeItem, productId)}
-                  scrollEnabled={false}
-                  removeClippedSubviews={Platform.OS === "android"}
-                  windowSize={3}
-                  maxToRenderPerBatch={10}
-                  initialNumToRender={10}
-                />
+              <FlatList
+                data={item.items}
+                keyExtractor={(sizeItem) => sizeItem.characteristic.id}
+                renderItem={({ item: sizeItem }) => renderSizeRow(sizeItem, productId)}
+                scrollEnabled={false}
+                removeClippedSubviews={Platform.OS === "android"}
+                windowSize={3}
+                maxToRenderPerBatch={10}
+                initialNumToRender={10}
+              />
             </View>
           )}
         </View>
@@ -896,8 +934,8 @@ function ImagesScreenContent() {
               <Switch
                 value={inStockOnly}
                 onValueChange={setInStockOnly}
-                disabled={!input.trim()}
-                trackColor={{ false: "#ccc", true: "rgba(106, 159, 53, 0.6)" }}
+                //disabled={!input.trim()}
+                trackColor={{ false: "rgba(73, 73, 73, 0.6)", true: "rgba(106, 159, 53, 0.6)" }}
                 thumbColor={inStockOnly ? "rgb(106, 159, 53)" : "#f4f3f4"}
               />
             </View>
@@ -926,16 +964,26 @@ function ImagesScreenContent() {
       {activeTab === "library" && (
         <>
           <FlatList
-            data={groupedLibraryPhotos}
+            data={photosLoading ? [] : groupedLibraryPhotos}
             keyExtractor={(item) => item.plantName}
             renderItem={renderLibrarySection}
             contentContainerStyle={[
               styles.listContent,
-              librarySelectMode && { paddingBottom: 120 }
+              librarySelectMode && { paddingBottom: 120, flex: 1 }
             ]}
-            ListEmptyComponent={<EmptyList text="Немає завантажених фото" />}
+            ListEmptyComponent={
+              photosLoading ?
+                <View style={styles.loaderScreen}>
+                  <ActivityIndicator size="large" color="rgb(255, 255, 255)" />
+                  <Text style={styles.loaderText}>Завантаження фото...</Text>
+                </View> :
+                <EmptyList text="Немає завантажених фото" />
+            }
             removeClippedSubviews={Platform.OS === "android"}
             windowSize={6}
+            updateCellsBatchingPeriod={120}
+            initialNumToRender={4} 
+            onEndReachedThreshold={0.2}
           />
           {librarySelectMode && (
             <View
@@ -1122,12 +1170,7 @@ function ImagesScreenContent() {
           <View style={styles.tabBarPill}>
             <TouchableVibrate
               style={[styles.tab, activeTab === "add" && styles.tabActive]}
-              onPress={() => {
-                if (activeTab !== "add") {
-                  setPreviousTab(activeTab);
-                }
-                setActiveTab("add");
-              }}
+              onPress={() => switchTab("add")}
             >
               <MaterialIcons
                 name="add-photo-alternate"
@@ -1140,12 +1183,7 @@ function ImagesScreenContent() {
             </TouchableVibrate>
             <TouchableVibrate
               style={[styles.tab, activeTab === "library" && styles.tabActive]}
-              onPress={() => {
-                if (activeTab !== "library") {
-                  setPreviousTab(activeTab);
-                }
-                setActiveTab("library");
-              }}
+              onPress={() => switchTab("library")}
             >
               <MaterialIcons
                 name="photo-library"
@@ -1158,13 +1196,7 @@ function ImagesScreenContent() {
             </TouchableVibrate>
             <TouchableVibrate
               style={[styles.tab, activeTab === "search" && styles.tabActive]}
-              onPress={() => {
-                if (activeTab !== "search") {
-                  setPreviousTab(activeTab);
-                }
-                setActiveTab("search");
-                setShowSearchBar(true);
-              }}
+              onPress={() => switchTab("search", { openSearch: true })}
             >
               <MaterialIcons
                 name="search"
@@ -1357,12 +1389,14 @@ const styles = StyleSheet.create({
     flex: 0.4,
   },
   inStockRowDisabled: {
-    opacity: 0.5,
+    opacity: 0.3,
+    pointerEvents: 'none'
   },
   listContent: {
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 100,
+    height: '100%'
   },
   productCard: {
     marginBottom: 10,
@@ -1744,4 +1778,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  loaderScreen: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    //backgroundColor: "rgba(255,255,255,0.5)",
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: 22,
+    color: "rgb(243, 243, 243)",
+    textShadowColor: "rgb(120, 120, 120)",
+    textShadowRadius: 5
+  },
+
 });

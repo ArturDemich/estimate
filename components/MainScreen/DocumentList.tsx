@@ -1,7 +1,7 @@
 import { deleteDocument, fetchDocuments } from "@/db/db";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
+import { FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
 import { formatDate } from "@/components/helpers";
@@ -10,6 +10,7 @@ import { cleaneDBPlantsName, setCurrentStoage, setDocComment, setDocSent } from 
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { UploadStatus } from "@/types/typesScreen";
+import { myToast } from "@/utils/toastConfig";
 
 
 interface DocumentList {
@@ -45,20 +46,16 @@ export default function DocumentList() {
 
   const handleDelete = (e: GestureResponderEvent, item: DocumentList) => {
     e.preventDefault()
-    Alert.alert(
-      'Увага!',
-      'Бажаєте видалити документ і всі його записи?',
-      [{
-          text: 'Скасувати',
-          style: 'cancel'
-        },
-        {
-          text: 'Видалити',
-          onPress: async () => {
-            await deleteDocument(item.id)
-            loadDocuments();
-          },
-        }])
+    myToast({
+      type: 'confirmToast',
+      text1: item.storage_name,
+      text2: 'Бажаєте видалити документ і всі його записи?',
+      autoHideFalse: false,
+      onConfirmFunc: async () => {
+        await deleteDocument(item.id)
+        loadDocuments();
+      },
+    })
   };
 
   useFocusEffect(
@@ -113,7 +110,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 7,
-    opacity: 0.9
+    opacity: 0.9,
+    userSelect: 'none',
+    //@ts-ignore
+    WebkitTouchCallout: 'none',
+    WebkitUserSelect: 'none'
   },
   itemRow: {
     flexDirection: "row",

@@ -77,8 +77,8 @@ const DocComment = () => {
                 }}>
                     <View style={styles.centeredView}>
                         <Pressable style={[styles.modalView,]} onPress={() => {
-                            Keyboard.dismiss();
-                            isInputFocused && setIsInputFocused(false)
+                           // Keyboard.dismiss();
+                            //isInputFocused && setIsInputFocused(false)
                         }}>
                             <View style={styles.titleBlock}>
                                 <Text style={styles.modalTitle}>Коментар до документа:</Text>
