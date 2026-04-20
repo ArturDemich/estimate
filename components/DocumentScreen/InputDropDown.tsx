@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     FlatList,
     StyleSheet,
@@ -168,7 +168,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         return groupedPlants;
     };
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => {
             setKeyboardOpen(true);
         });

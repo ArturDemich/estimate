@@ -59,7 +59,7 @@ export default function ProtectedLayout() {
           animation: 'slide_from_right'
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderMenu />, headerBackVisible: false }} />
+        <Stack.Screen name="index" options={{ title: "Всі документи", headerRight: () => <HeaderMenu />, headerBackVisible: false, headerLeft: () => null  }} />
         <Stack.Screen name="document" options={{ title: "Документ #",  }} />
         <Stack.Screen name="images" options={{ title: "Зображення", headerRight: () => <HeaderMenu />, headerBackVisible: false, headerLeft: () => null }} />
         <Stack.Screen name="plant" options={{ title: "Рослина", headerRight: () => (

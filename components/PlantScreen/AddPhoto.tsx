@@ -100,12 +100,13 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
         { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP }
       );
 
+      
+
       const formData = new FormData();
-      formData.append('file', {
-        uri: optimized.uri,
-        name: 'photo.webp',
-        type: 'image/webp',
-      } as any);
+      const response = await fetch(optimized.uri);
+      const blob = await response.blob();
+      
+      formData.append('file', blob, 'photo.webp'); 
       formData.append('plantName', plantName);
       formData.append('plantSize', plantSize);
       formData.append('barcode', barcode);
@@ -170,3 +171,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
 });
+
+

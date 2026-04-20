@@ -7,6 +7,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
 
         {/* PWA теги */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -24,25 +26,33 @@ export default function Root({ children }: { children: React.ReactNode }) {
 }
 
 const rootStyles = `
-  /* Головний фікс висоти */
   html, body, #root {
-    height: 100%;
+    height: 100dvh;
+    height: -webkit-fill-available; 
     display: flex;
     flex-direction: column;
+    margin: 0;
+    padding: 0;
+    /* ФОН МАЄ БУТИ ТУТ */
+    background-color: transparent !important; 
   }
 
-  /* Той самий перший div після root, про який ти казав */
   #root > div {
     flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100% !important;
+    /* Це дозволяє контенту (тексту, кнопкам) не зливатися зі смужкою, 
+       але фон при цьому заповнить весь екран */
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Видаляємо зайві відступи */
   body {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    /* Щоб не було "стрибків" при скролі */
+    position: fixed; 
+    width: 100%;
   }
 `;
