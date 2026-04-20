@@ -34,7 +34,7 @@ export default function LoginScreen() {
       }}
     >
       <View style={styles.container}>
-        <View style={styles.formContainer}>
+        <View id="login-form" style={[styles.formContainer]}>
           <Text style={styles.title}>Авторизація</Text>
           <TextInput
             placeholder="Логін"
@@ -88,11 +88,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     shadowColor: "rgba(255, 255, 255, 0.1)",
     shadowOpacity: 0.15,
-    //shadowOffset: { width: 0, height: 4 },
-    //shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
     elevation: 1
   },
   title: {
