@@ -175,24 +175,34 @@ export class DataService {
     try {
       const response = await axios.post(uploadPhoto_URL,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data', 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 10000, }
+        { headers: { 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 15000, }
       );
 
       return response.data;
     } catch (error: any) {
       console.error("Error in service uploadPhoto:", error);
-      let errorMessage = "Failed to upload photo";
+      
+      let message = "Помилка завантаження";
+      
       if (error.response?.data) {
-        errorMessage =
-          typeof error.response.data === "string"
-            ? error.response.data
-            : JSON.stringify(error.response.data);
-      } else if (error.message) {
-        errorMessage = error.message;
+        const serverData = error.response.data;
+        // Якщо сервер повернув масив помилок (NestJS style)
+        if (Array.isArray(serverData.message)) {
+          message = serverData.message.join(", ");
+        } else if (typeof serverData.message === 'string') {
+          message = serverData.message;
+        } else {
+          message = JSON.stringify(serverData);
+        }
+      } else {
+        message = error.message;
       }
-      throw new Error(errorMessage);
+      throw new Error(message);
     }
   }
+
+  
+  
 
   static async getPhotosByProductId(productId: string) {
     try {

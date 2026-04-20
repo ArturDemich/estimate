@@ -103,10 +103,13 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
       
 
       const formData = new FormData();
+
       const response = await fetch(optimized.uri);
-      const blob = await response.blob();
+      const rawBlob = await response.blob();
+      const webpBlob = new Blob([rawBlob], { type: 'image/webp' });
       
-      formData.append('file', blob, 'photo.webp'); 
+      formData.append('file', webpBlob, 'photo.webp'); 
+
       formData.append('plantName', plantName);
       formData.append('plantSize', plantSize);
       formData.append('barcode', barcode);
@@ -125,8 +128,8 @@ const AddPhoto = ({ plantName, plantSize, barcode, productId, photosUrl, sizeId 
     } catch (error: any) {
       console.error('❌ Upload error:', error);
       setUploading(false);
-      const message = typeof error === 'string' ? error : error?.message || JSON.stringify(error);
-      myToast({ type: "customError", text1: `Помилка завантаження фото!`, text2: message, visibilityTime: 4000 })
+      const errorMessage = error?.response?.data?.message || error?.message || "Невідома помилка";
+      myToast({ type: "customError", text1: `Помилка завантаження фото!`, text2: String(errorMessage) , visibilityTime: 4000 })
     }
   };
 
