@@ -10,7 +10,8 @@ const encodedToken = Buffer.from(tok).toString('base64');
 
 const TO_EXCEL_URL = 'https://generate-excel-git-main-arturdemichs-projects.vercel.app/api/jsonToExcel';
 const NEW_V_URL = 'https://digger-3000-default-rtdb.europe-west1.firebasedatabase.app/newVersionStock.json?print=pretty';
-const API = 'http://194.42.195.241:41001/UTP/hs/api';
+//const API = 'http://194.42.195.241:41001/UTP/hs/api'; // oridgen API
+const API = '/api-proxy';  // for Vercel proxy
 const TOKEN_URL = `${API}/getToken`;
 const getStorages_URL = `${API}/getStorages`;
 const getPlants_URL = `${API}/getProductInfo`;
