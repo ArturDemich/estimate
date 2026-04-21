@@ -3,7 +3,7 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, setSortByEmptyThunk } from "@/redux/thunks";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { getUkrainianPart } from "../helpers";
 import { PlantNameDB, Storages } from "@/redux/stateServiceTypes";
@@ -110,7 +110,7 @@ const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: Plan
         console.warn("⚠️ Failed to fetch photos:", photoError?.message || photoError);
         myToast({
           type: "customError",
-          text1: "Не вдалося отримати наявні фото!",
+          text1: "⚠️ Не вдалося отримати наявні фото!",
           text2: photoError?.message || photoError,
           visibilityTime: 5000,
         });

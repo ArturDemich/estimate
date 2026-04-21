@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   containerNBTN: {
     elevation: 5,
     position: "absolute",
-    right: 12,
+    right: 25,
     bottom: 15,
   },
   buttonStep: {

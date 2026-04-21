@@ -1,7 +1,7 @@
 import { PhotoItem, PlantDetails, PlantDetailsResponse } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { memo, useEffect, useRef, useState, } from "react";
-import { Alert, Modal, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { connect, useDispatch } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { deleteCharacteristic, updateCharacteristic, updateDBFreeQty, updateDBPlantComment } from "@/db/db";
@@ -14,6 +14,7 @@ import { newSIZE } from "@/types/typesScreen";
 import * as Clipboard from 'expo-clipboard';
 import { FontAwesome6 } from "@expo/vector-icons";
 import AddPhoto from "@/components/PlantScreen/AddPhoto";
+import { getUkrainianPart } from "../helpers";
 
 interface RenderPlantDetailProps {
     item: PlantDetailsResponse;
@@ -23,7 +24,6 @@ interface RenderPlantDetailProps {
     flatListRef?: () => void;
     plantName: string;
     docName: string;
-    autoPrint: boolean;
     productId: string;
     photosUrl: PhotoItem[] | null;
 };
@@ -79,7 +79,11 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
     const handleChangeQty = async (currentQty: string) => {
         const parsedQty = Number(currentQty);
         if ((item.currentQty === 0 && parsedQty < item.currentQty) || Number.isNaN(parsedQty)) {
-            Alert.alert(`Значення не може бути відємним ${currentQty}`);
+            myToast({
+                type: "customError",
+                text1: `⚠️ Значення не може бути відємним ${currentQty}`,
+                visibilityTime: 3000,
+              });
             setIsEditing(false);
             return
         }
@@ -89,7 +93,11 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
     const handleChangeFreeQty = async (freeQty: string) => {
         const parsedQty = Number(freeQty);
         if ((item.freeQty === 0 && parsedQty < item.freeQty) || Number.isNaN(parsedQty)) {
-            Alert.alert(`Значення не може бути відємним ${freeQty}`);
+            myToast({
+                type: "customError",
+                text1: `⚠️ Значення не може бути відємним ${freeQty}`,
+                visibilityTime: 3000,
+              });
             setIsEditing(false);
             return
         }
@@ -124,24 +132,16 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
     };
 
     const handleDelete = async () => {
-        Alert.alert(
-            'Увага!',
-            'Бажаєте видалити характеристику?',
-            [
-                {
-                    text: 'Скасувати',
-                    style: 'cancel'
-                },
-                {
-                    text: 'Видалити',
-                    onPress: async () => {
-                        console.log('handleDelete Alert', item.id)
-                        await deleteCharacteristic(item.id);
-                        await reloadList()
-                    },
-                }
-            ]
-        )
+        myToast({
+            type: 'confirmToast',
+            text1: getUkrainianPart(item.characteristic_name),
+            text2: `Бажаєте видалити і всі її записи?`,
+            autoHideFalse: false,
+            onConfirmFunc: async () => {
+              await deleteCharacteristic(item.id);
+              await reloadList()
+            },
+          })
         handleShowMenu(false);
     };
 

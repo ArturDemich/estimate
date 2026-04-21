@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     position: "absolute",
     right: 12,
-    bottom: 10,
+    bottom: 30,
   },
   buttonStep: {
     borderRadius: 12,

@@ -67,7 +67,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
             console.warn("⚠️ Failed to fetch photos:", photoError?.message || photoError);
             myToast({
               type: "customError",
-              text1: "Не вдалося отримати наявні фото!",
+              text1: "⚠️ Не вдалося отримати наявні фото!",
               text2: photoError?.message || photoError,
               visibilityTime: 5000,
             });

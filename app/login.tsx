@@ -24,15 +24,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/globoza.jpg")}
-      style={{
-        flex: 1,
-        width: "100%",
-        height: "100%",
-        position: "absolute",
-      }}
-    >
+    
       <View style={styles.container}>
         <View id="login-form" style={[styles.formContainer]}>
           <Text style={styles.title}>Авторизація</Text>
@@ -53,6 +45,7 @@ export default function LoginScreen() {
             <ActivityIndicator size="large" color="#ff6f61" />
           ) : (
             <TouchableVibrate
+              id="login-btn"
               disabled={username === '' || password === ''}
               style={[styles.button, (username === '' || password === '') && styles.lock]}
               onPress={handleLogin}
@@ -65,7 +58,7 @@ export default function LoginScreen() {
           <AppVersion />
         </View>
       </View>
-    </ImageBackground>
+   
   );
 }
 

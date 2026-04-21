@@ -3,6 +3,23 @@
     background-color: transparent !important;
   }
 
+  body::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: env(safe-area-inset-bottom);
+  
+    background: url('/assets/globoza.jpg') no-repeat center bottom;
+    background-size: cover;
+    pointer-events: none;
+  }
+
   #root #login-form {
     background-color: rgba(255, 255, 255, 0.70) !important;
+  }
+
+  #root #login-btn {
+    background-color: rgba(255, 111, 97, 1) !important;
   }

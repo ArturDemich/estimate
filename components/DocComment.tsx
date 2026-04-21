@@ -128,8 +128,8 @@ const styles = StyleSheet.create({
     containerNBTN: {
         elevation: 5,
         position: "absolute",
-        left: 12,
-        bottom: 15,
+        left: 30,
+        bottom: 20,
     },
     buttonStep: {
         borderRadius: 8,
@@ -171,9 +171,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(243, 255, 231, 0.95)',
         borderTopLeftRadius: 5,
         borderTopRightRadius: 5,
-        paddingLeft: 10,
-        paddingRight: 10,
-        paddingBottom: 5,
+        paddingLeft: 15,
+        paddingRight: 15,
+        paddingBottom: 10,
         paddingTop: 5,
         shadowColor: "rgba(255, 255, 255, 0.4)",
         shadowOffset: {

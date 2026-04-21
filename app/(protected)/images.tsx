@@ -13,7 +13,6 @@ import {
   Keyboard,
   ActivityIndicator,
   InteractionManager,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
@@ -352,7 +351,7 @@ function ImagesScreenContent() {
     load();
     return () => { mounted = false; };
   }, [activeTab, dispatch]);
- 
+
   useEffect(() => {
     dispatch(getStoragesThunk());
   }, [dispatch]);
@@ -442,11 +441,11 @@ function ImagesScreenContent() {
           { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP }
         );
         const formData = new FormData();
-        formData.append("file", {
-          uri: optimized.uri,
-          name: "photo.webp",
-          type: "image/webp",
-        } as any);
+        const response = await fetch(optimized.uri);
+        const rawBlob = await response.blob();
+        const webpBlob = new Blob([rawBlob], { type: 'image/webp' });
+
+        formData.append('file', webpBlob, 'photo.webp');
         formData.append("plantName", selectedPlant.product.name);
         formData.append("plantSize", selectedPlant.characteristic.name);
         formData.append("barcode", selectedPlant.barcode ?? "");
@@ -616,41 +615,37 @@ function ImagesScreenContent() {
 
   const handleLibraryDelete = useCallback(() => {
     if (selectedLibraryPhotos.length === 0) return;
-    Alert.alert(
-      "Видалити фото?",
-      `Ви впевнені, що хочете видалити ${selectedLibraryPhotos.length} фото?`,
-      [
-        { text: "Скасувати", style: "cancel" },
-        {
-          text: "Видалити",
-          style: "destructive",
-          onPress: async () => {
-            setLibraryDeleting(true);
-            try {
-              const ids = selectedLibraryPhotos.map((p) => p.id);
-              await dispatch(deletePhotoThunk({ ids })).unwrap();
-              myToast({
-                type: "customToast",
-                text1: `Видалено ${selectedLibraryPhotos.length} фото!`,
-                visibilityTime: 3000,
-              });
-              setSelectedLibraryPhotos([]);
-              setLibrarySelectMode(false);
-              dispatch(fetchAllPhotos());
-            } catch (error: any) {
-              myToast({
-                type: "customError",
-                text1: "Помилка видалення фото!",
-                text2: error?.message || String(error),
-                visibilityTime: 4000,
-              });
-            } finally {
-              setLibraryDeleting(false);
-            }
-          },
-        },
-      ]
-    );
+    myToast({
+      type: 'confirmToast',
+      text1: "Видалити фото?",
+      text2: `Ви впевнені, що хочете видалити ${selectedLibraryPhotos.length} фото?`,
+      autoHideFalse: false,
+      onConfirmFunc: async () => {
+        setLibraryDeleting(true);
+        try {
+          const ids = selectedLibraryPhotos.map((p) => p.id);
+          await dispatch(deletePhotoThunk({ ids })).unwrap();
+          myToast({
+            type: "customToast",
+            text1: `Видалено ${selectedLibraryPhotos.length} фото!`,
+            visibilityTime: 3000,
+          });
+          setSelectedLibraryPhotos([]);
+          setLibrarySelectMode(false);
+          dispatch(fetchAllPhotos());
+        } catch (error: any) {
+          myToast({
+            type: "customError",
+            text1: "Помилка видалення фото!",
+            text2: error?.message || String(error),
+            visibilityTime: 4000,
+          });
+        } finally {
+          setLibraryDeleting(false);
+        }
+      },
+    })
+   
   }, [selectedLibraryPhotos, dispatch]);
 
   useEffect(() => {
@@ -698,7 +693,7 @@ function ImagesScreenContent() {
                       librarySelectMode && isSelected && styles.libraryPhotoSelected
                     ]}>
                       <Image
-                         source={{ uri: `https://lh3.googleusercontent.com/d/${photo.id}` }}
+                        source={{ uri: `https://lh3.googleusercontent.com/d/${photo.id}` }}
                         style={styles.libraryPhoto}
                         resizeMode="cover"
                       />
@@ -981,7 +976,7 @@ function ImagesScreenContent() {
             removeClippedSubviews={Platform.OS === "android"}
             windowSize={6}
             updateCellsBatchingPeriod={120}
-            initialNumToRender={4} 
+            initialNumToRender={4}
             onEndReachedThreshold={0.2}
           />
           {librarySelectMode && (
@@ -1395,7 +1390,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 100,
-    height: '100%'
+    height: 'auto'
   },
   productCard: {
     marginBottom: 10,
