@@ -33,6 +33,7 @@ const rootStyles = `
     background: url('/globoza.jpg') no-repeat center center;
     background-size: cover;
     background-attachment: fixed;
+    overscroll-behavior: none; 
   }
 
   #root {
@@ -47,3 +48,4 @@ const rootStyles = `
     flex-direction: column;
   }
 `;
+

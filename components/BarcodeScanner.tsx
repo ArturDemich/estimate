@@ -41,7 +41,8 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
     <View style={styles.container}>
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-        barcodeScannerSettings={{ barcodeTypes: ["qr", "ean13", "upc_a"] }}
+        barcodeScannerSettings={{ barcodeTypes: ["qr", "ean13", "upc_a", "code128"] }}
+        facing="back" 
         style={styles.camera}
       />
       <View style={styles.overlay}>
@@ -52,6 +53,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

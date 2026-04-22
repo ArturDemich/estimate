@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Platform, GestureResponderEvent } from 'react-native';
+import { Modal, View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Platform } from 'react-native';
 import TouchableVibrate from '@/components/ui/TouchableVibrate';
 import { MaterialIcons, FontAwesome6 } from '@expo/vector-icons';
 import { PhotoItem } from '@/redux/stateServiceTypes';
 import { formatDate } from '@/components/helpers';
-import { toViewableImageUrl } from '@/utils/imageUrl';
 
 interface ModalAddPhotoProps {
-  visible: boolean; 
+  visible: boolean;
   onClose: () => void;
   onGallery: () => void;
   onCamera: () => void;
@@ -38,12 +37,6 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
   const [selected, setSelected] = useState<PhotoItem[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const showBtnCameraAndroid14Less = Platform.OS === 'android' && Platform.Version <= 34 ? true : false;
-
-  const handleLongPress = (url: PhotoItem, e: GestureResponderEvent) => {
-    e.preventDefault()
-    setSelectMode(true);
-    setSelected([url]);
-  };
 
   const handleSelect = (url: PhotoItem) => {
     if (!selectMode) return;
@@ -96,47 +89,46 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
             <Text style={styles.title}>Актуальні фото: {photosUrl?.length}</Text>
           )}
 
-          <View style={{overflow: 'hidden',width: '100%',}}>
-          <FlatList
-            data={reversed}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={true}
-            style={{ marginVertical: 1, paddingBottom: 10 }}
-            renderItem={({ item }) => (
-              <TouchableVibrate
-                onLongPress={(e) => handleLongPress(item, e)}
-                onPress={() => handleSelect(item)}
-                activeOpacity={0.7}
-                style={[
-                  styles.imageWrapper,
-                  selectMode && selected.includes(item) && styles.selectedImage,
-                ]}
-              >
-                <PhotoPreview item={item} />
-                {selectMode && selected.includes(item) && (
-                  <View style={styles.checkIcon}>
-                    <FontAwesome6 name="check" size={18} color="#fff" />
-                  </View>
-                )}
-              </TouchableVibrate>
-            )}
-            ListEmptyComponent={
-              uploading ? <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" /> :
-                photosUrl === null ? (
-                  <View style={styles.emptyPhoto}>
-                    <Text style={{ color: '#FF6F61', fontSize: 16 }}>Помилка завантаження фото</Text>
-                  </View>
-                ) : (
-                  <View style={styles.emptyPhoto}>
-                    <Text style={{ color: '#A0A0AB', fontSize: 16 }}>Фото ще не додано</Text>
-                  </View>
-                )
-            }
-          />
+          <View style={{ overflow: 'hidden', width: '100%', }}>
+            <FlatList
+              data={reversed}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={true}
+              style={{ marginVertical: 1, paddingBottom: 10 }}
+              renderItem={({ item }) => (
+                <TouchableVibrate
+                  onPress={() => handleSelect(item)}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.imageWrapper,
+                    selectMode && selected.includes(item) && styles.selectedImage,
+                  ]}
+                >
+                  <PhotoPreview item={item} />
+                  {selectMode && selected.includes(item) && (
+                    <View style={styles.checkIcon}>
+                      <FontAwesome6 name="check" size={18} color="#fff" />
+                    </View>
+                  )}
+                </TouchableVibrate>
+              )}
+              ListEmptyComponent={
+                uploading ? <ActivityIndicator size="large" color="rgba(255, 111, 97, 1)" /> :
+                  photosUrl === null ? (
+                    <View style={styles.emptyPhoto}>
+                      <Text style={{ color: '#FF6F61', fontSize: 16 }}>Помилка завантаження фото</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.emptyPhoto}>
+                      <Text style={{ color: '#A0A0AB', fontSize: 16 }}>Фото ще не додано</Text>
+                    </View>
+                  )
+              }
+            />
           </View>
           <View style={styles.footerRow}>
-            {deleting || selectMode && selected.length > 0 ? (
+            {deleting || selectMode ? (
               <>
                 <TouchableVibrate style={styles.deleteBtn} onPress={handleDelete} disabled={deleting}>
                   {deleting ? <ActivityIndicator size="small" color="#fff" /> :
@@ -157,6 +149,11 @@ const ModalAddPhoto: React.FC<ModalAddPhotoProps> = ({
                   <MaterialIcons name="close" size={22} color="#fff" />
                 </TouchableVibrate>
                 <View style={styles.btnRow}>
+                  {!selectMode &&
+                    <TouchableVibrate style={[styles.deleteBtn, { paddingHorizontal: 4, marginRight: 15 }]} onPress={() => setSelectMode(true)}>
+                      <MaterialIcons name="delete" size={22} color="#fff" />
+                    </TouchableVibrate>
+                  }
                   <TouchableVibrate style={styles.viberBtn} onPress={() => setSendViber()} >
                     {sendViber ? <FontAwesome6 name="check-square" size={27} color='rgba(168, 80, 249, 0.95)' /> :
                       <FontAwesome6 name="square" size={27} color='black' />}

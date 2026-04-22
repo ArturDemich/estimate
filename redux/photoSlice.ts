@@ -6,7 +6,8 @@ import { PhotoSlice } from './stateServiceTypes';
 const initialState: PhotoSlice = {
     photoList: [],
     allPhotosList: null,
-    sendViber: true
+    sendViber: true,
+    selectDeletePhoto: false
   };
   
 
@@ -17,6 +18,9 @@ const photoSlice = createSlice({
     clearImagesPhotoData(state) {
       state.allPhotosList = null;
       state.photoList = [];
+    },
+    setSelectDeletePhoto(state, action) {
+      state.selectDeletePhoto = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -57,5 +61,5 @@ const photoSlice = createSlice({
   },
 });
 
-export const { clearImagesPhotoData } = photoSlice.actions;
+export const { clearImagesPhotoData, setSelectDeletePhoto } = photoSlice.actions;
 export default photoSlice.reducer;

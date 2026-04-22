@@ -4,7 +4,7 @@ import { PlantNameDB } from "@/redux/stateServiceTypes";
 import { AppDispatch, RootState } from "@/redux/store";
 import { setSortByEmptyThunk } from "@/redux/thunks";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet, Vibration } from "react-native";
+import { StyleSheet, Text, Vibration } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
 
@@ -26,6 +26,7 @@ const SortingBtn = () => {
                 <MaterialCommunityIcons name="sort-reverse-variant" size={24} color="rgba(255, 111, 97, 1)" />
                 :
                 <MaterialCommunityIcons name="sort" size={24} color="black" />}
+                <Text style={styles.menuItemText}>Сортування</Text>
         </TouchableVibrate>
     )
 };
@@ -35,14 +36,13 @@ export default SortingBtn;
 
 const styles = StyleSheet.create({
     openBtn: {
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: "rgba(31, 30, 30, 0.06)",
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
         borderRadius: 5,
-        shadowColor: 'rgba(143, 143, 143, 0.9)',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        paddingVertical: 2,
-        paddingHorizontal: 3,
-        alignSelf: 'center'
+    },
+    menuItemText: {
+        fontSize: 16,
+        color: 'black',
     },
 })

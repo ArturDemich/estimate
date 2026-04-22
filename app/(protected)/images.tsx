@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
-import { useFocusEffect } from "expo-router";
+import { Stack, useFocusEffect } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { EvilIcons, Foundation } from "@expo/vector-icons";
@@ -42,12 +42,14 @@ import {
   toggleSendViber,
 } from "@/redux/thunks";
 import { clearSearchPlantName, setImagesScreenState } from "@/redux/dataSlice";
-import { clearImagesPhotoData } from "@/redux/photoSlice";
+import { clearImagesPhotoData, setSelectDeletePhoto } from "@/redux/photoSlice";
 import { compareUkrainian, formatDate, getUkrainianPart } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
 import EmptyList from "@/components/ui/EmptyList";
 import BarcodeScanner from "@/components/BarcodeScanner";
+import HeaderMenu from "@/components/HeaderMenu";
+import DeletePhotoOn from "@/components/DeletePhotoOn";
 
 type StorageItem = { id: string; id_parent?: string; is_group?: boolean; name: string };
 
@@ -113,7 +115,7 @@ function ImagesScreenContent() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [readyToRenderSizes, setReadyToRenderSizes] = useState<string | null>(null);
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
-  const [librarySelectMode, setLibrarySelectMode] = useState(false);
+  const librarySelectMode = useSelector((state: RootState) => state.photos.selectDeletePhoto)
   const [selectedLibraryPhotos, setSelectedLibraryPhotos] = useState<PhotoItem[]>([]);
   const [libraryDeleting, setLibraryDeleting] = useState(false);
 
@@ -577,8 +579,7 @@ function ImagesScreenContent() {
     [storages, storageExpanded, toggleStorageExpand]
   );
 
-  const handleLibraryPhotoLongPress = useCallback((photo: PhotoItem) => {
-    setLibrarySelectMode(true);
+  const handleLibraryPhotoLongPress = useCallback( async (photo: PhotoItem) => {
     setSelectedLibraryPhotos([photo]);
   }, []);
 
@@ -631,7 +632,7 @@ function ImagesScreenContent() {
             visibilityTime: 3000,
           });
           setSelectedLibraryPhotos([]);
-          setLibrarySelectMode(false);
+          dispatch(setSelectDeletePhoto(false))
           dispatch(fetchAllPhotos());
         } catch (error: any) {
           myToast({
@@ -645,12 +646,12 @@ function ImagesScreenContent() {
         }
       },
     })
-   
+
   }, [selectedLibraryPhotos, dispatch]);
 
   useEffect(() => {
     if (selectedLibraryPhotos.length === 0) {
-      setLibrarySelectMode(false);
+      dispatch(setSelectDeletePhoto(false))
     }
   }, [selectedLibraryPhotos]);
 
@@ -849,16 +850,11 @@ function ImagesScreenContent() {
           {renderProductHeader(item.productId, item.productName, item.items.length)}
           {expanded && (
             <View style={styles.sizesBlock}>
-              <FlatList
-                data={item.items}
-                keyExtractor={(sizeItem) => sizeItem.characteristic.id}
-                renderItem={({ item: sizeItem }) => renderSizeRow(sizeItem, productId)}
-                scrollEnabled={false}
-                removeClippedSubviews={Platform.OS === "android"}
-                windowSize={3}
-                maxToRenderPerBatch={10}
-                initialNumToRender={10}
-              />
+              {item.items.map((sizeItem) => (
+                <React.Fragment key={sizeItem.characteristic.id}>
+                  {renderSizeRow(sizeItem, productId)}
+                </React.Fragment>
+              ))}
             </View>
           )}
         </View>
@@ -867,8 +863,17 @@ function ImagesScreenContent() {
     [expandedProductId, readyToRenderSizes, renderProductHeader, renderSizeRow]
   );
 
+
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+           {(activeTab === "library" || previousTab === "library") &&  <DeletePhotoOn />}
+            <HeaderMenu />
+          </View>
+        ),
+      }} />
       {/* Top filters — only for Add tab */}
       {activeTab === "add" && (
         <View style={styles.filterBlock}>
@@ -1060,7 +1065,7 @@ function ImagesScreenContent() {
                     setSearchTabQuery("");
                     // Очищаємо виділення і виходимо з режиму виділення
                     setSelectedLibraryPhotos([]);
-                    setLibrarySelectMode(false);
+                    dispatch(setSelectDeletePhoto(false))
                   }}
                 >
                   <Text style={styles.searchBarClose}>Закрити</Text>

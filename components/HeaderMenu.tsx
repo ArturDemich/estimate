@@ -45,7 +45,7 @@ export default function HeaderMenu() {
 
     return (
         <>
-            <TouchableVibrate style={styles.menuBtn} onPressOut={handleMenuPress}>
+            <TouchableVibrate style={styles.menuBtn} onPress={handleMenuPress}>
                 <MaterialCommunityIcons name="menu" size={24} color="black" />
             </TouchableVibrate>
 
@@ -87,8 +87,7 @@ export default function HeaderMenu() {
                                 {/* SortingBtn - only on document screen */}
                                 {isDocumentScreen && (
                                     <View style={styles.menuItem}>
-                                        <SortingBtn />
-                                        <Text style={styles.menuItemText}>Сортування</Text>
+                                        <SortingBtn /> 
                                     </View>
                                 )}
 

@@ -7,7 +7,6 @@ import { logout } from "@/redux/authSlice";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as SecureStore from "expo-secure-store";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
-import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
 import { clearDataState } from "@/redux/dataSlice";
 
 
@@ -34,7 +33,6 @@ export default function HeaderLogout() {
 
     return (
         <View style={{ flexDirection: 'row', gap: 15, }}>
-            {isPlantScreen && <BluetoothPrintImg />}
             <TouchableVibrate style={styles.openBtn} onPressOut={handleLogout} >
                 <MaterialCommunityIcons name="logout" size={24} color="black" />
             </TouchableVibrate>

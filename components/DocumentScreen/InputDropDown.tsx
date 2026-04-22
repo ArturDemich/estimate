@@ -58,9 +58,9 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
     const [barcode, setBarcode] = useState("");
     const [isSendSearch, setSendSearch] = useState(false);
+    const [loadingId, setLoadingId] = useState<string | null>(null);
 
-    const navigateToPlantScreen = async (name: string, id: number | null, productId: string,) => {
-        id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
+    const checkPhotoFromServer = async (productId: string) => {
         try {
             await dispatch(fetchPhotosByProductId({ productId })).unwrap();
           } catch (photoError: any) {
@@ -72,6 +72,9 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
               visibilityTime: 5000,
             });
           }
+    };
+    const navigateToPlantScreen = async (name: string, id: number | null, productId: string,) => {
+        id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
         router.push({
             pathname: "/plant",
             params: { plantName: name, plantId: id, docId: docId, productId: productId, docName },
@@ -85,6 +88,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
         try {
             const existingPlant = checkIfPlantExists(productId);
             if (existingPlant) {
+                await checkPhotoFromServer(existingPlant.productId);
                 await navigateToPlantScreen(name, existingPlant.existId, existingPlant.productId);
             } else {
                 const docIdNum = Number(docId);
@@ -98,6 +102,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                     return;
                 }
                 await dispatch(getPlantsNameDB({ docId: docIdNum }));
+                await checkPhotoFromServer(productId);
                 await navigateToPlantScreen(name, addingId, productId);
             }
         } catch (error) {
@@ -278,10 +283,17 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                                 <TouchableVibrate
                                     style={styles.pressItemList}
                                     onPress={async () => {
-                                        await handleCreatePlant(item.product.name, item.product.id)
-                                    }}
+                                        if (loadingId) return;
+                                        setLoadingId(item.product.id);
+                                        try {
+                                          await handleCreatePlant(item.product.name, item.product.id);
+                                        } finally {
+                                          setLoadingId(null);
+                                        }
+                                      }}
                                 >
                                     <Text style={styles.pressItemName}>{getUkrainianPart(item.product.name)}</Text>
+                                    {loadingId === item.product.id && <ActivityIndicator size="small" color="#ff6f61" />}
                                     <Text style={styles.pressItemCount}>{item.sumQty} шт</Text>
                                 </TouchableVibrate>
                             )}
