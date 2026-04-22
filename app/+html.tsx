@@ -7,6 +7,9 @@ export default function Root({ children }: { children: React.ReactNode }) {
                 <meta charSet="utf-8" />
                 <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
                 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+                <title>Plant-Stock</title>
+                <meta property="og:title" content="Plant-Stock" />
+                <meta name="twitter:title" content="Plant-Stock" />
 
 
                 {/* PWA теги */}
