@@ -33,7 +33,7 @@ export default function HeaderLogout() {
 
     return (
         <View style={{ flexDirection: 'row', gap: 15, }}>
-            <TouchableVibrate style={styles.openBtn} onPressOut={handleLogout} >
+            <TouchableVibrate style={styles.openBtn} onPress={handleLogout} >
                 <MaterialCommunityIcons name="logout" size={24} color="black" />
             </TouchableVibrate>
         </View>

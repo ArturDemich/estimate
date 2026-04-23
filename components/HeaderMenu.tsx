@@ -92,7 +92,7 @@ export default function HeaderMenu() {
                                 )}
 
                                 {/* Logout button - always visible */}
-                                <TouchableVibrate style={styles.menuItem} onPressOut={handleLogout}>
+                                <TouchableVibrate style={styles.menuItem} onPress={handleLogout}>
                                     <MaterialCommunityIcons name="logout" size={24} color="black" />
                                     <Text style={styles.menuItemText}>Вихід</Text>
                                 </TouchableVibrate>
