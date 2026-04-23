@@ -21,7 +21,7 @@ const SortingBtn = () => {
     };
 
     return (
-        <TouchableVibrate style={styles.openBtn} onPressOut={sortData}>
+        <TouchableVibrate style={styles.openBtn} onPress={sortData}>
             {sortList.length > 0 ?
                 <MaterialCommunityIcons name="sort-reverse-variant" size={24} color="rgba(255, 111, 97, 1)" />
                 :
