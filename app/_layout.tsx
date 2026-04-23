@@ -9,6 +9,7 @@ import Toast from "react-native-toast-message";
 import { toastConfig } from "@/utils/toastConfig";
 import NewVersionModal from "@/components/NewVersionModal";
 import '../global.css';
+import { Platform } from "react-native";
 
 
 export default function RootLayout() {
@@ -25,6 +26,17 @@ export default function RootLayout() {
     };
 
     prepare();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === "web" && "serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then(() => console.log("✅ SW registered"))
+          .catch((err) => console.log("❌ SW error", err));
+      });
+    }
   }, []);
 
   return (
