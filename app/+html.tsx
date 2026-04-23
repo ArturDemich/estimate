@@ -9,7 +9,15 @@ export default function Root({ children }: { children: React.ReactNode }) {
                 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
                 <title>Plant-Stock</title>
                 <meta property="og:title" content="Plant-Stock" />
+                <meta property="og:description" content="Фотографуй, рахуй - рослини інвентаризуй!" />
+                <meta property="og:url" content="https://estimate-web-ten.vercel.app/" />
+                <meta property="og:site_name" content="Plant-Stock"/>
+                <meta property="og:image" content="https://estimate-web-ten.vercel.app/web-app-manifest-512x512.png" />
                 <meta name="twitter:title" content="Plant-Stock" />
+                <meta name="twitter:card" content="summary" />
+                <meta property="twitter:description" content="Фотографуй, рахуй - рослини інвентаризуй!" />
+                <meta property="og:type" content="website" />
+                
 
 
                 {/* PWA теги */}
