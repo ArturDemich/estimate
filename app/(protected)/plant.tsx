@@ -51,7 +51,7 @@ export default function Plant() {
         headerLeft: () => (
           <TouchableVibrate
             style={{ height: 45, width: 50, marginLeft: 10, justifyContent: 'center', pointerEvents: 'auto' }}
-            onPressOut={handleBack}
+            onPress={handleBack}
           >
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableVibrate>

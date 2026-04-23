@@ -73,9 +73,9 @@ export default function ModalAddPlant() {
                   <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                 </TouchableVibrate>
                 <DownloadListBtn docId={Number(docId)} closeModal={() => setShow(false)}/>
-                <TouchableVibrate style={styles.barcodeBtn} onPress={() => handleSetScanning(true)}>
+                {/* <TouchableVibrate style={styles.barcodeBtn} onPress={() => handleSetScanning(true)}>
                   <MaterialCommunityIcons name="barcode-scan" size={28} color="black" />
-                </TouchableVibrate>
+                </TouchableVibrate> */}
               </View>
 
             </View>

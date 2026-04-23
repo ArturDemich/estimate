@@ -869,7 +869,7 @@ function ImagesScreenContent() {
       <Stack.Screen options={{
         headerRight: () => (
           <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-           {(activeTab === "library" || previousTab === "library") &&  <DeletePhotoOn />}
+           {(activeTab === "search" && previousTab !== 'add' || activeTab === "library" ) && groupedLibraryPhotos.length > 0 &&  <DeletePhotoOn />}
             <HeaderMenu />
           </View>
         ),
@@ -914,18 +914,11 @@ function ImagesScreenContent() {
                 placeholderTextColor="#888"
               />
               <View style={styles.inputRightBtn}>
-                {input.length > 0 ? (
+                {input.length > 0 && (
                   <TouchableVibrate onPress={() => setInput("")} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <MaterialIcons name="clear" size={22} color="#666" />
                   </TouchableVibrate>
-                ) : selectedStorage ? (
-                  <TouchableVibrate
-                    onPress={() => setBarcodeScannerVisible(true)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <MaterialIcons name="qr-code-2" size={24} color="#333" />
-                  </TouchableVibrate>
-                ) : null}
+                )}
               </View>
             </View>
             <View style={[styles.inStockRow, !input.trim() && styles.inStockRowDisabled]}>
