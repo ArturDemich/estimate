@@ -175,7 +175,7 @@ export class DataService {
     try {
       const response = await axios.post(uploadPhoto_URL,
         formData,
-        { headers: { 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 15000, }
+        { headers: { 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 20000, }
       );
 
       return response.data;
@@ -213,7 +213,7 @@ export class DataService {
         headers: {
           "x-api-key": UPLOAD_PHOTO_API_KEY,
         },
-        timeout: 10000,
+        timeout: 20000,
       });
 
       return response.data;
@@ -236,7 +236,7 @@ export class DataService {
     try {
       const response = await axios.get(listAllPhotos_URL, {
         headers: { "x-api-key": UPLOAD_PHOTO_API_KEY },
-        timeout: 15000,
+        timeout: 20000,
       });
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
@@ -259,7 +259,7 @@ export class DataService {
       const response = await axios.post(
         deletePhoto_URL,
         { ids },
-        { headers: { 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 10000 }
+        { headers: { 'x-api-key': UPLOAD_PHOTO_API_KEY }, timeout: 15000 }
       );
       console.log('Service deletePhotos response:', response.data);
       return response.data;

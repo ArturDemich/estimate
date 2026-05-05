@@ -18,7 +18,7 @@ export default function HeaderMenu() {
     const [menuVisible, setMenuVisible] = useState(false);
     
     const isDocumentScreen = segments[1] === "document";
-    const isImagesScreen = segments[1] === "images";
+    const isImagesScreen = segments[1] === undefined;
     
     const handleLogout = async () => {
         Vibration.vibrate(5);
@@ -65,7 +65,7 @@ export default function HeaderMenu() {
                                         style={styles.menuItem}
                                         onPress={() => {
                                             handleCloseMenu();
-                                            router.push("/");
+                                            router.push("/allDocs");
                                         }}
                                     >
                                         <MaterialCommunityIcons name="clipboard-list" size={24} color="black" />
@@ -76,7 +76,7 @@ export default function HeaderMenu() {
                                         style={styles.menuItem}
                                         onPress={() => {
                                             handleCloseMenu();
-                                            router.push("/images");
+                                            router.push("/");
                                         }}
                                     >
                                         <MaterialCommunityIcons name="image-multiple" size={24} color="black" />
