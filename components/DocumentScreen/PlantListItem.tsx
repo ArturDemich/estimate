@@ -5,7 +5,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, GestureResponderEvent, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { getUkrainianPart } from "../helpers";
+import { useFormatPlantName } from "@/hooks/useFormatPlantName";
 import { PlantNameDB, Storages } from "@/redux/stateServiceTypes";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import EmptyList from "@/components/ui/EmptyList";
@@ -86,6 +86,7 @@ const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: Plan
   const currentStorage = useSelector<RootState, Storages | null>((state) => state.data.currentStorage);
   const router = useRouter();
   const [isLoding, setLoding] = useState(false);
+  const formatPlantName = useFormatPlantName();
 
   const handleDelete = (e: GestureResponderEvent, item: PlantNameDB) => {
     e.preventDefault()
@@ -152,7 +153,7 @@ const PlantNameItem = React.memo(({ item, loadDB, docId, numRow, docName }: Plan
         <View style={styles.row}>
           <View style={styles.rowItem}>
             <Text style={styles.itemNum}>{numRow}.</Text>
-            <Text style={styles.itemSize}>{getUkrainianPart(item.product_name)}</Text>
+            <Text style={styles.itemSize}>{formatPlantName(item.product_name)}</Text>
           </View>
           <View style={[styles.colItem]}>
             {item.count_items === 0 && <Text style={styles.itemEmpty}>{'(пусто)'}</Text>}

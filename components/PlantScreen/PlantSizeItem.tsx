@@ -18,6 +18,7 @@ const PlantSizeItem = memo(({ existPlantProps, plantName }: { existPlantProps: P
   const params = useLocalSearchParams();
   const docName = Array.isArray(params.docName) ? params.docName[0] : params.docName;
   const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId;
+  const fullPlantName = Array.isArray(params.plantName) ? params.plantName[0] : params.plantName;
   const flatListRef = useRef<FlatList>(null);
 
   const loadDBDetails = async () => {
@@ -58,6 +59,7 @@ const PlantSizeItem = memo(({ existPlantProps, plantName }: { existPlantProps: P
             photosUrl={findPhotoForPlantDetail(productId, item.characteristic_id, photoList)}
             flatListRef={() => handleFocus(index)}
             plantName={plantName}
+            productFullName={fullPlantName || plantName}
             docName={docName}
             item={item}
             numRow={palntDetails.length - index}

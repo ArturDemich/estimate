@@ -23,13 +23,14 @@ interface RenderPlantDetailProps {
     numRow: number;
     flatListRef?: () => void;
     plantName: string;
+    productFullName?: string;
     docName: string;
     autoPrint: boolean;
     productId: string;
     photosUrl: PhotoItem[] | null;
 };
 
-const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName, docName, autoPrint }: RenderPlantDetailProps) => {
+const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps, reloadList, flatListRef, plantName, productFullName, docName, autoPrint }: RenderPlantDetailProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const selected = existPlantProps?.characteristic_id !== newSIZE ? existPlantProps?.characteristic_id === item.characteristic_id : existPlantProps?.characteristic_name === item.characteristic_name;
 
@@ -164,7 +165,7 @@ const RenderPlantDetail = ({ item, productId, photosUrl, numRow, existPlantProps
             return;
         }
         const label: Label = {
-            product_name: plantName,
+            product_name: productFullName || plantName,
             characteristic_name: item.characteristic_name,
             labelItem_id: item.characteristic_id + numRow,
             storageName: docName,

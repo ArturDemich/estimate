@@ -44,6 +44,7 @@ import {
 import { clearSearchPlantName, setImagesScreenState, clearImagesScreenState } from "@/redux/dataSlice";
 import { clearImagesPhotoData } from "@/redux/photoSlice";
 import { compareUkrainian, formatDate, getUkrainianPart } from "@/components/helpers";
+import { useFormatPlantName } from "@/hooks/useFormatPlantName";
 import { myToast } from "@/utils/toastConfig";
 import ModalAddPhoto from "@/components/PlantScreen/ModalAddPhoto";
 import EmptyList from "@/components/ui/EmptyList";
@@ -81,7 +82,9 @@ function ImagesScreenContent() {
   const globalSearchPlantName = useSelector((state: RootState) => state.data.searchPlantName);
   const photoList = useSelector((state: RootState) => state.photos.photoList);
   const allPhotosList = useSelector((state: RootState) => state.photos.allPhotosList);
+  const allPhotosLoading = useSelector((state: RootState) => state.photos.allPhotosLoading);
   const sendViber = useSelector((state: RootState) => state.photos.sendViber);
+  const formatPlantName = useFormatPlantName();
 
   // Використовуємо searchPlantName з imagesScreenState якщо є, інакше з загального стейту
   const searchPlantName = imagesScreenState?.searchPlantName ?? globalSearchPlantName;
@@ -256,21 +259,21 @@ function ImagesScreenContent() {
       productName,
       items,
     }));
-    list.sort((a, b) => compareUkrainian(getUkrainianPart(a.productName), getUkrainianPart(b.productName)));
+    list.sort((a, b) => compareUkrainian(formatPlantName(a.productName), formatPlantName(b.productName)));
     return list;
-  }, [searchPlantName]);
+  }, [searchPlantName, formatPlantName]);
 
   const visibleItemsFiltered = useMemo(() => {
     if (activeTab !== "search" || !searchTabQuery.trim()) return groupedByProduct;
     const q = searchTabQuery.trim().toLowerCase();
     return groupedByProduct.filter((g) => {
-      const nameMatch = g.productName.toLowerCase().includes(q);
+      const nameMatch = formatPlantName(g.productName).toLowerCase().includes(q);
       const sizeMatch = g.items.some((i) =>
         getUkrainianPart(i.characteristic.name).toLowerCase().includes(q)
       );
       return nameMatch || sizeMatch;
     });
-  }, [groupedByProduct, activeTab, searchTabQuery]);
+  }, [groupedByProduct, activeTab, searchTabQuery, formatPlantName]);
 
   const groupedLibraryPhotos = useMemo(() => {
     if (!allPhotosList || allPhotosList.length === 0) return [];
@@ -308,13 +311,13 @@ function ImagesScreenContent() {
     if (activeTab !== "search" || !searchTabQuery.trim()) return groupedLibraryPhotos;
     const q = searchTabQuery.trim().toLowerCase();
     return groupedLibraryPhotos.filter((group) => {
-      const nameMatch = group.plantName.toLowerCase().includes(q);
+      const nameMatch = formatPlantName(group.plantName).toLowerCase().includes(q);
       const sizeMatch = group.sizes.some((size) =>
         size.sizeName.toLowerCase().includes(q)
       );
       return nameMatch || sizeMatch;
     });
-  }, [groupedLibraryPhotos, activeTab, searchTabQuery]);
+  }, [groupedLibraryPhotos, activeTab, searchTabQuery, formatPlantName]);
 
   React.useEffect(() => {
     if (activeTab === "library") {
@@ -633,7 +636,7 @@ function ImagesScreenContent() {
   const renderLibrarySection = useCallback(
     ({ item }: { item: (typeof groupedLibraryPhotos)[0] }) => (
       <View style={styles.librarySectionContainer}>
-        <Text style={styles.librarySectionTitle}>{item.plantName}</Text>
+        <Text style={styles.librarySectionTitle}>{formatPlantName(item.plantName)}</Text>
         <View style={styles.libraryDivider} />
         {item.sizes.map((size) => (
           <View key={size.sizeName} style={styles.librarySizeBlock}>
@@ -686,7 +689,7 @@ function ImagesScreenContent() {
         ))}
       </View>
     ),
-    [groupedLibraryPhotos, libraryItemSize, librarySelectMode, selectedLibraryPhotos, handleLibraryPhotoLongPress, handleLibraryPhotoPress]
+    [groupedLibraryPhotos, libraryItemSize, librarySelectMode, selectedLibraryPhotos, handleLibraryPhotoLongPress, handleLibraryPhotoPress, formatPlantName]
   );
 
   // Підрахунок фото для всіх продуктів з allPhotosList (синхронізовано з пошуком та вкладкою Бібліотека)
@@ -725,7 +728,7 @@ function ImagesScreenContent() {
           delayPressIn={0}
         >
           <Text style={styles.productName} numberOfLines={1}>
-            {getUkrainianPart(productName)}
+            {formatPlantName(productName)}
           </Text>
           <View style={styles.productHeaderRight}>
             <MaterialIcons
@@ -745,7 +748,7 @@ function ImagesScreenContent() {
         </TouchableVibrate>
       );
     },
-    [getProductPhotoCounts, toggleProductExpand, expandedProductId]
+    [getProductPhotoCounts, toggleProductExpand, expandedProductId, formatPlantName]
   );
 
   // Кількість фото по розмірах розгорнутого продукту з allPhotosList
@@ -927,10 +930,20 @@ function ImagesScreenContent() {
               styles.listContent,
               librarySelectMode && { paddingBottom: 120 }
             ]}
-            ListEmptyComponent={<EmptyList text="Немає завантажених фото" />}
+            ListEmptyComponent={
+              allPhotosLoading ? null : <EmptyList text="Немає завантажених фото" />
+            }
             removeClippedSubviews={Platform.OS === "android"}
             windowSize={6}
           />
+          {allPhotosLoading && (
+            <View style={styles.libraryLoaderOverlay}>
+              <View style={styles.libraryLoaderCard}>
+                <ActivityIndicator size="large" color="rgba(106, 159, 53, 0.95)" />
+                <Text style={styles.libraryLoaderText}>Завантаження фото...</Text>
+              </View>
+            </View>
+          )}
           {librarySelectMode && (
             <View
               style={[
@@ -1236,7 +1249,7 @@ function ImagesScreenContent() {
         deleting={deleting}
         sendViber={sendViber}
         setSendViber={() => dispatch(toggleSendViber())}
-        plantName={selectedPlant ? getUkrainianPart(selectedPlant.product.name) : undefined}
+        plantName={selectedPlant ? formatPlantName(selectedPlant.product.name) : undefined}
         plantSize={selectedPlant ? selectedPlant.characteristic.name : undefined}
       />
     </View>
@@ -1584,6 +1597,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#fff",
+  },
+  libraryLoaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    zIndex: 20,
+  },
+  libraryLoaderCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.98)",
+    borderRadius: 18,
+    paddingVertical: 30,
+    paddingHorizontal: 36,
+    alignItems: "center",
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  libraryLoaderText: {
+    fontSize: 15,
+    color: "#777",
+    fontWeight: "500",
   },
   searchBarContainer: {
     paddingHorizontal: 12,

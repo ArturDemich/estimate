@@ -5,6 +5,7 @@ import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB
 import { RootState } from "./store";
 import { addAllPlantToDB, fetchCharacteristics, fetchPlants } from "@/db/db.native";
 import * as SecureStore from "expo-secure-store";
+import { KEY_PLANT_LIST_NAME_MODE, PlantListNameMode } from "@/components/helpers";
 import { myToast } from "@/utils/toastConfig";
 
 const TOKEN = 'BB3C4F93C70785389584F3A1AC9A5F8E-';
@@ -264,6 +265,22 @@ export const loadSendViber = createAsyncThunk<boolean>(
   async () => {
     const value = await SecureStore.getItemAsync('sendViber');
     return value === '1';
+  }
+);
+
+export const loadPlantListNameMode = createAsyncThunk<PlantListNameMode>(
+  'data/loadPlantListNameMode',
+  async () => {
+    const value = await SecureStore.getItemAsync(KEY_PLANT_LIST_NAME_MODE);
+    return value === PlantListNameMode.Latin ? PlantListNameMode.Latin : PlantListNameMode.Ukrainian;
+  }
+);
+
+export const savePlantListNameMode = createAsyncThunk<PlantListNameMode, PlantListNameMode>(
+  'data/savePlantListNameMode',
+  async (mode) => {
+    await SecureStore.setItemAsync(KEY_PLANT_LIST_NAME_MODE, mode);
+    return mode;
   }
 );
 

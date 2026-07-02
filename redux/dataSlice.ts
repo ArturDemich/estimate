@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk, setSortByEmptyThunk } from './thunks';
+import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk, loadPlantListNameMode, savePlantListNameMode, setSortByEmptyThunk } from './thunks';
 import { DataSlice, ImagesScreenState, Label, PlantDetails, Storages } from './stateServiceTypes';
-import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
+import { PrinterDevice } from '@/components/Printer/printerConstants';
+import { PlantListNameMode } from '@/components/helpers';
 
 
 const initialState: DataSlice = {
@@ -22,6 +23,7 @@ const initialState: DataSlice = {
   newDetailBarcode: null,
   currentStorage: null,
   imagesScreenState: null,
+  plantListNameMode: PlantListNameMode.Ukrainian,
 };
 
 
@@ -62,11 +64,11 @@ const dataSlice = createSlice({
       state.labelData = action.payload;
      // console.log('dataSlice __ setLabelPrint', state.labelData)
     },
-    setDevices(state, action: PayloadAction<IBLEPrinter[]>) {
+    setDevices(state, action: PayloadAction<PrinterDevice[]>) {
       state.pairedDevices = action.payload;
      // console.log('dataSlice __ setDevices', state.pairedDevices)
     },
-    connectPrinter(state, action: PayloadAction<IBLEPrinter | null>) {
+    connectPrinter(state, action: PayloadAction<PrinterDevice | null>) {
       state.connectedPrinter = action.payload;
      // console.log('dataSlice __ connectPrinter', state.connectedPrinter)
     },
@@ -102,6 +104,9 @@ const dataSlice = createSlice({
     },
     clearImagesScreenState(state) {
       state.imagesScreenState = null;
+    },
+    setPlantListNameMode(state, action: PayloadAction<PlantListNameMode>) {
+      state.plantListNameMode = action.payload;
     },
     cleaneSortList(state) {
       state.sortingPlantList = []
@@ -157,10 +162,16 @@ const dataSlice = createSlice({
         state.newVersion = action.payload;
        // console.log('dataSlice getNewVersionThunk', state.newVersion, '1.0.3'<'1.0.4')
       })
+      .addCase(loadPlantListNameMode.fulfilled, (state, action) => {
+        state.plantListNameMode = action.payload;
+      })
+      .addCase(savePlantListNameMode.fulfilled, (state, action) => {
+        state.plantListNameMode = action.payload;
+      })
   },
 });
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
   connectPrinter, setDocComment, setAutoPrint, setPrinterPuty, clearDataState, setDocSent, cleaneDBPlantsName,
-  clearSearchPlantName, setImagesScreenState, clearImagesScreenState, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
+  clearSearchPlantName, setImagesScreenState, clearImagesScreenState, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList, setPlantListNameMode } = dataSlice.actions;
 export default dataSlice.reducer;

@@ -9,54 +9,115 @@ import { Label } from "@/redux/stateServiceTypes";
 import { printLabel } from "@/components/Printer/BluetoothPrinterImg";
 import { setLabelPrint } from "@/redux/dataSlice";
 import Toast from "react-native-toast-message";
-import { IBLEPrinter } from "@conodene/react-native-thermal-receipt-printer-image-qr";
 import { format } from "date-fns/format";
-//import Barcode from "react-native-barcode-builder";
 import Barcode from 'react-native-barcode-svg';
+import {
+    formatBarcodeDisplay,
+    formatPlantNameForLabel,
+    getBarcodeEncodeValue,
+    getBarcodeFormat,
+    getBarcodeSingleBarWidth,
+    getLabelPixelHeight,
+    getLabelPixelWidth,
+    LABEL_DESIGN_WIDTH,
+    LabelNameMode,
+    loadLabelPrintSettings,
+    normalizeBarcode,
+} from "@/components/Printer/printerConstants";
 
+const PUTY_LABEL_WIDTH = 280;
+const PUTY_LABEL_HEIGHT = 150;
 
 const LabelImgShot = () => {
     const label = useSelector<RootState, Label | null>(state => state.data.labelData);
     const isPrinterPuty = useSelector<RootState, boolean>((state) => state.data.isPrinterPuty);
     const dispatch = useDispatch<AppDispatch>();
-    const connectedPrinter = useSelector<RootState, IBLEPrinter | null>((state) => state.data.connectedPrinter);
+    const connectedPrinter = useSelector<RootState, RootState['data']['connectedPrinter']>((state) => state.data.connectedPrinter);
     const [showView, setShowView] = useState(false);
+    const [readyToCapture, setReadyToCapture] = useState(false);
+    const [renderWidth, setRenderWidth] = useState(LABEL_DESIGN_WIDTH);
+    const [renderHeight, setRenderHeight] = useState(120);
+    const [labelNameMode, setLabelNameMode] = useState<LabelNameMode>(LabelNameMode.Ukrainian);
     const ref = useRef<ViewShot>(null);
+    const printedRef = useRef(false);
     const DateNow = format(new Date(), 'dd.MM.y');
+
+    const rawBarcode = label?.barcode && label.barcode !== '0' ? label.barcode : null;
+    const barcode = rawBarcode ? normalizeBarcode(rawBarcode) : null;
+    const barcodeFormat = barcode ? getBarcodeFormat(barcode) : 'CODE128';
+    const barcodeValue = barcode ? getBarcodeEncodeValue(barcode, barcodeFormat) : '';
+    const scale = renderWidth / LABEL_DESIGN_WIDTH;
+    const labelWidth = isPrinterPuty ? PUTY_LABEL_WIDTH : renderWidth;
+    const labelHeight = isPrinterPuty ? PUTY_LABEL_HEIGHT : renderHeight;
+    const barcodeAreaWidth = labelWidth - Math.round(12 * scale);
+    const barcodeBarWidth = barcode
+        ? getBarcodeSingleBarWidth(barcodeFormat, barcodeValue, barcodeAreaWidth)
+        : 2;
+
+    useEffect(() => {
+        if (!showView) {
+            setReadyToCapture(false);
+            printedRef.current = false;
+            return;
+        }
+
+        const loadLayout = async () => {
+            const settings = await loadLabelPrintSettings();
+            setLabelNameMode(settings.labelNameMode);
+
+            if (isPrinterPuty) {
+                setRenderWidth(PUTY_LABEL_WIDTH);
+                setRenderHeight(PUTY_LABEL_HEIGHT);
+                return;
+            }
+
+            const width = settings.imgWidth ?? getLabelPixelWidth(settings.labelWidthMm);
+            const height = getLabelPixelHeight(settings.height);
+            setRenderWidth(width);
+            setRenderHeight(height);
+        };
+
+        loadLayout();
+        const timer = setTimeout(() => setReadyToCapture(true), 500);
+        return () => clearTimeout(timer);
+    }, [showView, isPrinterPuty]);
 
     const shot = async () => {
         try {
-            if (ref.current) {
-                const uri = await captureRef(ref, {
+            if (!ref.current) return null;
+
+            if (isPrinterPuty) {
+                return await captureRef(ref, {
                     format: "jpg",
                     quality: 1.0,
                     result: 'tmpfile',
-                    ...(isPrinterPuty ? {} : {
-                        width: 512,  // for ather printers
-                        height: 200  // for ather printers
-                    }),
                 });
-                return uri
             }
+
+            return await captureRef(ref, {
+                format: "png",
+                quality: 1.0,
+                result: 'base64',
+            });
         } catch (error) {
             Toast.show({
-                type: "customError",  // Can be 'success', 'error', 'info'
+                type: "customError",
                 text1: "Failed to capture image!",
                 position: "bottom",
                 bottomOffset: 150,
                 visibilityTime: 3000,
-            })
+            });
             console.error("Snapshot failed", error);
-            return null
+            return null;
         }
     };
 
     const sendPrint = async () => {
         const uri = await shot();
         setShowView(false);
+        setReadyToCapture(false);
         await printLabel(uri ? uri : null, label, isPrinterPuty);
         dispatch(setLabelPrint(null));
-        
     };
 
     useEffect(() => {
@@ -69,62 +130,104 @@ const LabelImgShot = () => {
                     position: "bottom",
                     bottomOffset: 150,
                     visibilityTime: 4000,
-                })
+                });
                 dispatch(setLabelPrint(null));
                 return;
             }
-            setShowView(true)
+            setShowView(true);
         }
-    }, [label])
+    }, [label]);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            if (showView) {
-                sendPrint()
-            } else {
-                clearInterval(interval);
-            }
-        }, 100)
+        if (!showView || !readyToCapture || printedRef.current) return;
+        printedRef.current = true;
+        sendPrint();
+    }, [showView, readyToCapture]);
 
-        return () => clearInterval(interval);
-    }, [showView])
+    const textStyle = {
+        includeFontPadding: false as const,
+        allowFontScaling: false as const,
+        color: '#000000',
+    };
 
-    console.log("LABEL", label?.barcode)
+    const displayProductName = label?.product_name
+        ? formatPlantNameForLabel(label.product_name, labelNameMode)
+        : '';
 
     return (
         <Modal visible={showView} animationType="slide" transparent>
             <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
-                <View style={{ backgroundColor: '#fff', padding: isPrinterPuty ? 5 : 10, borderRadius: 10, marginBottom: 5, alignItems: 'center' }}>
-                    <ViewShot ref={ref} >
-                        <View style={{ backgroundColor: '#ffffff', width: 280, height: isPrinterPuty ? 150 : 100, }}>
-                            <View style={{ flexDirection: 'row', paddingTop: isPrinterPuty ? 5 : 0 }}>
-                                <MaterialCommunityIcons name="pine-tree" size={17} color="black" />
-                                <Text numberOfLines={2} style={{ fontSize: isPrinterPuty ? 15 : 17, fontWeight: '900', width: 280, lineHeight: 17, color: 'rgb(0, 0, 0)' }}>{label?.product_name}</Text>
+                <View style={{ backgroundColor: '#fff', padding: isPrinterPuty ? 5 : 0, borderRadius: 10, marginBottom: 5, alignItems: 'center' }}>
+                    <ViewShot ref={ref} options={{ format: 'png', quality: 1 }}>
+                        <View
+                            collapsable={false}
+                            style={{
+                                backgroundColor: '#ffffff',
+                                width: labelWidth,
+                                height: labelHeight,
+                                paddingHorizontal: isPrinterPuty ? 0 : Math.round(6 * scale),
+                            }}
+                        >
+                            <View style={{ flexDirection: 'row', paddingTop: isPrinterPuty ? 5 : Math.round(2 * scale) }}>
+                                <MaterialCommunityIcons name="pine-tree" size={Math.round(17 * scale)} color="black" />
+                                <Text
+                                    numberOfLines={2}
+                                    style={{
+                                        ...textStyle,
+                                        fontSize: Math.round((isPrinterPuty ? 15 : 16) * scale),
+                                        fontWeight: '900',
+                                        flex: 1,
+                                        lineHeight: Math.round(17 * scale),
+                                    }}
+                                >
+                                    {displayProductName}
+                                </Text>
                             </View>
-                            <View style={{ flexDirection: 'row', marginTop: 8, marginBottom: 'auto', alignItems: 'baseline' }}>
-                                <Entypo name="ruler" size={16} color="black" style={{ transform: 'rotate(135deg)', }} />
-                                <Text numberOfLines={2} style={{ fontSize: isPrinterPuty ? 13 : 16, fontWeight: '800', alignSelf: 'baseline' }}>{label?.characteristic_name}</Text>
+                            <View style={{ flexDirection: 'row', marginTop: Math.round(6 * scale), alignItems: 'baseline' }}>
+                                <Entypo name="ruler" size={Math.round(16 * scale)} color="black" style={{ transform: 'rotate(135deg)' }} />
+                                <Text
+                                    numberOfLines={2}
+                                    style={{
+                                        ...textStyle,
+                                        fontSize: Math.round((isPrinterPuty ? 13 : 15) * scale),
+                                        fontWeight: '800',
+                                        flex: 1,
+                                        lineHeight: Math.round(17 * scale),
+                                    }}
+                                >
+                                    {label?.characteristic_name}
+                                </Text>
                             </View>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4, marginTop: 3 }}>
-                                <Text style={{ fontSize: 14, fontWeight: '900' }}> {label?.storageName}</Text>
-                                <Text style={{ fontSize: 14, fontWeight: '900' }}> {DateNow}</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: Math.round(4 * scale) }}>
+                                <Text style={{ ...textStyle, fontSize: Math.round(13 * scale), fontWeight: '900' }}>{label?.storageName}</Text>
+                                <Text style={{ ...textStyle, fontSize: Math.round(13 * scale), fontWeight: '900' }}>{DateNow}</Text>
                             </View>
-                            <View style={{ backgroundColor: 'rgb(0, 0, 0)', height: 3, width: '100%' }}></View>
+                            <View style={{ backgroundColor: '#000000', height: Math.max(2, Math.round(2 * scale)), width: '100%', marginTop: Math.round(3 * scale) }} />
 
-                            <View style={{ width: '100%', minHeight: '40%', alignItems: 'center', paddingTop: 10 }}>
-                                {label?.barcode && label?.barcode !== '0' && isPrinterPuty ? (
-                                    <>
-                                        <Barcode
-                                            value={label.barcode}
-                                            format="EAN13"
-                                            height={35}
-                                            lineColor="#000"
-                                        />
-                                        <Text style={{ letterSpacing: 10, fontSize: 9 }}>{label.barcode}</Text>
-                                    </>
-                                ) : null}
-                            </View>
-
+                            {barcode ? (
+                                <View style={{ width: '100%', alignItems: 'center', marginTop: Math.round(6 * scale) }}>
+                                    <Barcode
+                                        value={barcodeValue}
+                                        format={barcodeFormat}
+                                        height={Math.round((isPrinterPuty ? 40 : 38) * scale)}
+                                        singleBarWidth={barcodeBarWidth}
+                                        lineColor="#000000"
+                                        backgroundColor="#FFFFFF"
+                                    />
+                                    <Text
+                                        style={{
+                                            ...textStyle,
+                                            width: '100%',
+                                            textAlign: 'center',
+                                            fontSize: Math.round(11 * scale),
+                                            marginTop: Math.round(3 * scale),
+                                            fontWeight: '700',
+                                        }}
+                                    >
+                                        {formatBarcodeDisplay(barcode, barcodeFormat)}
+                                    </Text>
+                                </View>
+                            ) : null}
                         </View>
                     </ViewShot>
                 </View>

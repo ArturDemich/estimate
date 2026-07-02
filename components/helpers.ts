@@ -1,5 +1,12 @@
 import { format } from "date-fns/format";
 
+export enum PlantListNameMode {
+    Ukrainian = 'ukr',
+    Latin = 'latin',
+}
+
+export const KEY_PLANT_LIST_NAME_MODE = 'plantListNameMode';
+
 export function getUkrainianPart(name: string): string {
     const parts = name.split(",").map(p => p.trim());
   
@@ -22,6 +29,23 @@ export function getUkrainianPart(name: string): string {
   
     return base;
   }
+
+export function getLatinPart(name: string): string {
+    const parts = name.split(",").map(p => p.trim());
+    const hasCyrillic = (s: string) => /[а-яА-ЯіІїЇєЄґҐ]/.test(s);
+    const isOnlyNumber = (s: string) => /^\d+$/.test(s);
+
+    const latinPart = parts.find(p => p.length > 0 && !hasCyrillic(p) && !isOnlyNumber(p));
+    if (latinPart) return latinPart;
+
+    const fallback = parts.find(p => !hasCyrillic(p));
+    return fallback || parts[0] || name;
+}
+
+export function formatPlantNameForList(name: string, mode: PlantListNameMode): string {
+    if (!name) return name;
+    return mode === PlantListNameMode.Latin ? getLatinPart(name) : getUkrainianPart(name);
+}
   
 
 export const formatDate = (timestamp: string): string => { 

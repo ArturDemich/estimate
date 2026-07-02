@@ -1,0 +1,64 @@
+diff --git a/node_modules/react-native-barcode-svg/src/index.js b/node_modules/react-native-barcode-svg/src/index.js
+index fd55c23..a1b2c3d 100755
+--- a/node_modules/react-native-barcode-svg/src/index.js
++++ b/node_modules/react-native-barcode-svg/src/index.js
+@@ -97,7 +97,7 @@ const drawSvgBars = (encodings, options = {}) => {
+   Array.from(encodings).forEach((encoding) => {
+     const bar = drawSvgBar(encoding, barPaddingLeft, options);
+     results.push(bar);
+-    barPaddingLeft += encoding.data.length * 2;
++    barPaddingLeft += encoding.data.length * options.singleBarWidth;
+   });
+   return results.flat();
+ };
+@@ -105,10 +105,28 @@ const drawSvgBars = (encodings, options = {}) => {
+   return results.flat();
+ };
+ 
+-export default function Barcode(props) {
+-  const {
+-    value, format, singleBarWidth, maxWidth, height, lineColor, backgroundColor, onError,
+-  } = props;
++export default function Barcode({
++  value = '',
++  format = 'CODE128',
++  singleBarWidth = 2,
++  maxWidth = undefined,
++  height = 100,
++  lineColor = '#000000',
++  backgroundColor = '#FFFFFF',
++  onError = undefined,
++  ...rest
++}) {
++  const props = {
++    value,
++    format,
++    singleBarWidth,
++    maxWidth,
++    height,
++    lineColor,
++    backgroundColor,
++    onError,
++    ...rest,
++  };
+   const [bars, setBars] = useState([]);
+   const [barcodeWidth, setBarCodeWidth] = useState(0);
+   const [barcodeContainerWidth, setBarcodeContainerWidth] = useState(0);
+@@ -172,17 +190,6 @@ Barcode.propTypes = {
+   onError: PropTypes.func,
+ };
+ 
+-Barcode.defaultProps = {
+-  value: '',
+-  format: 'CODE128',
+-  singleBarWidth: 2, // width
+-  maxWidth: undefined,
+-  height: 100,
+-  lineColor: '#000000',
+-  backgroundColor: '#FFFFFF',
+-  onError: undefined,
+-};
+-
+ const styles = StyleSheet.create({
+   errorMessage: {
+     flex: 1,

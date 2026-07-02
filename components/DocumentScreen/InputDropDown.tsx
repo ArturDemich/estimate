@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchPhotosByProductId, getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
 import { addPlant } from "@/db/db.native";
-import { getUkrainianPart } from "../helpers";
+import { useFormatPlantName } from "@/hooks/useFormatPlantName";
 import { useRouter } from "expo-router";
 import BarcodeScanner from "../BarcodeScanner";
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
@@ -56,6 +56,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
     const [barcode, setBarcode] = useState("");
     const [isSendSearch, setSendSearch] = useState(false);
+    const formatPlantName = useFormatPlantName();
 
     const navigateToPlantScreen = async (name: string, id: number | null, productId: string,) => {
         id && await dispatch(getPlantsDetailsDB({ palntId: id, docId: Number(docId) }))
@@ -262,7 +263,7 @@ export default function InputDropDown({ docId, close, docName, handleSetScanning
                                         await handleCreatePlant(item.product.name, item.product.id)
                                     }}
                                 >
-                                    <Text style={styles.pressItemName}>{getUkrainianPart(item.product.name)}</Text>
+                                    <Text style={styles.pressItemName}>{formatPlantName(item.product.name)}</Text>
                                     <Text style={styles.pressItemCount}>{item.sumQty} шт</Text>
                                 </TouchableVibrate>
                             )}

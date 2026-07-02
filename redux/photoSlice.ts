@@ -6,6 +6,7 @@ import { PhotoSlice } from './stateServiceTypes';
 const initialState: PhotoSlice = {
     photoList: [],
     allPhotosList: null,
+    allPhotosLoading: false,
     sendViber: true
   };
   
@@ -17,6 +18,7 @@ const photoSlice = createSlice({
     clearImagesPhotoData(state) {
       state.allPhotosList = null;
       state.photoList = [];
+      state.allPhotosLoading = false;
     },
   },
   extraReducers: (builder) => {
@@ -28,11 +30,16 @@ const photoSlice = createSlice({
       .addCase(fetchPhotosByProductId.rejected, (state) => {
         state.photoList = null;
       })
+      .addCase(fetchAllPhotos.pending, (state) => {
+        state.allPhotosLoading = true;
+      })
       .addCase(fetchAllPhotos.fulfilled, (state, action) => {
         state.allPhotosList = action.payload;
+        state.allPhotosLoading = false;
       })
       .addCase(fetchAllPhotos.rejected, (state) => {
         state.allPhotosList = null;
+        state.allPhotosLoading = false;
       })
       .addCase(uploadPhotoThunk.fulfilled, (state, action) => {
         if (!state.photoList) {

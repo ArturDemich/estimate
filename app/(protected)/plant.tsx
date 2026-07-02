@@ -1,5 +1,5 @@
 import DocComment from "@/components/DocComment";
-import { getUkrainianPart } from "@/components/helpers";
+import { useFormatPlantName } from "@/hooks/useFormatPlantName";
 import AddDetailsModal from "@/components/PlantScreen/AddDetailsModal";
 import { LockScreen } from "@/components/PlantScreen/LockScreen";
 import PlantSizeItem from "@/components/PlantScreen/PlantSizeItem";
@@ -16,7 +16,9 @@ export default function Plant() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const docSent = useSelector<RootState, number>((state) => state.data.docSent);
-  const namePlant = Array.isArray(params.plantName) ? getUkrainianPart(params.plantName[0]) : getUkrainianPart(params.plantName);
+  const formatPlantName = useFormatPlantName();
+  const fullPlantName = Array.isArray(params.plantName) ? params.plantName[0] : params.plantName;
+  const namePlant = fullPlantName ? formatPlantName(fullPlantName) : '';
 
   return (
     <View style={{ position: 'relative', height: '100%' }}>

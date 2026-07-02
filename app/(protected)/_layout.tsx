@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import HeaderMenu from "@/components/HeaderMenu";
 import BluetoothPrintImg from "@/components/Printer/BluetoothPrinterImg";
 import { ActivityIndicator, ImageBackground, View } from "react-native";
-import { getNewVersionThunk, loadSendViber, loginThunk } from "@/redux/thunks";
+import { getNewVersionThunk, loadPlantListNameMode, loadSendViber, loginThunk } from "@/redux/thunks";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import AppVersion from "@/components/AppVersion";
@@ -26,6 +26,7 @@ export default function ProtectedLayout() {
     };
     dispatch(getNewVersionThunk())
     dispatch(loadSendViber());
+    dispatch(loadPlantListNameMode());
     checkToken();
   }, []);
 

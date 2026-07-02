@@ -1,7 +1,7 @@
 {
   "name": "plantstock",
   "main": "expo-router/entry",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -19,12 +19,10 @@
     "preset": "jest-expo"
   },
   "resolutions": {
-    "@charles-johnson/react-native-ping": "1.2.15",
     "react-native": "0.76.6"
   },
   "dependencies": {
-    "@charles-johnson/react-native-ping": "^1.2.15",
-    "@conodene/react-native-thermal-receipt-printer-image-qr": "github:herksaw/react-native-thermal-receipt-printer-image-qr",
+    "react-native-bluetooth-escpos-printer": "^0.0.5",
     "@expo/vector-icons": "^14.0.0",
     "@react-native-community/hooks": "^3.0.0",
     "@react-navigation/native": "^6.0.2",
