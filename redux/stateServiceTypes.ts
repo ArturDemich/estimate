@@ -60,6 +60,19 @@ export interface PlantItemRespons {
     barcode: string;
     qty: number;
 };
+export interface AttributeValue {
+    id: string;
+    name: string;
+};
+export interface AttributeGroup {
+    id: string;
+    name: string;
+    values: AttributeValue[];
+};
+export interface CreateCharacteristicInput {
+    productId: string;
+    attributeValueIds: string[];
+};
 export interface PlantNameDB {
     count_items: number;
     total_qty: number;

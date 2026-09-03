@@ -1,7 +1,7 @@
 import { DataService } from "@/axios/service";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Platform } from "react-native";
-import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes, PalntAllInput, PhotoItem } from "./stateServiceTypes";
+import { TokenResponse, LoginData, PalntNameInput, PlantItemRespons, PlantNameDB, Storages, PlantDetailsResponse, NewVersionRes, PalntAllInput, PhotoItem, AttributeGroup, CreateCharacteristicInput } from "./stateServiceTypes";
 import { RootState } from "./store";
 import { addAllPlantToDB, fetchCharacteristics, fetchPlants } from "@/db/db";
 import * as SecureStore from "expo-secure-store";
@@ -10,6 +10,19 @@ import { myToast } from "@/utils/toastConfig";
 const TOKEN = 'BB3C4F93C70785389584F3A1AC9A5F8E-';
 function isTokenResponse(token: TokenResponse | {}): token is TokenResponse {
   return (token as TokenResponse).token !== undefined;
+}
+
+function apiErrorText(errors: unknown, fallback: string) {
+  if (Array.isArray(errors) && errors.length) {
+    const first = errors[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first === "object" && "message" in first) {
+      return String((first as { message: unknown }).message);
+    }
+    return JSON.stringify(first);
+  }
+  if (typeof errors === "string" && errors) return errors;
+  return fallback;
 }
 
 export const loginThunk = createAsyncThunk<TokenResponse, LoginData | undefined, { rejectValue: string }>(
@@ -207,6 +220,77 @@ export const getPlantsDetailsDB = createAsyncThunk<PlantDetailsResponse[], { pal
     } catch (error) {
       console.error("Error in thunk getPlantsDetailsDB: ", error);
       return rejectWithValue("Failed to fetch plants details");
+    }
+  }
+);
+
+export const getAttributesThunk = createAsyncThunk<AttributeGroup[], void, { rejectValue: string; state: RootState }>(
+  "data/getAttributes",
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const tokenState = getState().login.token;
+      if (!isTokenResponse(tokenState)) {
+        const msg = "Немає токена авторизації";
+        myToast({ type: "customError", text1: "Атрибути не отримано!", text2: msg });
+        return rejectWithValue(msg);
+      }
+      const response = await DataService.getAttributes(tokenState.token);
+      if (!response?.success) {
+        const msg = apiErrorText(response?.errors, "Unknown error");
+        myToast({ type: "customError", text1: "Атрибути не отримано!", text2: msg });
+        return rejectWithValue(msg);
+      }
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error: any) {
+      const msg = error?.message || "Failed to fetch attributes";
+      myToast({ type: "customError", text1: "Атрибути не отримано!", text2: msg });
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+export const createCharacteristicThunk = createAsyncThunk<PlantItemRespons, CreateCharacteristicInput, { rejectValue: string; state: RootState }>(
+  "data/createCharacteristic",
+  async ({ productId, attributeValueIds }, { rejectWithValue, getState }) => {
+    try {
+      const tokenState = getState().login.token;
+      if (!isTokenResponse(tokenState)) {
+        const msg = "Немає токена авторизації";
+        myToast({ type: "customError", text1: "Характеристику не створено!", text2: msg });
+        return rejectWithValue(msg);
+      }
+      if (!productId) {
+        const msg = "Немає productId";
+        myToast({ type: "customError", text1: "Характеристику не створено!", text2: msg });
+        return rejectWithValue(msg);
+      }
+      const response = await DataService.createGetCharacteristic(
+        tokenState.token,
+        productId,
+        attributeValueIds
+      );
+      if (!response?.success) {
+        const msg = apiErrorText(response?.errors, "Unknown error");
+        myToast({ type: "customError", text1: "Характеристику не створено!", text2: msg });
+        return rejectWithValue(msg);
+      }
+      const first = Array.isArray(response.data) ? response.data[0] : null;
+      if (!first?.characteristic?.id) {
+        const msg = apiErrorText(response?.errors, "Порожня відповідь сервера");
+        myToast({ type: "customError", text1: "Характеристику не створено!", text2: msg });
+        return rejectWithValue(msg);
+      }
+      return {
+        product: first.product,
+        characteristic: first.characteristic,
+        unit: first.unit ?? { id: "", name: "" },
+        barcode: first.barcode ? String(first.barcode) : "0",
+        qty: 0,
+      };
+    } catch (error: any) {
+      const msg = error?.message || "Failed to create characteristic";
+      myToast({ type: "customError", text1: "Характеристику не створено!", text2: msg });
+      return rejectWithValue(msg);
     }
   }
 );

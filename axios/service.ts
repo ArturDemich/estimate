@@ -11,11 +11,14 @@ const encodedToken = Buffer.from(tok).toString('base64');
 const TO_EXCEL_URL = 'https://generate-excel-git-main-arturdemichs-projects.vercel.app/api/jsonToExcel';
 const NEW_V_URL = 'https://digger-3000-default-rtdb.europe-west1.firebasedatabase.app/newVersionStock.json?print=pretty';
 //const API = 'http://194.42.195.241:41001/UTP/hs/api'; // oridgen API
+//const API = 'http://194.42.195.241:41001/UTPT/hs/api'; // oridgen TEST API
 const API = '/api-proxy';  // for Vercel proxy
 const TOKEN_URL = `${API}/getToken`;
 const getStorages_URL = `${API}/getStorages`;
 const getPlants_URL = `${API}/getProductInfo`;
 const sendData_URL = `${API}/createStorageDoc`;
+
+const getAttributes_URL = `${API}/processAttributes`;
 
 const UPLOAD_PHOTO_API_KEY = 'my_secret_upload_key_12334326745';
 const API_PHOTO_URL = 'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app' //'http://192.168.1.94:3000'; //'https://secondary-carleen-green-angels-fe4cc7e4.koyeb.app'
@@ -116,6 +119,63 @@ export class DataService {
       throw new Error(errorMessage);
     }
   };
+
+  static async getAttributes(token: string) {
+    try {
+      const response = await axios.post(
+        getAttributes_URL,
+        { token, method: "getAttributes" },
+        { headers: { Authorization: "Basic " + encodedToken } }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error in service getAttributes:", error);
+      let errorMessage = "Failed to fetch attributes from server";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  static async createGetCharacteristic(
+    token: string,
+    productId: string,
+    attributeValueIds: string[]
+  ) {
+    try {
+      const response = await axios.post(
+        getAttributes_URL,
+        {
+          token,
+          method: "createGetCharacteristicForProduct",
+          data: {
+            product: { id: productId },
+            attributeValues: attributeValueIds.map((id) => ({ id })),
+          },
+        },
+        { headers: { Authorization: "Basic " + encodedToken } }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error in service createGetCharacteristic:", error);
+      let errorMessage = "Failed to create characteristic";
+      if (error.response?.data) {
+        errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new Error(errorMessage);
+    }
+  }
 
   static async sendDataToServer(token: string, document: DocumentResult) {
     try {

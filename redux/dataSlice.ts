@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getNewVersionThunk, getPlantsDetailsDB, getPlantsNameDB, getPlantsNameThunk, getStoragesThunk, setSortByEmptyThunk } from './thunks';
-import { DataSlice, ImagesScreenState, Label, PlantDetails, Storages } from './stateServiceTypes';
+import { DataSlice, ImagesScreenState, Label, PlantDetails, PlantItemRespons, Storages } from './stateServiceTypes';
 import { IBLEPrinter } from '@conodene/react-native-thermal-receipt-printer-image-qr';
 
 
@@ -88,7 +88,17 @@ const dataSlice = createSlice({
     },
     setNewDetailBarcode(state, action: PayloadAction<string | null>) {
       state.newDetailBarcode = action.payload;
-     // console.log('dataSlice __ newDetailBarcode', state.newDetailBarcode)
+      // console.log('dataSlice __ newDetailBarcode', state.newDetailBarcode)
+    },
+    appendSearchPlantItem(state, action: PayloadAction<PlantItemRespons>) {
+      const exists = state.searchPlantName.some(
+        (item) =>
+          item.product.id === action.payload.product.id &&
+          item.characteristic.id === action.payload.characteristic.id
+      );
+      if (!exists) {
+        state.searchPlantName = [action.payload, ...state.searchPlantName];
+      }
     },
     cleaneDBPlantsName(state) {
       state.dBPlantsName = []
@@ -162,5 +172,5 @@ const dataSlice = createSlice({
 
 export const { setExistPlantProps, updateLocalCharacteristic, setLabelPrint, setDevices, 
   connectPrinter, setDocComment, setAutoPrint, setPrinterPuty, clearDataState, setDocSent, cleaneDBPlantsName,
-  clearSearchPlantName, setImagesScreenState, clearImagesScreenState, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList } = dataSlice.actions;
+  clearSearchPlantName, setImagesScreenState, clearImagesScreenState, setNewDetailBarcode, setCurrentStoage, updateLocalFreeQty, updateLocalComment, cleaneSortList, appendSearchPlantItem } = dataSlice.actions;
 export default dataSlice.reducer;

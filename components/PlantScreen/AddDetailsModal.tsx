@@ -1,5 +1,5 @@
 import { AppDispatch, RootState } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -14,17 +14,17 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { addAllCharToDB, addCharacteristic } from "@/db/db";
-import { PlantDetails, PlantItemRespons, Storages } from "@/redux/stateServiceTypes";
-import { getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
-import { setExistPlantProps, setNewDetailBarcode } from "@/redux/dataSlice";
+import { getAttributesThunk, getPlantsDetailsDB, getPlantsNameThunk } from "@/redux/thunks";
+import { appendSearchPlantItem, setExistPlantProps, setNewDetailBarcode } from "@/redux/dataSlice";
 import Entypo from '@expo/vector-icons/Entypo';
 import TouchableVibrate from "@/components/ui/TouchableVibrate";
-import { EvilIcons } from "@expo/vector-icons";
+import { EvilIcons, Ionicons } from "@expo/vector-icons";
 import EmptyList from "@/components/ui/EmptyList";
-import ManualDetailsAdd from "@/components/PlantScreen/ManualDetailsAdd";
+import CreateCharacteristic, { CreateMeta } from "@/components/PlantScreen/CreateCharacteristic";
 import { newSIZE, nullID, unitPC } from "@/types/typesScreen";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { myToast } from "@/utils/toastConfig";
+import { AttributeGroup, PlantItemRespons, PlantDetails, Storages } from "@/redux/stateServiceTypes";
 
 interface AddDetailsProps {
     plantDBid: string;
@@ -43,12 +43,56 @@ export default function AddDetailsModal({ plantDBid, docId, productId, plantName
     const dataPlant = newAddPlants?.length > 0 ? newAddPlants.filter((item) => item.product.id === productId).sort((a, b) => (b.qty > 0 ? 1 : 0) - (a.qty > 0 ? 1 : 0)) : [];
     const [show, setShow] = useState(false);
     const [input, setInput] = useState("");
+    const [mode, setMode] = useState<"list" | "create">("list");
     const [manual, setManual] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
     const [loadingSizes, setLoadingSizes] = useState(false);
+    const [loadingAttrs, setLoadingAttrs] = useState(false);
+    const [attributes, setAttributes] = useState<AttributeGroup[]>([]);
+    const [createMeta, setCreateMeta] = useState<CreateMeta>({ canCreate: false, submitting: false });
+    const createFnRef = useRef<(() => void) | null>(null);
+
+    const registerCreate = useCallback((fn: (() => void) | null) => {
+        createFnRef.current = fn;
+    }, []);
+
+    const onCreateMeta = useCallback((meta: CreateMeta) => {
+        setCreateMeta((prev) =>
+            prev.canCreate === meta.canCreate && prev.submitting === meta.submitting ? prev : meta
+        );
+    }, []);
 
     const handleClose = () => {
         setShow(false);
+        setMode("list");
+        setManual(false);
+        setCreateMeta({ canCreate: false, submitting: false });
+    };
+
+    const handleOpenCreate = async () => {
+        if (mode === "create") {
+            setMode("list");
+            setManual(false);
+            return;
+        }
+        if (!productId) {
+            myToast({ type: "customError", text1: "Немає productId", text2: "Неможливо створити характеристику" });
+            return;
+        }
+        setLoadingAttrs(true);
+        try {
+            const data = await dispatch(getAttributesThunk()).unwrap();
+            if (!data.length) {
+                myToast({ type: "customError", text1: "Атрибути не отримано!", text2: "Порожній список" });
+                return;
+            }
+            setAttributes(data);
+            setMode("create");
+        } catch {
+            // toast in thunk
+        } finally {
+            setLoadingAttrs(false);
+        }
     };
 
     const handleLoadAll = async () => {
@@ -118,12 +162,14 @@ export default function AddDetailsModal({ plantDBid, docId, productId, plantName
                 barcode: '0',
                 quantity: 0
             }))
+            setMode("list");
             setShow(false);
             return;
         }
         const addCharact = await addCharacteristic(Number(plantDBid), detail);
         if (addCharact != null) await dispatch(getPlantsDetailsDB({ palntId: Number(plantDBid), docId: Number(docId) }));
 
+        setMode("list");
         show && setShow(false);
     };
 
@@ -158,6 +204,19 @@ export default function AddDetailsModal({ plantDBid, docId, productId, plantName
 
         show && setShow(false);
         dispatch(setNewDetailBarcode(null));
+    };
+
+    const handleCreated = async (item: PlantItemRespons) => {
+        myToast({
+            type: "customToast",
+            text1: "Характеристику створено / відкрито",
+            text2: item.characteristic?.name || item.barcode,
+            visibilityTime: 3500,
+        });
+        dispatch(appendSearchPlantItem(item));
+        setMode("list");
+        setManual(false);
+        await addDetails(Number(plantDBid), item);
     };
 
     useEffect(() => {
@@ -204,7 +263,8 @@ export default function AddDetailsModal({ plantDBid, docId, productId, plantName
                     style={styles.buttonStep}
                     onPress={() => {
                         existPlantProps && dispatch(setExistPlantProps(null));
-                        setShow(!show);
+                        if (show) handleClose();
+                        else setShow(true);
                     }}
                 >
                     <Entypo name="add-to-list" size={24} color="#131316" />
@@ -218,9 +278,23 @@ export default function AddDetailsModal({ plantDBid, docId, productId, plantName
                 onRequestClose={() => handleClose()}
             >
                 <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        {manual ?
-                            <ManualDetailsAdd add={(value: string) => addManualDetails(value)} />
+                    <View style={[styles.modalView, mode === "create" && styles.modalViewCreate]}>
+                        {mode === "create" ?
+                            <View style={styles.createWrap}>
+                                <CreateCharacteristic
+                                    productId={productId}
+                                    attributes={attributes}
+                                    manual={manual}
+                                    onBack={() => {
+                                        setMode("list");
+                                        setManual(false);
+                                    }}
+                                    onCreated={handleCreated}
+                                    addManual={(value: string) => addManualDetails(value)}
+                                    registerCreate={registerCreate}
+                                    onCreateMeta={onCreateMeta}
+                                />
+                            </View>
                             :
                             <>
                                 <Text
@@ -281,25 +355,62 @@ export default function AddDetailsModal({ plantDBid, docId, productId, plantName
                             >
                                 <EvilIcons name="close" size={24} color="#FFFFFF" style={{ lineHeight: 24 }} />
                             </TouchableVibrate>
-                            {!manual && <ReloadBtn dispatch={dispatch} name={dataPlant[0]?.product.name} />}
-                            {!manual &&
+
+                            {mode === "list" && <ReloadBtn dispatch={dispatch} name={dataPlant[0]?.product.name} />}
+                            {mode === "list" &&
                                 <TouchableVibrate style={styles.loadAllBtn} onPress={handleLoadAll}>
                                     <MaterialCommunityIcons name="file-download-outline" size={24} color="rgb(100, 100, 100)" />
                                 </TouchableVibrate>}
-                            <View style={styles.switchBlock}>
-                                <Switch
-                                    trackColor={{ false: '#767577', true: '"rgba(255, 111, 97, 1)"' }}
-                                    thumbColor={'#f4f3f4'}
-                                    ios_backgroundColor="#3e3e3e"
-                                    onValueChange={() => {
-                                        Vibration.vibrate(5);
-                                        setManual(!manual)
-                                    }}
-                                    value={manual}
-                                />
-                                <MaterialCommunityIcons name="draw-pen" size={22} color={manual ? "rgba(255, 111, 97, 1)" : "rgb(125, 125, 125)"} />
-                            </View>
 
+                            {mode === "create" && (
+                                <View style={styles.switchBlock}>
+                                    <Switch
+                                        trackColor={{ false: "#767577", true: "rgba(255, 111, 97, 1)" }}
+                                        thumbColor={"#f4f3f4"}
+                                        ios_backgroundColor="#3e3e3e"
+                                        onValueChange={() => {
+                                            Vibration.vibrate(5);
+                                            setManual(!manual);
+                                        }}
+                                        value={manual}
+                                        disabled={createMeta.submitting}
+                                    />
+                                    <MaterialCommunityIcons
+                                        name="draw-pen"
+                                        size={22}
+                                        color={manual ? "rgba(255, 111, 97, 1)" : "rgb(125, 125, 125)"}
+                                    />
+                                </View>
+                            )}
+
+                            {mode === "list" ? (
+                                <TouchableVibrate
+                                    style={styles.newBtn}
+                                    onPress={handleOpenCreate}
+                                    disabled={loadingAttrs}
+                                >
+                                    {loadingAttrs ? (
+                                        <ActivityIndicator size={18} color="rgba(255, 111, 97, 1)" />
+                                    ) : (
+                                        <Text style={styles.newBtnText}>+ New</Text>
+                                    )}
+                                </TouchableVibrate>
+                            ) : (
+                                <TouchableVibrate
+                                    style={[
+                                        styles.sendBtn,
+                                        { opacity: !createMeta.canCreate || createMeta.submitting || manual ? 0.45 : 1 },
+                                    ]}
+                                    onPress={() => createFnRef.current?.()}
+                                    disabled={!createMeta.canCreate || createMeta.submitting || manual}
+                                >
+                                    {createMeta.submitting ? (
+                                        <ActivityIndicator size={18} color="#FFFFFF" />
+                                    ) : (
+                                        <Ionicons name="send" size={20} color="#FFFFFF" />
+                                    )}
+                                </TouchableVibrate>
+                            )}
                         </View>
                     </View>
                 </View>
@@ -414,19 +525,35 @@ const styles = StyleSheet.create({
         minHeight: "35%",
         maxHeight: "70%",
     },
+    modalViewCreate: {
+        height: "70%",
+        minHeight: "70%",
+        maxHeight: "70%",
+    },
+    createWrap: {
+        flex: 1,
+        width: "100%",
+        alignSelf: "stretch",
+    },
     btnBlock: {
         flexDirection: "row",
         width: "100%",
         marginTop: 5,
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     buttonClose: {
         borderRadius: 8,
         elevation: 3,
         padding: 4,
-        alignSelf: "flex-end",
+        alignSelf: "center",
         backgroundColor: "rgba(199, 199, 199, 0.99)",
         justifyContent: "center",
+        alignItems: 'center',
+    },
+    switchBlock: {
+        flexDirection: 'row',
+        padding: 5,
         alignItems: 'center',
     },
     textStr: {
@@ -463,10 +590,34 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         zIndex: 1
     },
-    switchBlock: {
-        flexDirection: 'row',
-        padding: 5,
+    newBtn: {
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: "rgba(31, 30, 30, 0.06)",
+        borderRadius: 8,
+        shadowColor: 'rgba(143, 143, 143, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        paddingHorizontal: 10,
+        minWidth: 52,
+        minHeight: 32,
         alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+    },
+    newBtnText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "rgb(100, 100, 100)",
+    },
+    sendBtn: {
+        elevation: 3,
+        borderRadius: 8,
+        backgroundColor: "rgba(255, 111, 97, 1)",
+        width: 40,
+        height: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
     },
     reloadBtn: {
         elevation: 3,
