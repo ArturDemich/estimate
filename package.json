@@ -6,7 +6,8 @@
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "web": "expo start --web",
-    "build": "npx expo export --platform web"
+    "build": "npx expo export --platform web",
+    "postinstall": "node ./scripts/copy-sqljs-wasm.js"
   },
   "jest": {
     "preset": "jest-expo"
@@ -46,7 +47,7 @@
     "react-native-toast-message": "^2.2.1",
     "react-native-web": "~0.19.13",
     "react-redux": "^9.2.0",
-    "sql.js": "^1.14.0"
+    "sql.js": "^1.15.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

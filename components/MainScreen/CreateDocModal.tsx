@@ -17,6 +17,7 @@ import TouchableVibrate from "@/components/ui/TouchableVibrate";
 import { EvilIcons } from "@expo/vector-icons";
 import EmptyList from "@/components/ui/EmptyList";
 import { cleaneDBPlantsName, setCurrentStoage, setDocComment } from "@/redux/dataSlice";
+import { myToast } from "@/utils/toastConfig";
 
 type StorageItem = {
   id: string;
@@ -63,11 +64,20 @@ export default function CreateDocModal() {
   };
 
   const navigateToDocument = async (storeName: string, storeId: string) => {
-    setShow(false);
     await dispatch(setDocComment(''))
-     await dispatch(cleaneDBPlantsName())
+    await dispatch(cleaneDBPlantsName())
     const docId = await addDocument(storeName, storeId)
-     await dispatch(setCurrentStoage({id: storeId, name: storeName}))
+    if (docId == null) {
+      myToast({
+        type: "customError",
+        text1: "Не вдалося створити документ",
+        text2: "Помилка локальної бази. Оновіть сторінку або спробуйте ще раз.",
+        visibilityTime: 5000,
+      });
+      return;
+    }
+    setShow(false);
+    await dispatch(setCurrentStoage({id: storeId, name: storeName}))
     router.push({
       pathname: "/document",
       params: { docName: storeName, docId, docSent: 0, docTimeCr: new Date().toISOString() },

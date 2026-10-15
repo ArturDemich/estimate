@@ -64,9 +64,11 @@ async function initSqlJs(): Promise<SqlJsDatabase> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    const initSqlJs = (await import("sql.js")).default;
-    const SQL = await initSqlJs({
-      locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+    // Explicit sql-wasm.js (NOT sql-wasm-browser.js — browser export had bind bugs in 1.14.0).
+    // locateFile serves wasm from /public so JS and wasm stay on the same installed version.
+    const initSqlJsModule = (await import("sql.js/dist/sql-wasm.js")).default;
+    const SQL = await initSqlJsModule({
+      locateFile: (file: string) => `/${file}`,
     });
 
     const saved = await loadDbFromIndexedDB();
@@ -113,13 +115,26 @@ function getAdapter(db: SqlJsDatabase): WebDbAdapter {
 
     runAsync(sql: string, ...params: any[]): Promise<{ lastInsertRowId: number; changes: number }> {
       return new Promise((resolve, reject) => {
+        let stmt: ReturnType<SqlJsDatabase["prepare"]> | null = null;
         try {
           const flatParams = params.length === 1 && Array.isArray(params[0]) ? params[0] : params;
-          db.run(sql, flatParams);
+          // prepare → bind → step → free (do not rely on db.run(sql, params) in browser builds)
+          stmt = db.prepare(sql);
+          if (flatParams.length > 0) {
+            stmt.bind(flatParams);
+          }
+          stmt.step();
+          stmt.free();
+          stmt = null;
           const lastInsertRowId = Number(db.exec("SELECT last_insert_rowid()")[0]?.values[0]?.[0] ?? 0);
           const changes = db.getRowsModified();
           persist().then(() => resolve({ lastInsertRowId, changes })).catch(reject);
         } catch (e) {
+          try {
+            stmt?.free();
+          } catch (_) {
+            /* ignore */
+          }
           reject(e);
         }
       });
@@ -263,11 +278,12 @@ export async function addDocument(nameStore: string, storeId: string): Promise<n
   try {
     const result = await db.runAsync(
       "INSERT INTO documents (storage_name, storage_id, comment, is_sent, created_at) VALUES (?, ?, ?, 0, ?)",
-      nameStore,
-      storeId,
-      "",
-      createdAt
+      [nameStore, storeId, "", createdAt]
     );
+    if (!result.lastInsertRowId) {
+      console.error("Error adding document: insert returned no row id");
+      return null;
+    }
     return result.lastInsertRowId;
   } catch (error) {
     console.error("Error adding document:", error);
